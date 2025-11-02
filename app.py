@@ -28,7 +28,7 @@ if uploaded_file is not None:
             filtered_df = filtered_df[filtered_df["DeliveryType"].isin(delivery_types)]
         
         # --- Plot ---
-        fig, ax = plt.subplots(figsize=(6, 8))
+        fig, ax = plt.subplots(figsize=(4, 6))
         scatter = ax.scatter(
             filtered_df["StumpsY"],
             filtered_df["StumpsZ"],
