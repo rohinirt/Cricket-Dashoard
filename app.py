@@ -52,8 +52,8 @@ if uploaded_file is not None:
         # --- Stump lines ---
         fig.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2))
         fig.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2))
-        fig.add_vline(x=-0.92, line=dict(color="black", dash="dot", width=1.2))
-        fig.add_vline(x=-0.92, line=dict(color="black", dash="dot", width=1.2))
+        fig.add_vline(x=-0.92, line=dict(color="black", dash="line", width=1.2))
+        fig.add_vline(x=0.92, line=dict(color="black", dash="line", width=1.2))
 
         # --- Optional colored zones (to match your reference) ---
         fig.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
