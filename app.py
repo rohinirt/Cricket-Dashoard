@@ -13,7 +13,7 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     
     # Ensure required columns exist
-    required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpY", "StumpZ"]
+    required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ"]
     if not all(col in df.columns for col in required_cols):
         st.error(f"Missing required columns. Required: {required_cols}")
     else:
@@ -30,8 +30,8 @@ if uploaded_file is not None:
         # --- Plot ---
         fig, ax = plt.subplots(figsize=(6, 8))
         scatter = ax.scatter(
-            filtered_df["StumpY"],
-            filtered_df["StumpZ"],
+            filtered_df["StumpsY"],
+            filtered_df["StumpsZ"],
             c=filtered_df["Wicket"].astype("category").cat.codes,
             cmap="coolwarm",
             alpha=0.7,
@@ -56,4 +56,4 @@ if uploaded_file is not None:
         
         st.pyplot(fig)
 else:
-    st.info("👆 Upload a CSV file to begin.")
+    st.info("Upload a CSV file to begin.")
