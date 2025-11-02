@@ -37,8 +37,8 @@ if uploaded_file is not None:
             mode='markers',
             marker=dict(
                 color='lightgrey',
-                size=8,
-                line=dict(width=0),  # No border
+                size=12,
+                line=dict(color='white', width=0.6),  # No border
                 opacity=0.85
             ),
             name="No Wicket"
@@ -51,8 +51,8 @@ if uploaded_file is not None:
             mode='markers',
             marker=dict(
                 color='red',
-                size=12,
-                line=dict(width=0),  # No border
+                size=16,
+                line=dict(color='white', width=0.6),  # No border
                 opacity=0.95
             ),
             name="Wicket"
