@@ -12,14 +12,14 @@ uploaded_file = st.file_uploader("Upload your Hawkeye data (CSV)", type=["csv"])
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     
-    # Ensure required columns exist
-    required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ"]
+    # Required columns
+    required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpY", "StumpZ"]
     if not all(col in df.columns for col in required_cols):
         st.error(f"Missing required columns. Required: {required_cols}")
     else:
         # --- Filters ---
-        batsmen = st.multiselect("Select Batsman", options=df["BatsmanName"].unique(), default=None)
-        delivery_types = st.multiselect("Select Delivery Type", options=df["DeliveryType"].unique(), default=None)
+        batsmen = st.multiselect("Select Batsman", options=df["BatsmanName"].unique())
+        delivery_types = st.multiselect("Select Delivery Type", options=df["DeliveryType"].unique())
         
         filtered_df = df.copy()
         if batsmen:
@@ -27,33 +27,36 @@ if uploaded_file is not None:
         if delivery_types:
             filtered_df = filtered_df[filtered_df["DeliveryType"].isin(delivery_types)]
         
+        # --- Color Mapping for Wicket ---
+        color_map = {True: "red", False: "grey", "True": "red", "False": "grey"}
+        colors = filtered_df["Wicket"].map(color_map)
+        
         # --- Plot ---
-        fig, ax = plt.subplots(figsize=(4, 6))
-        scatter = ax.scatter(
-            filtered_df["StumpsY"],
-            filtered_df["StumpsZ"],
-            c=filtered_df["Wicket"].astype("category").cat.codes,
-            cmap="coolwarm",
-            alpha=0.7,
-            s=60,
-            edgecolor="black"
+        fig, ax = plt.subplots(figsize=(4, 5))  # smaller figure
+        ax.scatter(
+            filtered_df["StumpY"],
+            filtered_df["StumpZ"],
+            c=colors,
+            alpha=0.8,
+            s=40,
+            edgecolors="none"  # no boundary
         )
         
         # Vertical lines for stumps
-        ax.axvline(x=-0.18, color='black', linestyle='--', linewidth=1.5)
-        ax.axvline(x=0.18, color='black', linestyle='--', linewidth=1.5)
+        ax.axvline(x=-0.18, color='black', linestyle='--', linewidth=1.2)
+        ax.axvline(x=0.18, color='black', linestyle='--', linewidth=1.2)
         
-        # Axis limits
+        # Axis settings
         ax.set_xlim(-1.6, 1.6)
         ax.set_ylim(0, 2.5)
         ax.set_xlabel("StumpY (Left–Right)")
         ax.set_ylabel("StumpZ (Height)")
         ax.set_title("Crease Beehive (Stump View)")
         
-        # Add legend
-        cbar = plt.colorbar(scatter, ax=ax)
-        cbar.set_label("Wicket (encoded)")
-        
+        # Cleaner layout
+        ax.grid(False)
+        ax.set_facecolor("white")
         st.pyplot(fig)
+
 else:
-    st.info("Upload a CSV file to begin.")
+    st.info("👆 Upload a CSV file to begin.")
