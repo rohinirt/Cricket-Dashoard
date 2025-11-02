@@ -42,14 +42,12 @@ if uploaded_file is not None:
         )
 
         # Vertical lines for stumps
-        ax.axvline(x=-0.18, color='black', linestyle='--', linewidth=1.2)
-        ax.axvline(x=0.18, color='black', linestyle='--', linewidth=1.2)
+        ax.axvline(x=-0.18, color='black', linestyle='-', linewidth=1)
+        ax.axvline(x=0.18, color='black', linestyle='-', linewidth=1)
 
         # Fixed axes
         ax.set_xlim(-1.6, 1.6)
         ax.set_ylim(0, 2.5)
-        ax.set_xlabel("StumpsY (Left–Right)")
-        ax.set_ylabel("StumpsZ (Height)")
         ax.set_title("Crease Beehive (Stump View)", fontsize=12)
 
         # Hide top/right borders for a clean look
