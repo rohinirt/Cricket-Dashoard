@@ -13,15 +13,15 @@ if uploaded_file is not None:
     if not all(col in df.columns for col in required_cols):
         st.error(f"Missing required columns. Required columns: {required_cols}")
     else:
-        # --- Filters ---
-        batsmen = st.multiselect("Select Batsman", options=df["BatsmanName"].unique())
-        delivery_types = st.multiselect("Select Delivery Type", options=df["DeliveryType"].unique())
+        # --- Filters (Single Select) ---
+        batsman = st.selectbox("Select Batsman", options=["All"] + sorted(df["BatsmanName"].unique().tolist()))
+        delivery_type = st.selectbox("Select Delivery Type", options=["All"] + sorted(df["DeliveryType"].unique().tolist()))
 
         filtered_df = df.copy()
-        if batsmen:
-            filtered_df = filtered_df[filtered_df["BatsmanName"].isin(batsmen)]
-        if delivery_types:
-            filtered_df = filtered_df[filtered_df["DeliveryType"].isin(delivery_types)]
+        if batsman != "All":
+            filtered_df = filtered_df[filtered_df["BatsmanName"] == batsman]
+        if delivery_type != "All":
+            filtered_df = filtered_df[filtered_df["DeliveryType"] == delivery_type]
 
         # --- Separate by wicket ---
         wickets = filtered_df[filtered_df["Wicket"] == True]
@@ -30,7 +30,7 @@ if uploaded_file is not None:
         # --- Create figure ---
         fig = go.Figure()
 
-        # Non-wickets (grey with white border)
+        # Non-wickets (grey with no border)
         fig.add_trace(go.Scatter(
             x=non_wickets["StumpsY"],
             y=non_wickets["StumpsZ"],
@@ -38,13 +38,13 @@ if uploaded_file is not None:
             marker=dict(
                 color='lightgrey',
                 size=8,
-                line=dict(color='white', width=0.6),
+                line=dict(width=0),  # No border
                 opacity=0.85
             ),
             name="No Wicket"
         ))
 
-        # Wickets (red with white border)
+        # Wickets (red with no border)
         fig.add_trace(go.Scatter(
             x=wickets["StumpsY"],
             y=wickets["StumpsZ"],
@@ -52,7 +52,7 @@ if uploaded_file is not None:
             marker=dict(
                 color='red',
                 size=12,
-                line=dict(color='white', width=0.8),
+                line=dict(width=0),  # No border
                 opacity=0.95
             ),
             name="Wicket"
@@ -71,7 +71,7 @@ if uploaded_file is not None:
                       fillcolor="rgba(255,0,0,0.05)", line_width=0)
 
         # --- Chart Layout ---
-        batsman_name = batsmen[0] if batsmen else "All Batsmen"
+        batsman_name = batsman if batsman != "All" else "All Batsmen"
         fig.update_layout(
             title=dict(
                 text=f"<b>CBH - {batsman_name}</b>",
@@ -85,7 +85,7 @@ if uploaded_file is not None:
                 range=[-1.6, 1.6],
                 showgrid=False,
                 zeroline=False,
-                visible=False,   # Hide x-axis
+                visible=False,
                 scaleanchor="y",
                 scaleratio=1
             ),
@@ -93,7 +93,7 @@ if uploaded_file is not None:
                 range=[0, 2.5],
                 showgrid=False,
                 zeroline=False,
-                visible=False    # Hide y-axis
+                visible=False
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
