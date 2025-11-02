@@ -36,7 +36,7 @@ if uploaded_file is not None:
             x=non_wickets["StumpsY"],
             y=non_wickets["StumpsZ"],
             mode='markers',
-            marker=dict(color='lightgrey', size=6, opacity=0.8),
+            marker=dict(color='lightgrey', size=8, opacity=0.8),
             name="No Wicket"
         ))
 
@@ -45,18 +45,20 @@ if uploaded_file is not None:
             x=wickets["StumpsY"],
             y=wickets["StumpsZ"],
             mode='markers',
-            marker=dict(color='red', size=10, opacity=0.9),
+            marker=dict(color='red', size=12, opacity=0.9),
             name="Wicket"
         ))
 
         # --- Stump lines ---
         fig.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2))
         fig.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2))
+        fig.add_vline(x=-0.92, line=dict(color="black", dash="dot", width=1.2))
+        fig.add_vline(x=-0.92, line=dict(color="black", dash="dot", width=1.2))
 
         # --- Optional colored zones (to match your reference) ---
-        fig.add_shape(type="rect", x0=-1.6, x1=-0.18, y0=0, y1=2.5,
+        fig.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
                       fillcolor="rgba(0,255,0,0.05)", line_width=0)
-        fig.add_shape(type="rect", x0=0.18, x1=1.6, y0=0, y1=2.5,
+        fig.add_shape(type="rect", x0=0.25, x1=1.6, y0=0, y1=2.5,
                       fillcolor="rgba(255,0,0,0.05)", line_width=0)
 
         # --- Layout ---
