@@ -66,7 +66,6 @@ if uploaded_file is not None:
             width=750,      # rectangular layout
             height=400,
             xaxis=dict(
-                title="StumpsY (Left–Right)",
                 range=[-1.6, 1.6],
                 zeroline=False,
                 showgrid=True,
@@ -74,7 +73,6 @@ if uploaded_file is not None:
                 scaleratio=1
             ),
             yaxis=dict(
-                title="StumpsZ (Height)",
                 range=[0, 2.5],
                 zeroline=False,
                 showgrid=True
