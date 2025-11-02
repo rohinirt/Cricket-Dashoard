@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.graph_objects as go
 
 st.set_page_config(page_title="Cricket Crease Beehive", layout="wide")
-st.title("🏏 Crease Beehive Chart (Stump View)")
 
 uploaded_file = st.file_uploader("Upload your Hawkeye data (CSV)", type=["csv"])
 
@@ -31,7 +30,7 @@ if uploaded_file is not None:
         # --- Create figure ---
         fig = go.Figure()
 
-        # Non-wickets (grey)
+        # Non-wickets (grey with white border)
         fig.add_trace(go.Scatter(
             x=non_wickets["StumpsY"],
             y=non_wickets["StumpsZ"],
@@ -39,13 +38,13 @@ if uploaded_file is not None:
             marker=dict(
                 color='lightgrey',
                 size=8,
-                opacity=0.8,
-                line=dict(width=0.8, color='white')  # white border
+                line=dict(color='white', width=0.6),
+                opacity=0.85
             ),
             name="No Wicket"
         ))
 
-        # Wickets (red)
+        # Wickets (red with white border)
         fig.add_trace(go.Scatter(
             x=wickets["StumpsY"],
             y=wickets["StumpsZ"],
@@ -53,8 +52,8 @@ if uploaded_file is not None:
             marker=dict(
                 color='red',
                 size=12,
-                opacity=0.9,
-                line=dict(width=1, color='white')  # white border
+                line=dict(color='white', width=0.8),
+                opacity=0.95
             ),
             name="Wicket"
         ))
@@ -62,40 +61,44 @@ if uploaded_file is not None:
         # --- Stump lines ---
         fig.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2))
         fig.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2))
-        fig.add_vline(x=-0.92, line=dict(color="black", width=1.2))
-        fig.add_vline(x=0.92, line=dict(color="black", width=1.2))
+        fig.add_vline(x=-0.92, line=dict(color="black", width=1))
+        fig.add_vline(x=0.92, line=dict(color="black", width=1))
 
-        # --- Colored stump zones ---
+        # --- Background zones ---
         fig.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
                       fillcolor="rgba(0,255,0,0.05)", line_width=0)
         fig.add_shape(type="rect", x0=0.18, x1=2.5, y0=0, y1=2.5,
                       fillcolor="rgba(255,0,0,0.05)", line_width=0)
 
-        # --- Layout ---
+        # --- Chart Layout ---
+        batsman_name = batsmen[0] if batsmen else "All Batsmen"
         fig.update_layout(
+            title=dict(
+                text=f"<b>CBH - {batsman_name}</b>",
+                x=0.5,
+                y=0.95,
+                font=dict(size=20)
+            ),
             width=750,
             height=400,
             xaxis=dict(
                 range=[-1.6, 1.6],
-                showgrid=True,
+                showgrid=False,
                 zeroline=False,
+                visible=False,   # Hide x-axis
                 scaleanchor="y",
-                scaleratio=1,
-                showticklabels=False,  # hide tick labels
-                title=None,  # hide title
+                scaleratio=1
             ),
             yaxis=dict(
                 range=[0, 2.5],
-                showgrid=True,
+                showgrid=False,
                 zeroline=False,
-                showticklabels=False,  # hide tick labels
-                title=None,  # hide title
+                visible=False    # Hide y-axis
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
-            margin=dict(l=20, r=20, t=20, b=20),
-            showlegend=False,
-            font=dict(size=12)
+            margin=dict(l=20, r=20, t=60, b=20),
+            showlegend=False
         )
 
         st.plotly_chart(fig, use_container_width=False)
