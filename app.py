@@ -58,7 +58,7 @@ if uploaded_file is not None:
         # --- Optional colored zones (to match your reference) ---
         fig.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
                       fillcolor="rgba(0,255,0,0.05)", line_width=0)
-        fig.add_shape(type="rect", x0=0.25, x1=1.6, y0=0, y1=2.5,
+        fig.add_shape(type="rect", x0=0.25, x1=2.5, y0=0, y1=2.5,
                       fillcolor="rgba(255,0,0,0.05)", line_width=0)
 
         # --- Layout ---
