@@ -36,7 +36,12 @@ if uploaded_file is not None:
             x=non_wickets["StumpsY"],
             y=non_wickets["StumpsZ"],
             mode='markers',
-            marker=dict(color='lightgrey', size=8, opacity=0.8),
+            marker=dict(
+                color='lightgrey',
+                size=8,
+                opacity=0.8,
+                line=dict(width=0.8, color='white')  # white border
+            ),
             name="No Wicket"
         ))
 
@@ -45,7 +50,12 @@ if uploaded_file is not None:
             x=wickets["StumpsY"],
             y=wickets["StumpsZ"],
             mode='markers',
-            marker=dict(color='red', size=12, opacity=0.9),
+            marker=dict(
+                color='red',
+                size=12,
+                opacity=0.9,
+                line=dict(width=1, color='white')  # white border
+            ),
             name="Wicket"
         ))
 
@@ -55,7 +65,7 @@ if uploaded_file is not None:
         fig.add_vline(x=-0.92, line=dict(color="black", width=1.2))
         fig.add_vline(x=0.92, line=dict(color="black", width=1.2))
 
-        # --- Optional colored zones (to match your reference) ---
+        # --- Colored stump zones ---
         fig.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
                       fillcolor="rgba(0,255,0,0.05)", line_width=0)
         fig.add_shape(type="rect", x0=0.18, x1=2.5, y0=0, y1=2.5,
@@ -63,23 +73,27 @@ if uploaded_file is not None:
 
         # --- Layout ---
         fig.update_layout(
-            width=750,      # rectangular layout
+            width=750,
             height=400,
             xaxis=dict(
                 range=[-1.6, 1.6],
-                zeroline=False,
                 showgrid=True,
-                scaleanchor="y",  # keep scale 1:1
-                scaleratio=1
+                zeroline=False,
+                scaleanchor="y",
+                scaleratio=1,
+                showticklabels=False,  # hide tick labels
+                title=None,  # hide title
             ),
             yaxis=dict(
                 range=[0, 2.5],
+                showgrid=True,
                 zeroline=False,
-                showgrid=True
+                showticklabels=False,  # hide tick labels
+                title=None,  # hide title
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
-            margin=dict(l=40, r=40, t=40, b=40),
+            margin=dict(l=20, r=20, t=20, b=20),
             showlegend=False,
             font=dict(size=12)
         )
