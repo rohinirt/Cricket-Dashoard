@@ -132,7 +132,7 @@ with col1:
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
-            margin=dict(l=20, r=20, t=60, b=20),
+            margin=dict(l=0, r=20, t=60, b=20),
             showlegend=False
         )
 
@@ -215,7 +215,7 @@ with col1:
             ),
             plot_bgcolor="#f6d992", # Setting a default background color for the pitch area
             paper_bgcolor="white",
-            margin=dict(l=40, r=20, t=60, b=40),
+            margin=dict(l=0, r=20, t=60, b=40),
             showlegend=True
         )
 
