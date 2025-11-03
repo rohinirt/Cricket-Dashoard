@@ -122,7 +122,7 @@ with col1:
                 x=0, y=0.95, font=dict(size=20)
             ),
             width=400, # Adjusted width for side-by-side view
-            height=300,
+            height=600,
             xaxis=dict(
                 range=[-1.2, 1.2], showgrid=False, zeroline=False, visible=False,
                 scaleanchor="y", scaleratio=1
