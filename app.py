@@ -7,7 +7,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
 # --- 1. SET PAGE CONFIGURATION ---
-st.set_page_config(page_title="Cricket Analysis Dashboard", layout="wide")
+st.set_page_config(page_title="Cricket Analysis Dashboard")
 
 # --- 2. DATA UPLOADER AND INITIAL LOAD ---
 # Use the main area for the file uploader for better visibility
