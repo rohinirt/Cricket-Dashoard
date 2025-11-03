@@ -121,8 +121,8 @@ with col1:
                 text=f"<b>CBH - {batsman_name}</b>",
                 x=0, y=0.95, font=dict(size=20)
             ),
-            width=700, # Adjusted width for side-by-side view
-            height=400,
+            width=400, # Adjusted width for side-by-side view
+            height=300,
             xaxis=dict(
                 range=[-1.2, 1.2], showgrid=False, zeroline=False, visible=False,
                 scaleanchor="y", scaleratio=1
@@ -299,7 +299,7 @@ with col2:
         
         cmap = cm.get_cmap('Blues')
 
-        fig_boxes, ax = plt.subplots(figsize=(6, 6)) # Adjusted size
+        fig_boxes, ax = plt.subplots(figsize=(5, 5)) # Adjusted size
 
         for zone, (x1, y1, x2, y2) in zones_layout.items():
             w, h = x2 - x1, y2 - y1
