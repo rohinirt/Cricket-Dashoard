@@ -83,7 +83,7 @@ with col1:
                 color='lightgrey',
                 size=8,
                 line=dict(width=0),
-                opacity=0.85
+                opacity=0.2
             ),
             name="No Wicket"
         ))
