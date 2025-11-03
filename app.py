@@ -83,7 +83,7 @@ with col1:
                 color='lightgrey',
                 size=8,
                 line=dict(width=0),
-                opacity=0.2
+                opacity=0.95
             ),
             name="No Wicket"
         ))
@@ -97,7 +97,7 @@ with col1:
                 color='red',
                 size=12,
                 line=dict(width=0),
-                opacity=0.2
+                opacity=0.95
             ),
             name="Wicket"
         ))
@@ -161,7 +161,7 @@ with col1:
                 x0=-1.5, x1=1.5,
                 y0=params["y0"], y1=params["y1"],
                 fillcolor=params["color"],
-                opacity=0.3,
+                opacity=0.95,
                 layer="below",
                 line_width=0,
             )
