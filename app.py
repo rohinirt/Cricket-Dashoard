@@ -61,22 +61,21 @@ col1, col2 = st.columns([1, 1.2])
 # LEFT CHART: Crease Beehive (Plotly)
 # --------------------------
 with col1:
-    if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+    st.subheader("Crease Beehive (Stump View)")
 
     required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ"]
     if not all(col in df.columns for col in required_cols):
         st.error(f"Missing required columns. Required columns: {required_cols}")
     else:
         # --- Filters (Single Select) ---
-        batsman = st.selectbox("Select Batsman", options=["All"] + sorted(df["BatsmanName"].unique().tolist()))
-        delivery_type = st.selectbox("Select Delivery Type", options=["All"] + sorted(df["DeliveryType"].unique().tolist()))
+        batsman_cb = st.selectbox("Select Batsman", options=["All"] + sorted(df["BatsmanName"].unique().tolist()))
+        delivery_type_cb = st.selectbox("Select Delivery Type", options=["All"] + sorted(df["DeliveryType"].unique().tolist()))
 
         filtered_df = df.copy()
-        if batsman != "All":
-            filtered_df = filtered_df[filtered_df["BatsmanName"] == batsman]
-        if delivery_type != "All":
-            filtered_df = filtered_df[filtered_df["DeliveryType"] == delivery_type]
+        if batsman_cb != "All":
+            filtered_df = filtered_df[filtered_df["BatsmanName"] == batsman_cb]
+        if delivery_type_cb != "All":
+            filtered_df = filtered_df[filtered_df["DeliveryType"] == delivery_type_cb]
 
         # --- Separate by wicket ---
         wickets = filtered_df[filtered_df["Wicket"] == True]
@@ -85,7 +84,7 @@ with col1:
         # --- Create figure ---
         fig = go.Figure()
 
-        # Non-wickets (grey with no border)
+        # Non-wickets (grey)
         fig.add_trace(go.Scatter(
             x=non_wickets["StumpsY"],
             y=non_wickets["StumpsZ"],
@@ -93,13 +92,13 @@ with col1:
             marker=dict(
                 color='lightgrey',
                 size=8,
-                line=dict(width=0),  # No border
+                line=dict(color='white', width=0.6),
                 opacity=0.85
             ),
             name="No Wicket"
         ))
 
-        # Wickets (red with no border)
+        # Wickets (red)
         fig.add_trace(go.Scatter(
             x=wickets["StumpsY"],
             y=wickets["StumpsZ"],
@@ -107,7 +106,7 @@ with col1:
             marker=dict(
                 color='red',
                 size=12,
-                line=dict(width=0),  # No border
+                line=dict(color='white', width=0.6),
                 opacity=0.95
             ),
             name="Wicket"
@@ -119,37 +118,12 @@ with col1:
         fig.add_vline(x=-0.92, line=dict(color="black", width=1))
         fig.add_vline(x=0.92, line=dict(color="black", width=1))
 
-        # --- Background zones ---
-        fig.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
-                      fillcolor="rgba(0,255,0,0.05)", line_width=0)
-        fig.add_shape(type="rect", x0=0.18, x1=2.5, y0=0, y1=2.5,
-                      fillcolor="rgba(255,0,0,0.05)", line_width=0)
-
         # --- Chart Layout ---
-        batsman_name = batsman if batsman != "All" else "All Batsmen"
         fig.update_layout(
-            title=dict(
-                text=f"<b>CBH - {batsman_name}</b>",
-                x=0.5,
-                y=0.95,
-                font=dict(size=20)
-            ),
-            width=750,
+            width=700,
             height=400,
-            xaxis=dict(
-                range=[-1.6, 1.6],
-                showgrid=False,
-                zeroline=False,
-                visible=False,
-                scaleanchor="y",
-                scaleratio=1
-            ),
-            yaxis=dict(
-                range=[0, 2.5],
-                showgrid=False,
-                zeroline=False,
-                visible=False
-            ),
+            xaxis=dict(range=[-1.6, 1.6], scaleanchor="y", scaleratio=1, visible=False),
+            yaxis=dict(range=[0, 2.5], visible=False),
             plot_bgcolor="white",
             paper_bgcolor="white",
             margin=dict(l=20, r=20, t=60, b=20),
@@ -158,14 +132,13 @@ with col1:
 
         st.plotly_chart(fig, use_container_width=False)
 
-else:
-    st.info("👆 Upload a CSV file to view the crease beehive chart.")
-
 # --------------------------
 # RIGHT CHART: Zone Heatmap (Matplotlib)
 # --------------------------
 with col2:
-    # Define Zones based on Batting Hand
+    st.subheader("Zone Performance Heatmap")
+
+    # Define Zones
     right_hand_zones = {
         "Zone 1": (-0.72, 0, -0.45, 1.91),
         "Zone 2": (-0.45, 0, -0.18, 0.71),
@@ -175,26 +148,10 @@ with col2:
         "Zone 6": (-0.45, 1.31, 0.18, 1.91),
     }
 
-    left_hand_zones = {
-        "Zone 1": (0.45, 0, 0.72, 1.91),
-        "Zone 2": (0.18, 0, 0.45, 0.71),
-        "Zone 3": (-0.18, 0, 0.18, 0.71),
-        "Zone 4": (0.18, 0.71, 0.45, 1.31),
-        "Zone 5": (-0.18, 0.71, 0.18, 1.31),
-        "Zone 6": (-0.18, 1.31, 0.45, 1.91),
-    }
-
-    is_right_handed = True
-    if batsman != "All":
-        handed = filtered["IsBatsmanRightHanded"].dropna().unique()
-        is_right_handed = handed[0] if len(handed) > 0 else True
-
-    zones_layout = right_hand_zones if is_right_handed else left_hand_zones
-
-    # Assign Zone
+    # Assign Zone Function
     def assign_zone(row):
         x, y = row["CreaseY"], row["CreaseZ"]
-        for zone, (x1, y1, x2, y2) in zones_layout.items():
+        for zone, (x1, y1, x2, y2) in right_hand_zones.items():
             if x1 <= x <= x2 and y1 <= y <= y2:
                 return zone
         return "Other"
@@ -202,55 +159,30 @@ with col2:
     filtered["Zone"] = filtered.apply(assign_zone, axis=1)
     filtered = filtered[filtered["Zone"] != "Other"]
 
-    # Summary by Zone
+    # Group and summarize
     summary = (
         filtered.groupby("Zone")
-        .agg(
-            Runs=("Runs", "sum"),
-            Wickets=("Wicket", lambda x: (x == True).sum())
-        )
-        .reindex(["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6"])
+        .agg(Runs=("Runs", "sum"), Wickets=("Wicket", lambda x: (x == True).sum()))
         .fillna(0)
     )
+    summary["Avg Runs/Wicket"] = summary.apply(
+        lambda x: x["Runs"] / x["Wickets"] if x["Wickets"] > 0 else 0, axis=1
+    )
 
-    summary["Avg Runs/Wicket"] = summary["Runs"] / summary["Wickets"]
-    summary["Avg Runs/Wicket"] = summary["Avg Runs/Wicket"].replace([float("inf"), float("nan")], 0)
-
+    # Color Mapping
     avg_values = summary["Avg Runs/Wicket"]
     norm = mcolors.Normalize(vmin=avg_values.min(), vmax=avg_values.max())
     cmap = cm.get_cmap('Blues')
 
-    fig2, ax = plt.subplots(figsize=(7, 7))
-
-    for zone, (x1, y1, x2, y2) in zones_layout.items():
+    fig2, ax = plt.subplots(figsize=(6, 6))
+    for zone, (x1, y1, x2, y2) in right_hand_zones.items():
         w, h = x2 - x1, y2 - y1
-        avg = summary.loc[zone, "Avg Runs/Wicket"]
+        avg = summary.loc[zone, "Avg Runs/Wicket"] if zone in summary.index else 0
         color = cmap(norm(avg))
-
-        zone_data = filtered[filtered["Zone"] == zone]
-        runs = int(summary.loc[zone, "Runs"])
-        wkts = int(summary.loc[zone, "Wickets"])
-        balls = zone_data.shape[0]
-        sr = (runs / balls) * 100 if balls > 0 else 0
-
-        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=2))
-        ax.text(
-            x1 + w / 2,
-            y1 + h / 2,
-            f"{zone}\nRuns: {runs}\nWkts: {wkts}\nAvg: {avg:.1f}\nSR: {sr:.1f}",
-            ha="center", va="center", weight="bold", fontsize=10,
-            color="black" if norm(avg) < 0.6 else "white"
-        )
+        ax.add_patch(patches.Rectangle((x1, y1), w, h, facecolor=color, edgecolor="black", linewidth=2))
+        ax.text(x1 + w / 2, y1 + h / 2, f"{zone}\n{avg:.1f}", ha='center', va='center', fontsize=10, color='black')
 
     ax.set_xlim(-0.75, 0.75)
     ax.set_ylim(0, 2)
-    ax.set_xlabel("CreaseY")
-    ax.set_ylabel("CreaseZ")
-    ax.set_title(batsman if batsman != "All" else "All Batters", fontsize=16)
-
-    sm = cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
-    cbar.set_label("Avg Runs/Wicket")
-
+    ax.axis('off')
     st.pyplot(fig2)
