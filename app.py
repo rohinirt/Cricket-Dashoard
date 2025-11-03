@@ -145,8 +145,8 @@ PITCH_BINS = {
     "Short": {"y0": 8.60, "y1": 16.0, "color": "purple"},
     "Length": {"y0": 5.0, "y1": 8.60, "color": "orange"},
     "Slot": {"y0": 2.8, "y1": 5.0, "color": "red"},
-    "Full Toss": {"y0": 0.9, "y1": 2.8, "color": "lightgreen"},
-    "Yorker": {"y0": -4.0, "y1": 0.9, "color": "darkblue"},
+    "Yorker": {"y0": 0.9, "y1": 2.8, "color": "lightgreen"},
+    "Full Toss": {"y0": -4.0, "y1": 0.9, "color": "darkblue"},
 }
 
 with col1:
