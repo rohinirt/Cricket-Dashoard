@@ -203,8 +203,8 @@ with col1:
                 text=f"<b>Pitch Map - {batsman_name}</b>", 
                 x=0, y=0.95, font=dict(size=20)
             ),
-            width=100, 
-            height=400, # Increased height for better visualization of lengths
+            width=90, 
+            height=500, # Increased height for better visualization of lengths
             xaxis=dict(
                 range=[-1.5, 1.5],
                 showgrid=False, zeroline=False,visible = False
@@ -215,7 +215,7 @@ with col1:
             ),
             plot_bgcolor="#f6d992", # Setting a default background color for the pitch area
             paper_bgcolor="white",
-            margin=dict(l=0, r=20, t=60, b=40),
+            margin=dict(l=10, r=20, t=60, b=40),
             showlegend=True
         )
 
