@@ -133,7 +133,7 @@ with col1:
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
-            margin=dict(l=10, r=10, t=20, b=20),
+            margin=dict(l=20, r=20, t=60, b=20),
             showlegend=False
         )
 
