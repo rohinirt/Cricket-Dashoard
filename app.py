@@ -183,10 +183,7 @@ with col2:
         df_chart2 = filtered_df.copy()
         df_chart2["Zone"] = df_chart2.apply(assign_zone, axis=1)
         df_chart2 = df_chart2[df_chart2["Zone"] != "Other"]
-        title=dict(
-                text=f"<b>CBH Boxes - {batsman_name}</b>",
-                x=0, y=0.95, font=dict(size=20)
-            )
+       
         # --- Calculate Summary ---
         summary = (
             df_chart2.groupby("Zone")
@@ -245,16 +242,14 @@ with col2:
 
         ax.set_xlim(-0.75, 0.75)
         ax.set_ylim(0, 2)
-        ax.set_xlabel("CreaseY (Distance from Middle Stump)")
-        ax.set_ylabel("CreaseZ (Height from Ground)")
         
         handedness = "Right Handed" if is_right_handed else "Left Handed"
-        ax.set_title(f"{batsman if batsman != 'All' else 'All Batters'} ({handedness})", fontsize=14)
+        ax.set_title(f"{batsman if batsman != 'All' else 'All Batters'} ({handedness})", fontsize=20)
 
         # Colorbar
         sm = cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
         cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
         cbar.set_label("Avg Runs/Wicket")
-
+        
         st.pyplot(fig_boxes)
