@@ -181,8 +181,8 @@ with col1:
 
         # 2. Separate Data by Wicket Status and Plot
         # --- ADDED: Stump lines for Pitch Map ---
-        fig_pitch.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2, opacity = 0.8))
-        fig_pitch.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2,opacity = 0.8))
+        fig_pitch.add_vline(x=-0.18, line=dict(color="#777777", dash="dot", width=1.2))
+        fig_pitch.add_vline(x=0.18, line=dict(color="#777777", dash="dot", width=1.2))
         pitch_wickets = filtered_df[filtered_df["Wicket"] == True]
         pitch_non_wickets = filtered_df[filtered_df["Wicket"] == False]
 
