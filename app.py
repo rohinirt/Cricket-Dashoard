@@ -129,7 +129,7 @@ with col1:
                 scaleanchor="y", scaleratio=1
             ),
             yaxis=dict(
-                range=[-0.5, 2.6], showgrid=False, zeroline=False, visible=True
+                range=[0.5, 2], showgrid=False, zeroline=False, visible=True
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
