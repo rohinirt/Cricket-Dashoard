@@ -242,9 +242,10 @@ with col2:
 
         ax.set_xlim(-0.75, 0.75)
         ax.set_ylim(0, 2)
-        ax.set_xlabel("CreaseY")
-        ax.set_ylabel("CreaseZ")
-        ax.set_title(batsman if batsman != "All" else "All Batters", fontsize=16)
+        ax.set_xticks([])  # Hide x-axis ticks
+        ax.set_yticks([])  # Hide y-axis ticks
+        ax.set_xlabel("")  # Hide x-axis label
+        ax.set_ylabel("")
 
         
         handedness = "Right Handed" if is_right_handed else "Left Handed"
