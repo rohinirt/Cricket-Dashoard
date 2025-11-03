@@ -216,7 +216,7 @@ with col2:
         
         cmap = cm.get_cmap('Blues')
 
-        fig_boxes, ax = plt.subplots(figsize=(7, 7)) # Adjusted size
+        fig_boxes, ax = plt.subplots(figsize=(6, 6)) # Adjusted size
 
         for zone, (x1, y1, x2, y2) in zones_layout.items():
             w, h = x2 - x1, y2 - y1
@@ -242,6 +242,11 @@ with col2:
 
         ax.set_xlim(-0.75, 0.75)
         ax.set_ylim(0, 2)
+
+        ax.set_xticks([])  # Hide x-axis ticks
+        ax.set_yticks([])  # Hide y-axis ticks
+        ax.set_xlabel("")  # Hide x-axis label
+        ax.set_ylabel("")  # Hide y-axis label
         
         handedness = "Right Handed" if is_right_handed else "Left Handed"
         ax.set_title(f"{batsman if batsman != 'All' else 'All Batters'} ({handedness})", fontsize=20)
