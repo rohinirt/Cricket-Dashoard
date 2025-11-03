@@ -155,7 +155,7 @@ with col2:
             "Zone 3": (-0.18, 0, 0.18, 0.71),
             "Zone 4": (-0.45, 0.71, -0.18, 1.31),
             "Zone 5": (-0.18, 0.71, 0.18, 1.31),
-            "Zone 6": (-0.18, 1.31, 0.45, 1.91), # Note: Zone 6 seems defined differently in original
+             "Zone 6": (-0.45, 1.31, 0.18, 1.91), # Note: Zone 6 seems defined differently in original
         }
 
         left_hand_zones = {
