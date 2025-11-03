@@ -13,11 +13,11 @@ st.set_page_config(page_title="Cricket Analytics Dashboard", layout="wide")
 # --------------------------
 st.sidebar.header("Upload or Use Default Data")
 uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type="csv")
-
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
+    st.success("File uploaded successfully!")
 else:
-    df = pd.read_csv("/mnt/data/queryOutput_1751703447858.csv")
+    st.warning("Please upload a file to proceed.")
 
 # --------------------------
 # Common Filters (Batting Team → Batsman → Delivery Type)
