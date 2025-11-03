@@ -161,7 +161,7 @@ with col1:
                 x0=-1.5, x1=1.5,
                 y0=params["y0"], y1=params["y1"],
                 fillcolor=params["color"],
-                opacity=0.4,
+                opacity=0.1,
                 layer="below",
                 line_width=0,
             )
