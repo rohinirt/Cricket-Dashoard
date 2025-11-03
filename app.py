@@ -61,17 +61,31 @@ col1, col2 = st.columns([1, 1.2])
 # LEFT CHART: Crease Beehive (Plotly)
 # --------------------------
 with col1:
-    required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ"]
-    if not all(col in filtered.columns for col in required_cols):
-        st.error(f"Missing required columns: {required_cols}")
-    else:
-        # Separate by wicket
-        wickets = filtered[filtered["Wicket"] == True]
-        non_wickets = filtered[filtered["Wicket"] == False]
+    if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
 
+    required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ"]
+    if not all(col in df.columns for col in required_cols):
+        st.error(f"Missing required columns. Required columns: {required_cols}")
+    else:
+        # --- Filters (Single Select) ---
+        batsman = st.selectbox("Select Batsman", options=["All"] + sorted(df["BatsmanName"].unique().tolist()))
+        delivery_type = st.selectbox("Select Delivery Type", options=["All"] + sorted(df["DeliveryType"].unique().tolist()))
+
+        filtered_df = df.copy()
+        if batsman != "All":
+            filtered_df = filtered_df[filtered_df["BatsmanName"] == batsman]
+        if delivery_type != "All":
+            filtered_df = filtered_df[filtered_df["DeliveryType"] == delivery_type]
+
+        # --- Separate by wicket ---
+        wickets = filtered_df[filtered_df["Wicket"] == True]
+        non_wickets = filtered_df[filtered_df["Wicket"] == False]
+
+        # --- Create figure ---
         fig = go.Figure()
 
-        # Non-wickets
+        # Non-wickets (grey with no border)
         fig.add_trace(go.Scatter(
             x=non_wickets["StumpsY"],
             y=non_wickets["StumpsZ"],
@@ -85,7 +99,7 @@ with col1:
             name="No Wicket"
         ))
 
-        # Wickets
+        # Wickets (red with no border)
         fig.add_trace(go.Scatter(
             x=wickets["StumpsY"],
             y=wickets["StumpsZ"],
@@ -93,24 +107,25 @@ with col1:
             marker=dict(
                 color='red',
                 size=12,
-                line=dict(width=0),
+                line=dict(width=0),  # No border
                 opacity=0.95
             ),
             name="Wicket"
         ))
 
-        # Stumps
+        # --- Stump lines ---
         fig.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2))
         fig.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2))
         fig.add_vline(x=-0.92, line=dict(color="black", width=1))
         fig.add_vline(x=0.92, line=dict(color="black", width=1))
 
-        # Background Zones
+        # --- Background zones ---
         fig.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
                       fillcolor="rgba(0,255,0,0.05)", line_width=0)
         fig.add_shape(type="rect", x0=0.18, x1=2.5, y0=0, y1=2.5,
                       fillcolor="rgba(255,0,0,0.05)", line_width=0)
 
+        # --- Chart Layout ---
         batsman_name = batsman if batsman != "All" else "All Batsmen"
         fig.update_layout(
             title=dict(
@@ -142,6 +157,9 @@ with col1:
         )
 
         st.plotly_chart(fig, use_container_width=False)
+
+else:
+    st.info("👆 Upload a CSV file to view the crease beehive chart.")
 
 # --------------------------
 # RIGHT CHART: Zone Heatmap (Matplotlib)
