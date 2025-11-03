@@ -110,9 +110,9 @@ with col1:
         fig_cbh.add_vline(x=0.92, line=dict(color="black", width=1))
 
         # Background zones (left/right of middle stump)
-        fig_cbh.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=4,
+        fig_cbh.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
                           fillcolor="rgba(0,255,0,0.05)", line_width=0)
-        fig_cbh.add_shape(type="rect", x0=0.18, x1=2.5, y0=0, y1=4,
+        fig_cbh.add_shape(type="rect", x0=0.18, x1=2.5, y0=0, y1=2.5,
                           fillcolor="rgba(255,0,0,0.05)", line_width=0)
 
         # --- Chart Layout ---
@@ -120,7 +120,7 @@ with col1:
         fig_cbh.update_layout(
             title=dict(
                 text=f"<b>CBH - {batsman_name}</b>",
-                x=0.5, y=0.95, font=dict(size=20)
+                x=0, y=0.95, font=dict(size=20)
             ),
             width=700, # Adjusted width for side-by-side view
             height=400,
