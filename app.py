@@ -242,8 +242,6 @@ with col2:
 
         ax.set_xlim(-0.75, 0.75)
         ax.set_ylim(0, 2)
-        ax.set_xticks([])  # Hide x-axis ticks
-        ax.set_yticks([])  # Hide y-axis ticks
         ax.set_xlabel("")  # Hide x-axis label
         ax.set_ylabel("")
 
