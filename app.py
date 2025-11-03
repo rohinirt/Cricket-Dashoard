@@ -161,20 +161,21 @@ with col1:
                 x0=-1.5, x1=1.5,
                 y0=params["y0"], y1=params["y1"],
                 fillcolor=params["color"],
-                opacity=0.6,
+                opacity=0.4,
                 layer="below",
                 line_width=0,
             )
             # Add length labels (Approximate position)
-            mid_y = (params["y0"] + params["y1"])
+            mid_y = (params["y0"] + params["y1"]/2)
             if length in ["Short", "Length", "Slot", "Yorker", "Full Toss"]:
                 fig_pitch.add_annotation(
-                    x=0, y=mid_y,
+                    x=-1.45, y=mid_y,
                     text=length.upper(),
                     showarrow=False,
-                    font=dict(size=14, color="white"),
+                    font=dict(size=14, color="white",weight='bold'),
                     yref="y",
-                    xref="x"
+                    xref="x",
+                    xanchor='left'
                 )
 
 
@@ -206,12 +207,11 @@ with col1:
             height=600, # Increased height for better visualization of lengths
             xaxis=dict(
                 range=[-1.5, 1.5],
-                title="Line (BounceX)",
-                showgrid=False, zeroline=False,
+                showgrid=False, zeroline=False,visible = False
             ),
             yaxis=dict(
                 range=[16.0, -4.0], # **Reversed Y-axis**,
-                showgrid=False, zeroline=False,
+                showgrid=False, zeroline=False,visible = False
             ),
             plot_bgcolor="#f6d992", # Setting a default background color for the pitch area
             paper_bgcolor="white",
