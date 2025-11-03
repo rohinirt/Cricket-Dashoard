@@ -137,6 +137,94 @@ with col1:
         )
 
         st.plotly_chart(fig_cbh, use_container_width=True)
+# ==============================================================================
+# CHART 3: PITCH MAP (In Column 1, Bottom - NEW CHART)
+# ==============================================================================
+# Define Length Bins and Colors
+PITCH_BINS = {
+    "Short": {"y0": 8.60, "y1": 16.0, "color": "purple"},
+    "Length": {"y0": 5.0, "y1": 8.60, "color": "orange"},
+    "Slot": {"y0": 2.8, "y1": 5.0, "color": "red"},
+    "Full Toss": {"y0": 0.9, "y1": 2.8, "color": "lightgreen"},
+    "Yorker": {"y0": -4.0, "y1": 0.9, "color": "darkblue"},
+}
+
+with col1:
+    st.header("Pitch Map - Bowling Lengths")
+    
+    if filtered_df.empty:
+        st.warning("No data matches the selected filters for Pitch Map.")
+    else:
+        fig_pitch = go.Figure()
+
+        # 1. Add Background Zones (Reversed Y-axis for standard pitch view)
+        for length, params in PITCH_BINS.items():
+            fig_pitch.add_shape(
+                type="rect",
+                x0=-1.5, x1=1.5,
+                y0=params["y0"], y1=params["y1"],
+                fillcolor=params["color"],
+                opacity=0.2,
+                layer="below",
+                line_width=0,
+            )
+            # Add length labels (Approximate position)
+            mid_y = (params["y0"] + params["y1"]) / 2
+            if length in ["Short", "Length", "Slot", "Yorker"]:
+                fig_pitch.add_annotation(
+                    x=0, y=mid_y,
+                    text=length.upper(),
+                    showarrow=False,
+                    font=dict(size=14, color="black" if length in ["Slot", "Full Toss"] else "white"),
+                    yref="y",
+                    xref="x"
+                )
+
+
+        # 2. Separate Data by Wicket Status and Plot
+        pitch_wickets = filtered_df[filtered_df["Wicket"] == True]
+        pitch_non_wickets = filtered_df[filtered_df["Wicket"] == False]
+
+        # Non-wickets (smaller size, white)
+        fig_pitch.add_trace(go.Scatter(
+            x=pitch_non_wickets["BounceX"], y=pitch_non_wickets["BounceY"],
+            mode='markers', name="No Wicket",
+            marker=dict(color='white', size=8, line=dict(width=1, color="black"), opacity=0.9)
+        ))
+
+        # Wickets (larger size, blue/darker color)
+        fig_pitch.add_trace(go.Scatter(
+            x=pitch_wickets["BounceX"], y=pitch_wickets["BounceY"],
+            mode='markers', name="Wicket",
+            marker=dict(color='blue', size=12, line=dict(width=0), opacity=0.95)
+        ))
+
+
+        # 3. Layout Configuration
+        fig_pitch.update_layout(
+            title=dict(
+                text=f"<b>Pitch Map - {batsman_name}</b>", 
+                x=0.5, y=0.95, font=dict(size=20)
+            ),
+            width=700, 
+            height=600, # Increased height for better visualization of lengths
+            xaxis=dict(
+                range=[-1.5, 1.5],
+                title="Line (BounceX)",
+                showgrid=False, zeroline=False,
+            ),
+            yaxis=dict(
+                range=[16.0, -4.0], # **Reversed Y-axis**
+                title="Length (BounceY - Meters from Batsman's Crease)",
+                showgrid=False, zeroline=False,
+            ),
+            plot_bgcolor="lightgray", # Setting a default background color for the pitch area
+            paper_bgcolor="white",
+            margin=dict(l=40, r=20, t=60, b=40),
+            showlegend=True
+        )
+
+        st.plotly_chart(fig_pitch, use_container_width=True)
 
 # ==============================================================================
 # CHART 2: ZONAL BOXES (In Column 2)
