@@ -161,7 +161,7 @@ with col1:
                 x0=-1.5, x1=1.5,
                 y0=params["y0"], y1=params["y1"],
                 fillcolor=params["color"],
-                opacity=0.5,
+                opacity=0.4,
                 layer="below",
                 line_width=0,
             )
@@ -206,7 +206,7 @@ with col1:
                 text=f"<b>Pitch Map - {batsman_name}</b>", 
                 x=0, y=0.95, font=dict(size=20)
             ),
-            width=80, 
+            width=70, 
             height=550, # Increased height for better visualization of lengths
             xaxis=dict(
                 range=[-1.5, 1.5],
