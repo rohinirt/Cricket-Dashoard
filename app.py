@@ -125,11 +125,11 @@ with col1:
             width=700, # Adjusted width for side-by-side view
             height=400,
             xaxis=dict(
-                range=[-1.6, 1.6], showgrid=False, zeroline=False, visible=False,
+                range=[-1.6, 1.6], showgrid=False, zeroline=False, visible=True,
                 scaleanchor="y", scaleratio=1
             ),
             yaxis=dict(
-                range=[0, 2.5], showgrid=False, zeroline=False, visible=False
+                range=[0, 2.5], showgrid=False, zeroline=False, visible=True
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
