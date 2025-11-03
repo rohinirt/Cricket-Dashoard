@@ -206,8 +206,8 @@ with col1:
                 text=f"<b>Pitch Map - {batsman_name}</b>", 
                 x=0, y=0.95, font=dict(size=20)
             ),
-            width=70, 
-            height=550, # Increased height for better visualization of lengths
+            width=50, 
+            height=500, # Increased height for better visualization of lengths
             xaxis=dict(
                 range=[-1.5, 1.5],
                 showgrid=False, zeroline=False,visible = False
