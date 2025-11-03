@@ -164,13 +164,13 @@ with col1:
                 x0=-1.5, x1=1.5,
                 y0=params["y0"], y1=params["y1"],
                 fillcolor=params["color"],
-                opacity=0.2,
+                opacity=0.8,
                 layer="below",
                 line_width=0,
             )
             # Add length labels (Approximate position)
             mid_y = (params["y0"] + params["y1"]) / 2
-            if length in ["Short", "Length", "Slot", "Yorker"]:
+            if length in ["Short", "Length", "Slot", "Yorker", "Full Toss"]:
                 fig_pitch.add_annotation(
                     x=0, y=mid_y,
                     text=length.upper(),
@@ -187,14 +187,14 @@ with col1:
 
         # Non-wickets (smaller size, white)
         fig_pitch.add_trace(go.Scatter(
-            x=pitch_non_wickets["BounceX"], y=pitch_non_wickets["BounceY"],
+            x=pitch_non_wickets["BounceY"], y=pitch_non_wickets["BounceX"],
             mode='markers', name="No Wicket",
             marker=dict(color='white', size=8, line=dict(width=1, color="black"), opacity=0.9)
         ))
 
         # Wickets (larger size, blue/darker color)
         fig_pitch.add_trace(go.Scatter(
-            x=pitch_wickets["BounceX"], y=pitch_wickets["BounceY"],
+            x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"],
             mode='markers', name="Wicket",
             marker=dict(color='blue', size=12, line=dict(width=0), opacity=0.95)
         ))
@@ -218,7 +218,7 @@ with col1:
                 title="Length (BounceY - Meters from Batsman's Crease)",
                 showgrid=False, zeroline=False,
             ),
-            plot_bgcolor="lightgray", # Setting a default background color for the pitch area
+            plot_bgcolor="white", # Setting a default background color for the pitch area
             paper_bgcolor="white",
             margin=dict(l=40, r=20, t=60, b=40),
             showlegend=True
