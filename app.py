@@ -142,11 +142,11 @@ with col1:
 # ==============================================================================
 # Define Length Bins and Colors
 PITCH_BINS = {
-    "Short": {"y0": 8.60, "y1": 16.0, "color": "purple"},
-    "Length": {"y0": 5.0, "y1": 8.60, "color": "orange"},
-    "Slot": {"y0": 2.8, "y1": 5.0, "color": "red"},
-    "Yorker": {"y0": 0.9, "y1": 2.8, "color": "lightgreen"}, # Changed Full Toss and Yorker order/colors slightly to match image better
-    "Full Toss": {"y0": -4.0, "y1": 0.9, "color": "darkblue"},
+    "Short": {"y0": 8.60, "y1": 16.0, "color": "#5d3bb3"},
+    "Length": {"y0": 5.0, "y1": 8.60, "color": "#ae4fa1"},
+    "Slot": {"y0": 2.8, "y1": 5.0, "color": "#cc5d54"},
+    "Yorker": {"y0": 0.9, "y1": 2.8, "color": "#c7b365"}, # Changed Full Toss and Yorker order/colors slightly to match image better
+    "Full Toss": {"y0": -4.0, "y1": 0.9, "color": "#6e9d4f"},
 }
 
 with col1:
