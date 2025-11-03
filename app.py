@@ -150,13 +150,10 @@ PITCH_BINS = {
 }
 
 with col1:
-    st.header("Pitch Map - Bowling Lengths")
-    
     if filtered_df.empty:
         st.warning("No data matches the selected filters for Pitch Map.")
     else:
         fig_pitch = go.Figure()
-
         # 1. Add Background Zones (Reversed Y-axis for standard pitch view)
         for length, params in PITCH_BINS.items():
             fig_pitch.add_shape(
@@ -164,7 +161,7 @@ with col1:
                 x0=-1.5, x1=1.5,
                 y0=params["y0"], y1=params["y1"],
                 fillcolor=params["color"],
-                opacity=0.8,
+                opacity=0.1,
                 layer="below",
                 line_width=0,
             )
@@ -175,7 +172,7 @@ with col1:
                     x=0, y=mid_y,
                     text=length.upper(),
                     showarrow=False,
-                    font=dict(size=14, color="black" if length in ["Slot", "Full Toss"] else "white"),
+                    font=dict(size=14, color="white"),
                     yref="y",
                     xref="x"
                 )
@@ -189,22 +186,21 @@ with col1:
         fig_pitch.add_trace(go.Scatter(
             x=pitch_non_wickets["BounceY"], y=pitch_non_wickets["BounceX"],
             mode='markers', name="No Wicket",
-            marker=dict(color='white', size=8, line=dict(width=1, color="black"), opacity=0.9)
+            marker=dict(color='white', size=10, line=dict(width=1, color="grey"), opacity=0.9)
         ))
 
-        # Wickets (larger size, blue/darker color)
+        # Wickets (larger size, color)
         fig_pitch.add_trace(go.Scatter(
             x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"],
             mode='markers', name="Wicket",
-            marker=dict(color='blue', size=12, line=dict(width=0), opacity=0.95)
+            marker=dict(color='red', size=14, line=dict(width=0), opacity=0.95)
         ))
-
 
         # 3. Layout Configuration
         fig_pitch.update_layout(
             title=dict(
                 text=f"<b>Pitch Map - {batsman_name}</b>", 
-                x=0.5, y=0.95, font=dict(size=20)
+                x=0, y=0.95, font=dict(size=20)
             ),
             width=700, 
             height=600, # Increased height for better visualization of lengths
@@ -214,11 +210,10 @@ with col1:
                 showgrid=False, zeroline=False,
             ),
             yaxis=dict(
-                range=[16.0, -4.0], # **Reversed Y-axis**
-                title="Length (BounceY - Meters from Batsman's Crease)",
+                range=[16.0, -4.0], # **Reversed Y-axis**,
                 showgrid=False, zeroline=False,
             ),
-            plot_bgcolor="white", # Setting a default background color for the pitch area
+            plot_bgcolor="grey", # Setting a default background color for the pitch area
             paper_bgcolor="white",
             margin=dict(l=40, r=20, t=60, b=40),
             showlegend=True
