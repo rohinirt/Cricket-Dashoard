@@ -161,12 +161,12 @@ with col1:
                 x0=-1.5, x1=1.5,
                 y0=params["y0"], y1=params["y1"],
                 fillcolor=params["color"],
-                opacity=0.1,
+                opacity=0.6,
                 layer="below",
                 line_width=0,
             )
             # Add length labels (Approximate position)
-            mid_y = (params["y0"] + params["y1"]) / 2
+            mid_y = (params["y0"] + params["y1"])
             if length in ["Short", "Length", "Slot", "Yorker", "Full Toss"]:
                 fig_pitch.add_annotation(
                     x=0, y=mid_y,
@@ -213,7 +213,7 @@ with col1:
                 range=[16.0, -4.0], # **Reversed Y-axis**,
                 showgrid=False, zeroline=False,
             ),
-            plot_bgcolor="grey", # Setting a default background color for the pitch area
+            plot_bgcolor="#f6d992", # Setting a default background color for the pitch area
             paper_bgcolor="white",
             margin=dict(l=40, r=20, t=60, b=40),
             showlegend=True
