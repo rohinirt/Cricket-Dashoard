@@ -97,7 +97,7 @@ with col1:
                 color='red',
                 size=12,
                 line=dict(width=0),
-                opacity=0.95
+                opacity=0.2
             ),
             name="Wicket"
         ))
