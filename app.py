@@ -63,7 +63,6 @@ col1, col2 = st.columns(2)
 # CHART 1: CREASE BEEHIVE (In Column 1)
 # ==============================================================================
 with col1:
-    st.header("Crease Beehive (CBH)")
     
     if filtered_df.empty:
         st.warning("No data matches the selected filters for CBH.")
@@ -143,8 +142,6 @@ with col1:
 # CHART 2: ZONAL BOXES (In Column 2)
 # ==============================================================================
 with col2:
-    st.header("Crease Zonal Analysis (Avg Runs/Wicket)")
-
     if filtered_df.empty:
         st.warning("No data matches the selected filters for Zonal Analysis.")
     else:
@@ -155,9 +152,8 @@ with col2:
             "Zone 3": (-0.18, 0, 0.18, 0.71),
             "Zone 4": (-0.45, 0.71, -0.18, 1.31),
             "Zone 5": (-0.18, 0.71, 0.18, 1.31),
-             "Zone 6": (-0.45, 1.31, 0.18, 1.91), # Note: Zone 6 seems defined differently in original
+             "Zone 6": (-0.45, 1.31, 0.18, 1.91),
         }
-
         left_hand_zones = {
             "Zone 1": (0.45, 0, 0.72, 1.91),
             "Zone 2": (0.18, 0, 0.45, 0.71),
@@ -187,7 +183,10 @@ with col2:
         df_chart2 = filtered_df.copy()
         df_chart2["Zone"] = df_chart2.apply(assign_zone, axis=1)
         df_chart2 = df_chart2[df_chart2["Zone"] != "Other"]
-
+        title=dict(
+                text=f"<b>CBH Boxes - {batsman_name}</b>",
+                x=0, y=0.95, font=dict(size=20)
+            )
         # --- Calculate Summary ---
         summary = (
             df_chart2.groupby("Zone")
