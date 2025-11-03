@@ -165,8 +165,6 @@ with col1:
                 layer="below",
                 line_width=0,
             )
-        fig_pitch.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2))
-        fig_pitch.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2))
             # Add length labels (Approximate position)
             mid_y = (params["y0"] + params["y1"]/2)
             if length in ["Short", "Length", "Slot", "Yorker", "Full Toss"]:
@@ -182,6 +180,9 @@ with col1:
 
 
         # 2. Separate Data by Wicket Status and Plot
+        # --- ADDED: Stump lines for Pitch Map ---
+        fig_pitch.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2))
+        fig_pitch.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2))
         pitch_wickets = filtered_df[filtered_df["Wicket"] == True]
         pitch_non_wickets = filtered_df[filtered_df["Wicket"] == False]
 
@@ -206,7 +207,7 @@ with col1:
                 x=0, y=0.95, font=dict(size=20)
             ),
             width=80, 
-            height=500, # Increased height for better visualization of lengths
+            height=600, # Increased height for better visualization of lengths
             xaxis=dict(
                 range=[-1.5, 1.5],
                 showgrid=False, zeroline=False,visible = False
