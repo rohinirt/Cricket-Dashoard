@@ -489,8 +489,6 @@ import matplotlib.colors as mcolors
 # CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - MATPLOTLIB (FINAL UPDATED)
 # ------------------------------------------------------------------------------
 with col2:
-    st.header("Scoring Areas (Wagon Wheel) - Matplotlib")
-    
     if wagon_summary.empty:
         st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated.")
     else:
@@ -539,7 +537,7 @@ with col2:
                 colors[i] = (1.0, 1.0, 1.0, 1.0)
 
         # 3. Create the Matplotlib Figure
-        fig, ax = plt.subplots(figsize=(7, 7))
+        fig, ax = plt.subplots(figsize=(10, 10))
         
         # The 'angles' array controls the size of the slices, which are fixed (90 or 45)
         # Use the 'labels' argument for outside text, and 'pctdistance' to move the text
@@ -566,7 +564,7 @@ with col2:
         # The entire loop that manually calculated x,y and used ax.text() is removed.
         # -----------------------------------------
 
-        ax.set_title(f"Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
+        ax.set_title(f"Scoring Areas - {batsman if batsman != 'All' else 'All Batters'}", fontsize=22, fontweight='bold')
         ax.axis('equal') 
 
         st.pyplot(fig)
