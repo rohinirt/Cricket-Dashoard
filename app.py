@@ -438,7 +438,7 @@ with col2:
             marker=dict(colors=wagon_summary["TotalRuns"]), 
             # -----------
             
-            sort=False 
+            sort=True 
         )])
         
         # This part correctly defines the color scale in the layout:
