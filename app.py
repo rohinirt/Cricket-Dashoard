@@ -430,7 +430,7 @@ with col2:
         
         cmap = cm.get_cmap('Blues')
 
-        fig_boxes, ax = plt.subplots(figsize=(7, 10)) # Adjusted size
+        fig_boxes, ax = plt.subplots(figsize=(7, 9)) # Adjusted size
 
         for zone, (x1, y1, x2, y2) in zones_layout.items():
             w, h = x2 - x1, y2 - y1
@@ -552,14 +552,14 @@ with col2:
         # 4. Customize Text Properties (Outside Labels)
         for text in texts:
             text.set_color('black')
-            text.set_fontsize(12)
+            text.set_fontsize(16)
             text.set_fontweight('bold')
 
         # --- REMOVE MANUAL TEXT PLACEMENT LOOP ---
         # The entire loop that manually calculated x,y and used ax.text() is removed.
         # -----------------------------------------
 
-        ax.set_title(f"Scoring Areas - {batsman if batsman != 'All' else 'All Batters'}", fontsize=22, fontweight='bold')
+        ax.set_title(f"Scoring Areas - {batsman if batsman != 'All' else 'All Batters'}", fontsize=24, fontweight='bold')
         ax.axis('equal') 
 
         st.pyplot(fig)
