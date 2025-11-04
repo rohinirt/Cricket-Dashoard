@@ -493,7 +493,7 @@ with col2:
         
         # Labels for outside: Area Name + Run Percentage
         labels = [
-            f"{area}\n({pct:.1f}%)" 
+            f"{area}\n({pct:.0f}%)" 
             for area, pct in zip(wagon_summary["ScoringWagon"], wagon_summary["RunPercentage"])
         ]
         
