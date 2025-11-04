@@ -653,7 +653,10 @@ with col1:
         ax_7.set_xlim(-0.2, 3.4) # X limit: 0-3.4 (Distance)
         ax_7.set_ylim(0, 1.5) # Y limit: 0-1.5 (Height)
         ax_7.set_title(f"Interception Points Side On - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
-        ax_7.legend(loc='upper right')
+        ax_7.legend(
+            loc='upper left',  # Anchor the legend's corner (e.g., upper left of the legend box)
+            bbox_to_anchor=(1.05, 1), # Place the anchor point outside the axes (1.05 = slightly right of the chart edge)
+            borderaxespad=0. # No padding between the legend and the axes
         ax_7.grid(True, linestyle=':', alpha=0.5)
-
+        ax_7.axis('off')
         st.pyplot(fig_7)
