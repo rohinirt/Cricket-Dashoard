@@ -452,7 +452,7 @@ with col2:
             width=500,
             height=500,
             margin=dict(l=20, r=20, t=60, b=20),
-            showlegend=True
+            showlegend=False
         )
 
         st.plotly_chart(fig_wagon, use_container_width=True)
