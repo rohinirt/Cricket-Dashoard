@@ -494,12 +494,6 @@ with col2:
 
         
         handedness = "Right Handed" if is_right_handed else "Left Handed"
-
-        # Colorbar
-        sm = cm.ScalarMappable(cmap=cmap, norm=norm)
-        sm.set_array([])
-        cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
-        cbar.set_label("Avg Runs/Wicket")
         
         st.pyplot(fig_boxes)
 
