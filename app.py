@@ -281,11 +281,11 @@ with col1:
             width=700, # Adjusted width for side-by-side view
             height=500,
             xaxis=dict(
-                range=[-1.6, 1.6], showgrid=True, zeroline=False, visible=True,
+                range=[-1.6, 1.6], showgrid=True, zeroline=False, visible=False,
                 scaleanchor="y", scaleratio=1
             ),
             yaxis=dict(
-                range=[0, 2], showgrid=True, zeroline=False, visible=True
+                range=[0.5, 2], showgrid=True, zeroline=False, visible=False
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
@@ -549,7 +549,7 @@ with col2:
             norm = mcolors.Normalize(vmin=0, vmax=1)
         
         # Choose the Colormap (I'll switch back to 'Reds' as 'Blues' was used in the Zonal Chart)
-        cmap = cm.get_cmap('Blues')
+        cmap = cm.get_cmap('Green')
         
         # Map the run totals to colors
         colors = cmap(norm(runs))
@@ -561,7 +561,7 @@ with col2:
                 colors[i] = (1.0, 1.0, 1.0, 1.0)
 
         # 3. Create the Matplotlib Figure
-        fig, ax = plt.subplots(figsize=(14, 14))
+        fig, ax = plt.subplots(figsize=(10, 10))
         
         # The 'angles' array controls the size of the slices, which are fixed (90 or 45)
         # Use the 'labels' argument for outside text, and 'pctdistance' to move the text
