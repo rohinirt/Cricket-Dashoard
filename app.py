@@ -559,7 +559,7 @@ with col2:
         # The entire loop that manually calculated x,y and used ax.text() is removed.
         # -----------------------------------------
 
-        ax.set_title(f"Scoring Areas - {batsman if batsman != 'All' else 'All Batters'}", fontsize=30, fontweight='bold')
+        ax.set_title(f"Scoring Areas - {batsman if batsman != 'All' else 'All Batters'}", fontsize=36, fontweight='bold')
         ax.axis('equal') 
 
         st.pyplot(fig)
