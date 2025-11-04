@@ -673,3 +673,57 @@ with col1:
         )
         ax_7.grid(True, linestyle=':', alpha=0.5)
         st.pyplot(fig_7)
+
+# ==============================================================================
+# CHART 6: INTERCEPTION POINTS Top on  - Col 2, Bottom
+# ==============================================================================
+with col2:
+    if df_interception.empty:
+        st.warning("No valid interception data matches the selected filters.")
+    else:
+        fig_8, ax_8 = plt.subplots(figsize=(7, 4))
+        
+        # 1. Define Axes: X-axis is InterceptionY (Width), Y-axis is InterceptionX + 10 (Distance)
+        
+        # 2. Plot Data (Layered for correct border visibility)
+        
+        # Plot "Other" (White with Grey Border)
+        df_other = df_interception[df_interception["ColorType"] == "Other"]
+        ax_8.scatter(
+            df_other["InterceptionY"], df_other["InterceptionX"] + 10, 
+            color='white', edgecolors='grey', linewidths=0.5, s=50, label="Other"
+        )
+        
+        # Plot "Wicket" and "Boundary" (Solid colors)
+        for ctype in ["Boundary", "Wicket"]:
+            df_slice = df_interception[df_interception["ColorType"] == ctype]
+            ax_8.scatter(
+                df_slice["InterceptionY"], df_slice["InterceptionX"] + 10, 
+                color=color_map[ctype], s=50, label=ctype
+            )
+
+        # 3. Draw Horizontal Dashed Lines with Labels (Lines are horizontal since Y-axis is Distance)
+        line_specs = {
+            0.00: "Stumps: 0",
+            1.25: "Crease: 1.250"        
+        }
+        
+        for y_val, label in line_specs.items():
+            ax_8.axhline(y=y_val, color='grey', linestyle='--', linewidth=1.5, alpha=0.7)
+            
+            # Add labels to the left edge (X limit is -1)
+            ax_8.text(-0.95, y_val, label.split(':')[-1].strip(), 
+                      ha='left', va='center', fontsize=9, color='grey',
+                      bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=2))
+
+        # 4. Set Axes Limits and Labels
+        ax_8.set_xlim(-1, 1)      # X limit: -1 - 1 (Width)
+        ax_8.set_ylim(0, 3.5)     # Y limit: 0 - 3.5 (Distance)
+        ax_8.invert_yaxis()       # REVERSE Y-AXIS as requested
+        ax_8.set_xlabel("Width (m)")
+        ax_8.set_ylabel("Distance from Stumps (m)")
+        ax_8.set_title(f"Interception Points Top On - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
+        ax_8.legend(loc='lower right')
+        ax_8.grid(True, linestyle=':', alpha=0.5)
+        
+        st.pyplot(fig_8)
