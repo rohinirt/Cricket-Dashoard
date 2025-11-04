@@ -515,7 +515,7 @@ with col2:
         wedges, texts = ax.pie(
             angles, 
             colors=colors, 
-            wedgeprops={"width": 0.1, "edgecolor": "black"}, # 'width' creates the donut hole
+            wedgeprops={"width": 0.9, "edgecolor": "black"}, # 'width' creates the donut hole
             startangle=90, # Start at the top (usually 0 is right)
             counterclock=False # Cricket wagon wheels are typically clockwise
         )
