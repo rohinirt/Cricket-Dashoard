@@ -704,8 +704,8 @@ with col2:
 
         # 3. Draw Horizontal Dashed Lines with Labels (Lines are horizontal since Y-axis is Distance)
         line_specs = {
-            0.00: "Stumps: 0",
-            1.25: "Crease: 1.250"        
+            0.00: "Stumps",
+            1.25: "Crease"        
         }
         
         for y_val, label in line_specs.items():
@@ -731,7 +731,8 @@ with col2:
         labelbottom=False, # Hide the label text
         bottom=False       # Hide the tick marks
         )
-
+        ax_8.axvline(x=-0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
+        ax_8.axvline(x= 0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
         # To hide Y-axis labels and ticks:
         ax_8.tick_params(
         axis='y',          # Apply to the Y-axis
