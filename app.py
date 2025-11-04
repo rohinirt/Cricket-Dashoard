@@ -447,6 +447,9 @@ with col2:
 # ==============================================================================
 # CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom - FINAL CORRECTED)
 # ==============================================================================
+# ------------------------------------------------------------------------------
+# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - FINAL FIX
+# ------------------------------------------------------------------------------
 with col2:
     st.header("Scoring Areas (Wagon Wheel)")
     
@@ -459,29 +462,29 @@ with col2:
         # Create the Pie Chart
         fig_wagon = go.Figure(data=[go.Pie(
             labels=wagon_summary["ScoringWagon"],
-            # Use FixedAngle for size (Required slice size)
             values=wagon_summary["FixedAngle"], 
             hole=.3, 
             name=f"Runs by Area for {batsman if batsman != 'All' else 'All Batters'}",
             
-            # --- Marker for Coloring (Heatmap Effect) ---
+            # --- Marker Definition (Only accepts colors, line, pattern) ---
             marker=dict(
-                colors=wagon_summary["TotalRuns"], # Use runs data array for color values
-                cmin=run_min, 
-                cmax=run_max,
-                showscale=True,
-                colorbar=dict(title="Total Runs", len=0.3, y=0.5)
+                # Use runs data array for the colors property
+                colors=wagon_summary["TotalRuns"], 
             ),
             
-            # Use colorscale at the trace level (Fix for ValueError: 'colorscale')
-            colorscale='Reds', 
+            # --- Color Scale Properties (Must be defined at trace level with 'marker_' prefix) ---
+            marker_colorscale='Reds', # The colorscale property (was 'colorscale')
+            marker_cmin=run_min,     # The minimum value for the color scale (was 'cmin')
+            marker_cmax=run_max,     # The maximum value for the color scale (was 'cmax')
+            marker_showscale=True,   # Show the color bar (was 'showscale')
+            marker_colorbar=dict(title="Total Runs", len=0.3, y=0.5), # The colorbar definition (was 'colorbar')
             
             # --- Label Formatting ---
             textinfo='label+percent',
             texttemplate="<b>%{label}</b><br>(%{percent})",
             customdata=wagon_summary["TotalRuns"], 
             hovertemplate="<b>%{label}</b><br>Runs: %{customdata}<br>Angle: %{value}<extra></extra>",
-            sort=False # Maintain the DataFrame's custom sort order
+            sort=False
         )])
         
         # Layout updates
