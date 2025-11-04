@@ -592,3 +592,57 @@ with col2:
         ax.axis('equal') 
 
         st.pyplot(fig)
+
+# ==============================================================================
+# CHART 5: INTERCEPTION POINTS (SIDE-ON) - Col 1, Bottom
+# ==============================================================================
+with col1:
+
+    if df_interception.empty:
+        st.warning("No valid interception data matches the selected filters.")
+    else:
+        fig_7, ax_7 = plt.subplots(figsize=(7, 4))
+        
+        # 1. Plot Data (Layered for correct border visibility)
+        
+        # Plot "Other" (White with Grey Border)
+        df_other = df_interception[df_interception["ColorType"] == "Other"]
+        ax_7.scatter(
+            df_other["InterceptionX"] + 10, df_other["InterceptionZ"], 
+            color='white', edgecolors='grey', linewidths=0.5, s=50, label="Other"
+        )
+        
+        # Plot "Wicket" and "Boundary" (Solid colors)
+        for ctype in ["Boundary", "Wicket"]:
+            df_slice = df_interception[df_interception["ColorType"] == ctype]
+            ax_7.scatter(
+                df_slice["InterceptionX"] + 10, df_slice["InterceptionZ"], 
+                color=color_map[ctype], s=50, label=ctype
+            )
+
+        # 2. Draw Vertical Dashed Lines with Labels
+        line_specs = {
+            0.0: "Stumps: 0",
+            1.250: "Crease: 1.250",
+            2.000: "2m: 2",     
+            3.000: "3m: 3"      
+        }
+        
+        for x_val, label in line_specs.items():
+            ax_7.axvline(x=x_val, color='grey', linestyle='--', linewidth=1.5, alpha=0.7)
+            
+            # Add labels just below the top axis limit (Y limit is 1.5)
+            ax_7.text(x_val, 1.45, label.split(':')[-1].strip(), # Only display the value part
+                      ha='center', va='center', fontsize=9, color='grey',
+                      bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=2))
+
+        # 3. Set Axes Limits and Labels
+        ax_7.set_xlim(0, 3.4) # X limit: 0-3.4 (Distance)
+        ax_7.set_ylim(0, 1.5) # Y limit: 0-1.5 (Height)
+        ax_7.set_xlabel("Distance from Stumps (m)")
+        ax_7.set_ylabel("Height (m)")
+        ax_7.set_title(f"Interception Points: Height vs. Distance", fontsize=12)
+        ax_7.legend(loc='upper right')
+        ax_7.grid(True, linestyle=':', alpha=0.5)
+
+        st.pyplot(fig_7)
