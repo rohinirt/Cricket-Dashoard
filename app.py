@@ -20,15 +20,11 @@ df = None
 if uploaded_file is not None:
     try:
         df = pd.read_csv(uploaded_file)
-        # Required columns check (adjusting for both charts)
-        required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ", "BattingTeam", "CreaseY", "CreaseZ", "Runs", "IsBatsmanRightHanded"]
-        if not all(col in df.columns for col in required_cols):
-            st.error(f"Missing one or more required columns. Required: {', '.join(required_cols)}")
-            df = None
-        else:
-            st.success("File uploaded and validated successfully!")
+        # --- Logic removed here ---
+        st.success("File uploaded successfully!")
     except Exception as e:
         st.error(f"Error reading file: {e}")
+        df = None # Ensure df is None if reading fails
 
 if df is None:
     st.info("👆 Please upload a CSV file with the required Hawkeye data columns to view the dashboard.")
