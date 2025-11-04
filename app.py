@@ -231,11 +231,11 @@ with col1:
         ))
 
         # --- Stump lines & Background zones ---
-        fig_cbh.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2))
-        fig_cbh.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2))
-        fig_cbh.add_vline(x=-0.92, line=dict(color="black", width=1))
-        fig_cbh.add_vline(x=0.92, line=dict(color="black", width=1))
-        fig_cbh.add_hline(y=0.78, line=dict(color="black", width=1))
+        fig_cbh.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1))
+        fig_cbh.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1))
+        fig_cbh.add_vline(x=-0.92, line=dict(color="grey", width=0.8))
+        fig_cbh.add_vline(x=0.92, line=dict(color="grey", width=0.8))
+        fig_cbh.add_hline(y=0.78, line=dict(color="grey", width=0.8))
 
         # Background zones (left/right of middle stump)
         fig_cbh.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
@@ -253,11 +253,11 @@ with col1:
             width=700, # Adjusted width for side-by-side view
             height=400,
             xaxis=dict(
-                range=[-1.2, 1.2], showgrid=True, zeroline=False, visible=True,
+                range=[-1.6, 1.6], showgrid=True, zeroline=False, visible=True,
                 scaleanchor="y", scaleratio=1
             ),
             yaxis=dict(
-                range=[0.5, 1.5], showgrid=True, zeroline=False, visible=True
+                range=[-0.2, 2.5], showgrid=True, zeroline=False, visible=True
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
