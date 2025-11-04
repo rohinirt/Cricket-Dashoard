@@ -14,7 +14,7 @@ st.set_page_config(page_title="Cricket Analysis Dashboard")
 # Use the main area for the file uploader for better visibility
 st.title("Cricket Analysis Dashboard 🏏")
 st.markdown("Upload your Hawkeye data (CSV) below to begin analysis.")
-uploaded_file = pd.read_csv(r"odi sample data.csv")
+uploaded_file =uploaded_file = st.file_uploader("Upload your data", type=["csv"])
 
 df = None
 if uploaded_file is not None:
