@@ -1,5 +1,4 @@
-import numpy as np
-import plotly.graph_objects as go
+CHART123
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -9,6 +8,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
 # --- 1. SET PAGE CONFIGURATION ---
+st.set_page_config(page_title="Cricket Analysis Dashboard")
 
 # --- 2. DATA UPLOADER AND INITIAL LOAD ---
 # Use the main area for the file uploader for better visibility
@@ -20,11 +20,15 @@ df = None
 if uploaded_file is not None:
     try:
         df = pd.read_csv(uploaded_file)
-        # --- Logic removed here ---
-        st.success("File uploaded successfully!")
+        # Required columns check (adjusting for both charts)
+        required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ", "BattingTeam", "CreaseY", "CreaseZ", "Runs", "IsBatsmanRightHanded"]
+        if not all(col in df.columns for col in required_cols):
+            st.error(f"Missing one or more required columns. Required: {', '.join(required_cols)}")
+            df = None
+        else:
+            st.success("File uploaded and validated successfully!")
     except Exception as e:
         st.error(f"Error reading file: {e}")
-        df = None # Ensure df is None if reading fails
 
 if df is None:
     st.info("👆 Please upload a CSV file with the required Hawkeye data columns to view the dashboard.")
@@ -53,105 +57,289 @@ delivery_options = ["All"] + sorted(df_batsman["DeliveryType"].dropna().unique()
 delivery = st.sidebar.selectbox("Select Delivery Type", delivery_options)
 filtered_df = df_batsman if delivery == "All" else df_batsman[df_batsman["DeliveryType"] == delivery]
 
+# --- 4. LAYOUT: CHARTS SIDE BY SIDE ---
+col1, col2 = st.columns(2)
 
-# --- Check for required columns ---
-required_cols = ["LandingX", "LandingY", "IsBatsmanRightHanded", "Runs"]
-if not all(col in df.columns for col in required_cols):
-    st.warning(f"Missing columns for wagon wheel. Required: {required_cols}")
-else:
-    # --- Apply Tableau logic ---
-    def scoring_wagon(row):
-        x, y = row["LandingX"], row["LandingY"]
-        right = row["IsBatsmanRightHanded"]
-        angle = np.arctan2(y, x)
+# ==============================================================================
+# CHART 1: CREASE BEEHIVE (In Column 1)
+# ==============================================================================
+with col1:
+    
+    if filtered_df.empty:
+        st.warning("No data matches the selected filters for CBH.")
+    else:
+        # --- Separate by wicket ---
+        wickets = filtered_df[filtered_df["Wicket"] == True]
+        non_wickets = filtered_df[filtered_df["Wicket"] == False]
 
-        if right:
-            if x <= 0 and y > 0:
-                return "FINE LEG"
-            elif x <= 0 and y <= 0:
-                return "THIRD MAN"
-            elif x > 0 and y < 0 and angle < np.pi / -4:
-                return "COVER"
-            elif x > 0 and y < 0 and np.arctan(x / y) <= np.pi / -4:
-                return "LONG OFF"
-            elif x > 0 and y >= 0 and angle >= np.pi / 4:
-                return "SQUARE LEG"
-            elif x > 0 and y >= 0 and angle <= np.pi / 4:
-                return "LONG ON"
-        else:
-            if x <= 0 and y > 0:
-                return "THIRD MAN"
-            elif x <= 0 and y <= 0:
-                return "FINE LEG"
-            elif x > 0 and y < 0 and angle < np.pi / -4:
-                return "SQUARE LEG"
-            elif x > 0 and y < 0 and np.arctan(x / y) <= np.pi / -4:
-                return "LONG ON"
-            elif x > 0 and y >= 0 and angle >= np.pi / 4:
-                return "COVER"
-            elif x > 0 and y >= 0 and angle <= np.pi / 4:
-                return "LONG OFF"
-        return None
+        # --- Create Plotly figure ---
+        fig_cbh = go.Figure()
 
-    df["ScoringWagon"] = df.apply(scoring_wagon, axis=1)
-
-    # --- Compute total runs and % ---
-    agg_df = df.groupby("ScoringWagon", dropna=True)["Runs"].sum().reset_index()
-    agg_df["Percentage"] = (agg_df["Runs"] / agg_df["Runs"].sum()) * 100
-
-    # --- Assign fixed angles to zones ---
-    angle_map = {
-        "FINE LEG": 135,
-        "THIRD MAN": -135,
-        "COVER": -45,
-        "SQUARE LEG": 45,
-        "LONG OFF": -15,
-        "LONG ON": 15
-    }
-    agg_df["Angle"] = agg_df["ScoringWagon"].map(angle_map)
-
-    # --- Wagon Wheel Plot ---
-    wagon = go.Figure()
-    colors = ['#e63946', '#f3722c', '#f9c74f', '#90be6d', '#43aa8b', '#577590']
-
-    for i, r in agg_df.iterrows():
-        wagon.add_trace(go.Scatterpolar(
-            r=[0, r["Runs"]],
-            theta=[0, r["Angle"]],
-            mode="lines+markers+text",
-            line=dict(width=4, color=colors[i % len(colors)]),
-            text=[None, f"{r['ScoringWagon']}<br>{r['Percentage']:.1f}%"],
-            textposition="top center",
-            marker=dict(size=8, color=colors[i % len(colors)], line=dict(color="white", width=1.5))
+        # Non-wickets (grey with no border)
+        fig_cbh.add_trace(go.Scatter(
+            x=non_wickets["StumpsY"],
+            y=non_wickets["StumpsZ"],
+            mode='markers',
+            marker=dict(
+                color='lightgrey',
+                size=8,
+                line=dict(width=0),
+                opacity=0.95
+            ),
+            name="No Wicket"
         ))
 
-    wagon.update_layout(
-        polar=dict(
-            radialaxis=dict(visible=False, range=[0, agg_df["Runs"].max() * 1.2]),
-            angularaxis=dict(direction="clockwise", rotation=90)
-        ),
-        showlegend=False,
-        height=500,
-        width=500
-    )
+        # Wickets (red with no border)
+        fig_cbh.add_trace(go.Scatter(
+            x=wickets["StumpsY"],
+            y=wickets["StumpsZ"],
+            mode='markers',
+            marker=dict(
+                color='red',
+                size=12,
+                line=dict(width=0),
+                opacity=0.95
+            ),
+            name="Wicket"
+        ))
 
-    # --- Pie Chart ---
-    pie = go.Figure(data=[
-        go.Pie(
-            labels=agg_df["ScoringWagon"],
-            values=agg_df["Runs"],
-            hole=0.3,
-            textinfo="label+percent",
-            marker=dict(colors=colors, line=dict(color="white", width=1))
+        # --- Stump lines & Background zones ---
+        fig_cbh.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1.2))
+        fig_cbh.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1.2))
+        fig_cbh.add_vline(x=-0.92, line=dict(color="black", width=1))
+        fig_cbh.add_vline(x=0.92, line=dict(color="black", width=1))
+
+        # Background zones (left/right of middle stump)
+        fig_cbh.add_shape(type="rect", x0=-2.5, x1=-0.18, y0=0, y1=2.5,
+                          fillcolor="rgba(0,255,0,0.05)", line_width=0)
+        fig_cbh.add_shape(type="rect", x0=0.18, x1=2.5, y0=0, y1=2.5,
+                          fillcolor="rgba(255,0,0,0.05)", line_width=0)
+
+        # --- Chart Layout ---
+        batsman_name = batsman if batsman != "All" else "All Batsmen"
+        fig_cbh.update_layout(
+            title=dict(
+                text=f"<b>CBH - {batsman_name}</b>",
+                x=0, y=0.95, font=dict(size=20)
+            ),
+            width=700, # Adjusted width for side-by-side view
+            height=400,
+            xaxis=dict(
+                range=[-1.2, 1.2], showgrid=False, zeroline=False, visible=False,
+                scaleanchor="y", scaleratio=1
+            ),
+            yaxis=dict(
+                range=[0.5, 2], showgrid=False, zeroline=False, visible=False
+            ),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            margin=dict(l=0, r=20, t=60, b=20),
+            showlegend=False
         )
-    ])
-    pie.update_layout(title="Scoring Areas Distribution", height=500, width=500)
 
-    # --- Display Both ---
-    col1, col2 = st.columns(2)
-    with col1:
-        st.plotly_chart(wagon, use_container_width=True)
-    with col2:
-        st.plotly_chart(pie, use_container_width=True)
+        st.plotly_chart(fig_cbh, use_container_width=True)
+# ==============================================================================
+# CHART 3: PITCH MAP (In Column 1, Bottom - NEW CHART)
+# ==============================================================================
+# Define Length Bins and Colors
+PITCH_BINS = {
+    "Short": {"y0": 8.60, "y1": 16.0, "color": "#5d3bb3"},
+    "Length": {"y0": 5.0, "y1": 8.60, "color": "#ae4fa1"},
+    "Slot": {"y0": 2.8, "y1": 5.0, "color": "#cc5d54"},
+    "Yorker": {"y0": 0.9, "y1": 2.8, "color": "#c7b365"}, # Changed Full Toss and Yorker order/colors slightly to match image better
+    "Full Toss": {"y0": -4.0, "y1": 0.9, "color": "#6e9d4f"},
+}
+
+with col1:
+    if filtered_df.empty:
+        st.warning("No data matches the selected filters for Pitch Map.")
+    else:
+        fig_pitch = go.Figure()
+        # 1. Add Background Zones (Reversed Y-axis for standard pitch view)
+        for length, params in PITCH_BINS.items():
+            fig_pitch.add_shape(
+                type="rect",
+                x0=-1.5, x1=1.5,
+                y0=params["y0"], y1=params["y1"],
+                fillcolor=params["color"],
+                opacity=0.4,
+                layer="below",
+                line_width=0,
+            )
+            # Add length labels (Approximate position)
+            mid_y = (params["y0"] + params["y1"]/2)
+            if length in ["Short", "Length", "Slot", "Yorker", "Full Toss"]:
+                fig_pitch.add_annotation(
+                    x=-1.45, y=mid_y,
+                    text=length.upper(),
+                    showarrow=False,
+                    font=dict(size=14, color="white",weight='bold'),
+                    yref="y",
+                    xref="x",
+                    xanchor='left'
+                )
 
 
+        # 2. Separate Data by Wicket Status and Plot
+        # --- ADDED: Stump lines for Pitch Map ---
+        fig_pitch.add_vline(x=-0.18, line=dict(color="#777777", dash="dot", width=1.2))
+        fig_pitch.add_vline(x=0.18, line=dict(color="#777777", dash="dot", width=1.2))
+        pitch_wickets = filtered_df[filtered_df["Wicket"] == True]
+        pitch_non_wickets = filtered_df[filtered_df["Wicket"] == False]
+
+        # Non-wickets (smaller size, white)
+        fig_pitch.add_trace(go.Scatter(
+            x=pitch_non_wickets["BounceY"], y=pitch_non_wickets["BounceX"],
+            mode='markers', name="No Wicket",
+            marker=dict(color='white', size=10, line=dict(width=1, color="grey"), opacity=0.9)
+        ))
+
+        # Wickets (larger size, color)
+        fig_pitch.add_trace(go.Scatter(
+            x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"],
+            mode='markers', name="Wicket",
+            marker=dict(color='red', size=14, line=dict(width=0), opacity=0.95)
+        ))
+
+        # 3. Layout Configuration
+        fig_pitch.update_layout(
+            title=dict(
+                text=f"<b>Pitch Map - {batsman_name}</b>", 
+                x=0, y=0.95, font=dict(size=20)
+            ),
+            width=40, 
+            height=550, # Increased height for better visualization of lengths
+            xaxis=dict(
+                range=[-1.5, 1.5],
+                showgrid=False, zeroline=False,visible = False
+            ),
+            yaxis=dict(
+                range=[16.0, -4.0], # **Reversed Y-axis**,
+                showgrid=False, zeroline=False,visible = False
+            ),
+            plot_bgcolor="#f6d992", # Setting a default background color for the pitch area
+            paper_bgcolor="white",
+            margin=dict(l=10, r=20, t=60, b=40),
+            showlegend=True
+        )
+
+        st.plotly_chart(fig_pitch, use_container_width=True)
+
+# ==============================================================================
+# CHART 2: ZONAL BOXES (In Column 2)
+# ==============================================================================
+with col2:
+    if filtered_df.empty:
+        st.warning("No data matches the selected filters for Zonal Analysis.")
+    else:
+        # --- Define Zones based on Batting Hand ---
+        right_hand_zones = {
+            "Zone 1": (-0.72, 0, -0.45, 1.91),
+            "Zone 2": (-0.45, 0, -0.18, 0.71),
+            "Zone 3": (-0.18, 0, 0.18, 0.71),
+            "Zone 4": (-0.45, 0.71, -0.18, 1.31),
+            "Zone 5": (-0.18, 0.71, 0.18, 1.31),
+             "Zone 6": (-0.45, 1.31, 0.18, 1.91),
+        }
+        left_hand_zones = {
+            "Zone 1": (0.45, 0, 0.72, 1.91),
+            "Zone 2": (0.18, 0, 0.45, 0.71),
+            "Zone 3": (-0.18, 0, 0.18, 0.71),
+            "Zone 4": (0.18, 0.71, 0.45, 1.31),
+            "Zone 5": (-0.18, 0.71, 0.18, 1.31),
+            "Zone 6": (-0.18, 1.31, 0.45, 1.91), # Note: Zone 6 seems defined differently in original
+        }
+
+        # Detect handedness (Default to Right Hand if data is ambiguous/missing)
+        is_right_handed = True
+        handed_data = filtered_df["IsBatsmanRightHanded"].dropna().unique()
+        if len(handed_data) > 0 and batsman != "All":
+            is_right_handed = handed_data[0]
+        
+        zones_layout = right_hand_zones if is_right_handed else left_hand_zones
+        
+        # --- Assign Zone Function ---
+        def assign_zone(row):
+            x, y = row["CreaseY"], row["CreaseZ"]
+            for zone, (x1, y1, x2, y2) in zones_layout.items():
+                if x1 <= x <= x2 and y1 <= y <= y2:
+                    return zone
+            return "Other"
+
+        # Apply assignment to a copy to avoid SettingWithCopyWarning
+        df_chart2 = filtered_df.copy()
+        df_chart2["Zone"] = df_chart2.apply(assign_zone, axis=1)
+        df_chart2 = df_chart2[df_chart2["Zone"] != "Other"]
+       
+        # --- Calculate Summary ---
+        summary = (
+            df_chart2.groupby("Zone")
+            .agg(
+                Runs=("Runs", "sum"),
+                Wickets=("Wicket", lambda x: (x == True).sum()),
+                Balls=("Wicket", "count")
+            )
+            .reindex(["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6"])
+            .fillna(0)
+        )
+
+        # Avoid division by zero/inf
+        summary["Avg Runs/Wicket"] = summary.apply(
+            lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0,
+            axis=1
+        )
+        summary["StrikeRate"] = summary.apply(
+            lambda row: (row["Runs"] / row["Balls"]) * 100 if row["Balls"] > 0 else 0,
+            axis=1
+        )
+
+        # --- Heatmap Plotting (Matplotlib) ---
+        avg_values = summary["Avg Runs/Wicket"]
+        if avg_values.empty or avg_values.max() == 0:
+             # Handle case where all avg runs are zero or no data
+             norm = mcolors.Normalize(vmin=0, vmax=1)
+        else:
+            norm = mcolors.Normalize(vmin=avg_values[avg_values > 0].min(), vmax=avg_values.max())
+        
+        cmap = cm.get_cmap('Blues')
+
+        fig_boxes, ax = plt.subplots(figsize=(5, 5)) # Adjusted size
+
+        for zone, (x1, y1, x2, y2) in zones_layout.items():
+            w, h = x2 - x1, y2 - y1
+            
+            if zone not in summary.index:
+                runs, wkts, avg, sr = 0, 0, 0, 0
+                color = 'white' # No data color
+            else:
+                runs = int(summary.loc[zone, "Runs"])
+                wkts = int(summary.loc[zone, "Wickets"])
+                avg = summary.loc[zone, "Avg Runs/Wicket"]
+                sr = summary.loc[zone, "StrikeRate"]
+                color = cmap(norm(avg))
+
+            ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=2))
+
+            ax.text(
+                x1 + w / 2, y1 + h / 2,
+                f"{zone}\nRuns: {runs}\nWkts: {wkts}\nAvg: {avg:.1f}\nSR: {sr:.1f}",
+                ha="center", va="center", weight="bold", fontsize=9,
+                color="black" if norm(avg) < 0.6 else "white"
+            )
+
+        ax.set_xlim(-0.75, 0.75)
+        ax.set_ylim(0, 2)
+        ax.set_xlabel("")  # Hide x-axis label
+        ax.set_ylabel("")
+
+        
+        handedness = "Right Handed" if is_right_handed else "Left Handed"
+        ax.set_title(f"{batsman if batsman != 'All' else 'All Batters'} ({handedness})", fontsize=20)
+
+        # Colorbar
+        sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
+        cbar.set_label("Avg Runs/Wicket")
+        
+        st.pyplot(fig_boxes)
