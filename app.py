@@ -636,15 +636,14 @@ with col1:
 
         # 2. Draw Vertical Dashed Lines with Labels
         line_specs = {
-            0.0: "Stumps: 0",
-            1.250: "Crease: 1.250",
-            2.000: "2m: 2",     
-            3.000: "3m: 3"      
+            0.0: "Stumps",
+            1.250: "Crease",
+            2.000: "2m",     
+            3.000: "3m"      
         }
         
         for x_val, label in line_specs.items():
-            ax_7.axvline(x=x_val, color='grey', linestyle='--', linewidth=1.5, alpha=0.7)
-            
+            ax_7.axvline(x=x_val, color='grey', linestyle='--', linewidth=1.5, alpha=0.7)   
             # Add labels just below the top axis limit (Y limit is 1.5)
             ax_7.text(x_val, 1.45, label.split(':')[-1].strip(), # Only display the value part
                       ha='center', va='center', fontsize=9, color='grey',
@@ -652,10 +651,8 @@ with col1:
 
         # 3. Set Axes Limits and Labels
         ax_7.set_xlim(0, 3.4) # X limit: 0-3.4 (Distance)
-        ax_7.set_ylim(0, 1.5) # Y limit: 0-1.5 (Height)
-        ax_7.set_xlabel("Distance from Stumps (m)")
-        ax_7.set_ylabel("Height (m)")
-        ax_7.set_title(f"Interception Points: Height vs. Distance", fontsize=12)
+        ax_7.set_ylim(-0.2, 1.5) # Y limit: 0-1.5 (Height)
+        ax_7.set_title(f"Interception Points: Height vs. Distance", fontsize=20,fontweight='bold')
         ax_7.legend(loc='upper right')
         ax_7.grid(True, linestyle=':', alpha=0.5)
 
