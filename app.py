@@ -552,7 +552,7 @@ with col2:
         # 4. Customize Text Properties (Outside Labels)
         for text in texts:
             text.set_color('black')
-            text.set_fontsize(16)
+            text.set_fontsize(22)
             text.set_fontweight('bold')
 
         # --- REMOVE MANUAL TEXT PLACEMENT LOOP ---
