@@ -1,8 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
 
-st.subheader("🏏 Wagon Wheel and Scoring Areas")
-
 # --- 1. SET PAGE CONFIGURATION ---
 st.set_page_config(page_title="Cricket Analysis Dashboard")
 
