@@ -339,86 +339,60 @@ with col2:
         cbar.set_label("Avg Runs/Wicket")
         
         st.pyplot(fig_boxes)
+
 # ==============================================================================
-# CHART 4: WAGON WHEEL (Circular Scoring Areas)
+# CHART 4: WAGON WHEEL (In Column 2, Bottom)
 # ==============================================================================
-
-if not filtered_df.empty:
-    # Determine batting hand
-    is_right_handed = True
-    handed_data = filtered_df["IsBatsmanRightHanded"].dropna().unique()
-    if len(handed_data) > 0 and batsman != "All":
-        is_right_handed = handed_data[0]
-
-    # Function to classify shots by area based on Landing X/Y and batting hand
-    def scoring_area(row):
-        x = row["LandingX"]
-        y = row["LandingY"]
-        angle = np.degrees(np.arctan2(y, x))
-
-        if is_right_handed:
-            if -180 <= angle < -120: return "Third Man"
-            elif -120 <= angle < -60: return "Cover"
-            elif -60 <= angle < 0: return "Long Off"
-            elif 0 <= angle < 60: return "Long On"
-            elif 60 <= angle < 120: return "Square Leg"
-            else: return "Fine Leg"
-        else:
-            # Mirrored areas for left-handers
-            if -180 <= angle < -120: return "Fine Leg"
-            elif -120 <= angle < -60: return "Square Leg"
-            elif -60 <= angle < 0: return "Long On"
-            elif 0 <= angle < 60: return "Long Off"
-            elif 60 <= angle < 120: return "Cover"
-            else: return "Third Man"
-
-    # Apply scoring logic
-    df_wheel = filtered_df.copy()
-    df_wheel["ScoringArea"] = df_wheel.apply(scoring_area, axis=1)
-
-    # Aggregate runs
-    area_summary = df_wheel.groupby("ScoringArea")["Runs"].sum().reset_index()
-    area_summary["Percentage"] = 100 * area_summary["Runs"] / area_summary["Runs"].sum()
-
-    # Order for right vs left hand
-    if is_right_handed:
-        order = ["Third Man", "Cover", "Long Off", "Long On", "Square Leg", "Fine Leg"]
+with col2:
+    if filtered_df.empty:
+        st.warning("No data matches the selected filters for Wagon Wheel.")
     else:
-        order = ["Fine Leg", "Square Leg", "Long On", "Long Off", "Cover", "Third Man"]
+        st.subheader(f"Wagon Wheel - {batsman_name}")
 
-    area_summary["ScoringArea"] = pd.Categorical(area_summary["ScoringArea"], categories=order, ordered=True)
-    area_summary = area_summary.sort_values("ScoringArea")
+        fig, ax = plt.subplots(figsize=(6, 6))
 
-    # Color map by runs
-    norm = mcolors.Normalize(vmin=area_summary["Runs"].min(), vmax=area_summary["Runs"].max())
-    cmap = cm.get_cmap("YlOrRd")
-    colors = [cmap(norm(v)) for v in area_summary["Runs"]]
+        # Draw the circular boundary (field)
+        field = plt.Circle((0, 0), 75, color='lightgreen', ec='white', lw=2)
+        ax.add_patch(field)
 
-    # --- Create Wagon Wheel as Pie Chart ---
-    fig, ax = plt.subplots(figsize=(5, 5), subplot_kw=dict(aspect="equal"))
-    wedges, texts, autotexts = ax.pie(
-        area_summary["Runs"],
-        labels=None,
-        colors=colors,
-        startangle=90,
-        counterclock=False,
-        wedgeprops=dict(width=0.4, edgecolor="white", linewidth=2),
-        autopct=None
-    )
+        # Draw inner circle (pitch area)
+        pitch = plt.Circle((0, 0), 10, color='brown', ec='white', lw=1.5)
+        ax.add_patch(pitch)
 
-    # Add area labels and % manually outside
-    for i, p in enumerate(wedges):
-        ang = (p.theta2 - p.theta1)/2. + p.theta1
-        y = np.sin(np.deg2rad(ang))
-        x = np.cos(np.deg2rad(ang))
-        ax.text(x*1.2, y*1.2,
-                f"{area_summary['ScoringArea'].iloc[i]}\n{area_summary['Percentage'].iloc[i]:.1f}%",
-                ha='center', va='center', fontsize=10, weight="bold")
+        # Compute shot angles (assuming CreaseY, CreaseZ as shot directions)
+        # Normalize coordinates to get shot direction angles
+        x = filtered_df["CreaseY"]
+        y = filtered_df["CreaseZ"]
 
-    # Remove spines and add circle boundary
-    circle = plt.Circle((0, 0), 0.2, color='white', ec='grey', lw=1.5)
-    ax.add_artist(circle)
-    ax.set_title(f"Wagon Wheel - {batsman_name}", fontsize=16, pad=20)
-    ax.set_axis_off()
+        # Convert to angles for polar plotting
+        angles = np.degrees(np.arctan2(y, x))
+        lengths = np.sqrt(x**2 + y**2) * 30  # scaled for visualization
 
-    st.pyplot(fig)
+        # Scatter points for each shot
+        ax.scatter(
+            lengths * np.cos(np.radians(angles)),
+            lengths * np.sin(np.radians(angles)),
+            c='red',
+            s=40,
+            edgecolors='white',  # white border around dots
+            linewidth=1.2,
+            alpha=0.9
+        )
+
+        # Draw angle lines for better visual segmentation
+        for theta in np.arange(0, 360, 30):
+            ax.plot(
+                [0, 75 * np.cos(np.radians(theta))],
+                [0, 75 * np.sin(np.radians(theta))],
+                color='white', lw=0.8, alpha=0.6
+            )
+
+        # Formatting
+        ax.set_xlim(-80, 80)
+        ax.set_ylim(-80, 80)
+        ax.set_aspect('equal')
+        ax.axis('off')
+        ax.set_title(f"{batsman_name} Wagon Wheel", fontsize=18, pad=10)
+
+        st.pyplot(fig)
+
