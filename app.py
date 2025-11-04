@@ -532,12 +532,11 @@ with col2:
         # Map the run totals to colors
         colors = cmap(norm(runs))
         
-        # --- FIX FOR WHITE 0% SLICES ---
+        # --- FIX FOR WHITE 0% SLICES (Confirms the logic) ---
         # Set slices with 0 runs to white
         for i, run_count in enumerate(runs):
             if run_count == 0:
                 colors[i] = 'white'
-        # -----------------------------
 
         # 3. Create the Matplotlib Figure
         fig, ax = plt.subplots(figsize=(7, 7))
