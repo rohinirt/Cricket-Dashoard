@@ -430,7 +430,7 @@ with col2:
         
         cmap = cm.get_cmap('Blues')
 
-        fig_boxes, ax = plt.subplots(figsize=(5, 5)) # Adjusted size
+        fig_boxes, ax = plt.subplots(figsize=(7, 7)) # Adjusted size
 
         for zone, (x1, y1, x2, y2) in zones_layout.items():
             w, h = x2 - x1, y2 - y1
