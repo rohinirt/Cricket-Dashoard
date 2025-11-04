@@ -447,58 +447,113 @@ with col2:
 # ------------------------------------------------------------------------------
 # CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - FINAL CORRECTED VERSION
 # ------------------------------------------------------------------------------
+# --- Matplotlib Imports (Ensure these are at the top of your script) ---
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
+# ----------------------------------------------------------------------
+
+# ... (Previous code remains, including data processing for wagon_summary) ...
+
+# ------------------------------------------------------------------------------
+# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - MATPLOTLIB
+# ------------------------------------------------------------------------------
 with col2:
-    st.header("Scoring Areas (Wagon Wheel)")
+    st.header("Scoring Areas (Wagon Wheel) - Matplotlib")
     
     if wagon_summary.empty:
-        st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated. Please check the data processing section.")
+        st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated.")
     else:
-        run_min = wagon_summary["TotalRuns"].min()
-        run_max = wagon_summary["TotalRuns"].max()
+        # 1. Prepare Data for Matplotlib
+        # Matplotlib uses a list of values for slice sizes
+        angles = wagon_summary["FixedAngle"].tolist()
+        runs = wagon_summary["TotalRuns"].tolist()
+        labels = wagon_summary["ScoringWagon"].tolist()
         
-        # Create the Pie Chart
-        fig_wagon = go.Figure(data=[go.Pie(
-            labels=wagon_summary["ScoringWagon"],
-            values=wagon_summary["FixedAngle"], 
-            hole=.3, 
-            name=f"Runs by Area for {batsman if batsman != 'All' else 'All Batters'}",
+        # Calculate run percentages for labels
+        total_runs = sum(runs)
+        percentages = [(r / total_runs) * 100 if total_runs > 0 else 0 for r in runs]
+        
+        # Custom auto-label function to show Area and Run Percentage
+        def autopct_format(pct):
+            # pct here refers to the percentage of the *angle* (which is fixed), 
+            # so we must look up the run percentage from our pre-calculated list
+            # We use an index based approach since the angles list directly maps to the percentages list
+            i = autopct_format.counter
+            current_pct = percentages[i]
             
-            # Marker only contains the 'colors' data array
-            marker=dict(
-                colors=wagon_summary["TotalRuns"], 
-            ),
+            # Format the label to show the Area Name and the calculated Run Percentage
+            label = labels[i]
+            formatted_label = f"{label}\n({current_pct:.1f}%)"
             
-            # Label Formatting
-            textinfo='label+percent',
-            texttemplate="<b>%{label}</b><br>(%{percent})",
-            customdata=wagon_summary["TotalRuns"], 
-            hovertemplate="<b>%{label}</b><br>Runs: %{customdata}<br>Angle: %{value}<extra></extra>",
-            sort=False
-        )])
+            autopct_format.counter += 1
+            return formatted_label
         
-        # --- FIX: Apply color scale properties using update_traces ---
-        fig_wagon.update_traces(
-            marker=dict(
-                colorscale='Reds',
-                cmin=run_min,
-                cmax=run_max
-            ),
-            showscale=True,
-            colorbar=dict(title="Total Runs", len=0.3, y=0.5),
-            selector=dict(type='pie') # Ensure we only target the pie trace
-        )
-        # --- END FIX ---
-        
-        # Layout updates
-        fig_wagon.update_layout(
-            title=dict(
-                text=f"<b>Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}</b>",
-                x=0.5, y=0.95, font=dict(size=18)
-            ),
-            width=500,
-            height=500,
-            margin=dict(l=20, r=20, t=60, b=20),
-            showlegend=True
-        )
+        # Initialize the counter for the custom formatter
+        autopct_format.counter = 0
 
-        st.plotly_chart(fig_wagon, use_container_width=True)
+        # 2. Setup Coloring (Heatmap Effect)
+        run_min = min(runs)
+        run_max = max(runs)
+        
+        # Create a Normalization object based on runs
+        if run_max > run_min:
+            norm = mcolors.Normalize(vmin=run_min, vmax=run_max)
+        else:
+            # Handle case where all runs are the same (or zero)
+            norm = mcolors.Normalize(vmin=0, vmax=1)
+        
+        # Choose the Colormap (corresponding to 'Reds' in Plotly)
+        cmap = cm.get_cmap('Reds')
+        
+        # Map the run totals to colors
+        colors = cmap(norm(runs))
+
+        # 3. Create the Matplotlib Figure
+        fig, ax = plt.subplots(figsize=(7, 7))
+        
+        # The 'angles' array controls the size of the slices, which are fixed (90 or 45)
+        wedges, texts = ax.pie(
+            angles, 
+            colors=colors, 
+            wedgeprops={"width": 0.4, "edgecolor": "black"}, # 'width' creates the donut hole
+            startangle=90, # Start at the top (usually 0 is right)
+            counterclock=False # Cricket wagon wheels are typically clockwise
+        )
+        
+        # 4. Add Labels and Customize Text
+        # We need to manually place the custom labels using the counter function
+        autopct_format.counter = 0 # Reset counter for actual application
+        for i, wedge in enumerate(wedges):
+            # Calculate the text position inside the wedge
+            ang = (wedge.theta2 - wedge.theta1) / 2. + wedge.theta1
+            y = np.sin(np.deg2rad(ang))
+            x = np.cos(np.deg2rad(ang))
+            
+            # Get the custom formatted label
+            label_text = autopct_format(None) 
+
+            # Choose text color based on slice darkness (optional)
+            color_intensity = norm(runs[i])
+            text_color = 'white' if color_intensity > 0.5 else 'black'
+            
+            # Place the text
+            ax.text(
+                x * 0.7, y * 0.7, # 0.7 radius for inner placement
+                label_text, 
+                ha='center', va='center', 
+                color=text_color,
+                fontsize=9,
+                fontweight='bold'
+            )
+
+        ax.set_title(f"Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}", fontsize=16)
+        ax.axis('equal') # Ensures the pie chart is a circle
+
+        # 5. Add Colorbar (Legend for Total Runs)
+        sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([]) # Required for Matplotlib colorbars
+        cbar = fig.colorbar(sm, ax=ax, fraction=0.046, pad=0.04)
+        cbar.set_label("Total Runs")
+
+        st.pyplot(fig)
