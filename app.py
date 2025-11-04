@@ -8,8 +8,6 @@ import matplotlib.colors as mcolors
 import numpy as np
 
 # --- 1. SET PAGE CONFIGURATION ---
-st.set_page_config(page_title="Cricket Analysis Dashboard", layout="wide")
-
 # --- 2. INJECT CUSTOM CSS TO REMOVE PADDING (The Fix) ---
 st.markdown("""
 <style>
@@ -241,7 +239,6 @@ with col1:
         # --- Separate by wicket ---
         wickets = filtered_df[filtered_df["Wicket"] == True]
         non_wickets = filtered_df[filtered_df["Wicket"] == False]
-
         # --- Create Plotly figure ---
         fig_cbh = go.Figure()
 
@@ -289,10 +286,6 @@ with col1:
         # --- Chart Layout ---
         batsman_name = batsman if batsman != "All" else "All Batsmen"
         fig_cbh.update_layout(
-            title=dict(
-                text=f"<b>CBH - {batsman_name}</b>",
-                x=0, y=0.95, font=dict(size=20)
-            ),
             width=700, # Adjusted width for side-by-side view
             height=500,
             xaxis=dict(
@@ -374,10 +367,6 @@ with col1:
 
         # 3. Layout Configuration
         fig_pitch.update_layout(
-            title=dict(
-                text=f"<b>Pitch Map - {batsman_name}</b>", 
-                x=0, y=0.95, font=dict(size=20)
-            ),
             width=40, 
             height=550, # Increased height for better visualization of lengths
             xaxis=dict(
@@ -505,7 +494,6 @@ with col2:
 
         
         handedness = "Right Handed" if is_right_handed else "Left Handed"
-        ax.set_title(f"{batsman if batsman != 'All' else 'All Batters'} ({handedness})", fontsize=20)
 
         # Colorbar
         sm = cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -602,8 +590,6 @@ with col2:
         # --- REMOVE MANUAL TEXT PLACEMENT LOOP ---
         # The entire loop that manually calculated x,y and used ax.text() is removed.
         # -----------------------------------------
-
-        ax.set_title(f"Scoring Areas - {batsman if batsman != 'All' else 'All Batters'}", fontsize=50, fontweight='bold')
         ax.axis('equal') 
 
         st.pyplot(fig)
@@ -652,18 +638,6 @@ with col1:
         # 3. Set Axes Limits and Labels
         ax_7.set_xlim(-0.2, 3.4) # X limit: 0-3.4 (Distance)
         ax_7.set_ylim(0, 1.5) # Y limit: 0-1.5 (Height)
-        ax_7.set_title(f"Interception Points Side On - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
-        ax_7.legend(
-            loc='upper left',  # Anchor the legend's corner (e.g., upper left of the legend box)
-            bbox_to_anchor=(1.05, 1), # Place the anchor point outside the axes (1.05 = slightly right of the chart edge)
-            borderaxespad=0) # No padding between the legend and the axes
-        ax_7.tick_params(
-        axis='x',          # Apply to the X-axis
-        which='both',      # Apply to both major and minor ticks
-        labelbottom=False, # Hide the label text
-        bottom=False       # Hide the tick marks
-        )
-
         # To hide Y-axis labels and ticks:
         ax_7.tick_params(
         axis='y',          # Apply to the Y-axis
@@ -720,17 +694,7 @@ with col2:
         ax_8.set_xlim(-1, 1)      # X limit: -1 - 1 (Width)
         ax_8.set_ylim(-0.2, 3.5)     # Y limit: 0 - 3.5 (Distance)
         ax_8.invert_yaxis()       # REVERSE Y-AXIS as requested
-        ax_8.set_title(f"Interception Points Top On - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
-        ax_8.legend(
-            loc='upper left',  # Anchor the legend's corner (e.g., upper left of the legend box)
-            bbox_to_anchor=(1.05, 1), # Place the anchor point outside the axes (1.05 = slightly right of the chart edge)
-            borderaxespad=0) # No padding between the legend and the axes
-        ax_8.tick_params(
-        axis='x',          # Apply to the X-axis
-        which='both',      # Apply to both major and minor ticks
-        labelbottom=False, # Hide the label text
-        bottom=False       # Hide the tick marks
-        )
+    
         ax_8.axvline(x=-0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
         ax_8.axvline(x= 0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
         # To hide Y-axis labels and ticks:
