@@ -317,7 +317,7 @@ PITCH_BINS = {
     "Short": {"y0": 8.60, "y1": 16.0, "color": "#5d3bb3"},
     "Length": {"y0": 5.0, "y1": 8.60, "color": "#ae4fa1"},
     "Slot": {"y0": 2.8, "y1": 5.0, "color": "#cc5d54"},
-    "Yorker": {"y0": 0.9, "y1": 2.8, "color": "#c7b365"}, # Changed Full Toss and Yorker order/colors slightly to match image better
+    "Yorker": {"y0": 0.9, "y1": 2.8, "color": "#c7b365"},
     "Full Toss": {"y0": -4.0, "y1": 0.9, "color": "#6e9d4f"},
 }
 
@@ -338,7 +338,7 @@ with col1:
                 line_width=0,
             )
             # Add length labels (Approximate position)
-            mid_y = (params["y0"] + params["y1"]/2)
+            mid_y = (params["y0"] + params["y1"])
             if length in ["Short", "Length", "Slot", "Yorker", "Full Toss"]:
                 fig_pitch.add_annotation(
                     x=-1.45, y=mid_y,
