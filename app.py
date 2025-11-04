@@ -652,7 +652,7 @@ with col1:
         # 3. Set Axes Limits and Labels
         ax_7.set_xlim(-0.2, 3.4) # X limit: 0-3.4 (Distance)
         ax_7.set_ylim(0, 1.5) # Y limit: 0-1.5 (Height)
-        ax_7.set_title(f"Interception Points Side On - {batsman if batsman != 'All' else 'All Batters'}", fontsize=30, fontweight='bold')
+        ax_7.set_title(f"Interception Points Side On - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
         ax_7.legend(loc='upper right')
         ax_7.grid(True, linestyle=':', alpha=0.5)
 
