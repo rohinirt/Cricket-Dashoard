@@ -364,7 +364,7 @@ with col1:
                 x=0, y=0.95, font=dict(size=20)
             ),
             width=40, 
-            height=400, # Increased height for better visualization of lengths
+            height=550, # Increased height for better visualization of lengths
             xaxis=dict(
                 range=[-1.5, 1.5],
                 showgrid=False, zeroline=False,visible = False
@@ -459,7 +459,7 @@ with col2:
         
         cmap = cm.get_cmap('Blues')
 
-        fig_boxes, ax = plt.subplots(figsize=(7, 7)) # Adjusted size
+        fig_boxes, ax = plt.subplots(figsize=(6, 6)) # Adjusted size
 
         for zone, (x1, y1, x2, y2) in zones_layout.items():
             w, h = x2 - x1, y2 - y1
