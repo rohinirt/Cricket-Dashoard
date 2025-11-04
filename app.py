@@ -536,7 +536,7 @@ with col2:
         # Set slices with 0 runs to white
         for i, run_count in enumerate(runs):
             if run_count == 0:
-                colors[i] = 'white'
+                colors[i] = (1.0, 1.0, 1.0, 1.0)
 
         # 3. Create the Matplotlib Figure
         fig, ax = plt.subplots(figsize=(7, 7))
