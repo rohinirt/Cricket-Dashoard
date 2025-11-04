@@ -279,13 +279,13 @@ with col1:
                 x=0, y=0.95, font=dict(size=20)
             ),
             width=700, # Adjusted width for side-by-side view
-            height=400,
+            height=500,
             xaxis=dict(
                 range=[-1.6, 1.6], showgrid=True, zeroline=False, visible=True,
                 scaleanchor="y", scaleratio=1
             ),
             yaxis=dict(
-                range=[-0.2, 2.5], showgrid=True, zeroline=False, visible=True
+                range=[0, 2], showgrid=True, zeroline=False, visible=True
             ),
             plot_bgcolor="white",
             paper_bgcolor="white",
@@ -459,7 +459,7 @@ with col2:
         
         cmap = cm.get_cmap('Blues')
 
-        fig_boxes, ax = plt.subplots(figsize=(7, 9)) # Adjusted size
+        fig_boxes, ax = plt.subplots(figsize=(7, 7)) # Adjusted size
 
         for zone, (x1, y1, x2, y2) in zones_layout.items():
             w, h = x2 - x1, y2 - y1
