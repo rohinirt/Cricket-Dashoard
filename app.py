@@ -459,7 +459,6 @@ import matplotlib.colors as mcolors
 # CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - MATPLOTLIB
 # ------------------------------------------------------------------------------
 with col2:
-    st.header("Scoring Areas (Wagon Wheel) - Matplotlib")
     
     if wagon_summary.empty:
         st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated.")
@@ -504,7 +503,7 @@ with col2:
             norm = mcolors.Normalize(vmin=0, vmax=1)
         
         # Choose the Colormap (corresponding to 'Reds' in Plotly)
-        cmap = cm.get_cmap('Reds')
+        cmap = cm.get_cmap('Blues')
         
         # Map the run totals to colors
         colors = cmap(norm(runs))
@@ -516,7 +515,7 @@ with col2:
         wedges, texts = ax.pie(
             angles, 
             colors=colors, 
-            wedgeprops={"width": 0.4, "edgecolor": "black"}, # 'width' creates the donut hole
+            wedgeprops={"width": 0.1, "edgecolor": "black"}, # 'width' creates the donut hole
             startangle=90, # Start at the top (usually 0 is right)
             counterclock=False # Cricket wagon wheels are typically clockwise
         )
@@ -539,7 +538,7 @@ with col2:
             
             # Place the text
             ax.text(
-                x * 0.7, y * 0.7, # 0.7 radius for inner placement
+                x , y , # 0.7 radius for inner placement
                 label_text, 
                 ha='center', va='center', 
                 color=text_color,
@@ -547,7 +546,7 @@ with col2:
                 fontweight='bold'
             )
 
-        ax.set_title(f"Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}", fontsize=16)
+        ax.set_title(f"Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
         ax.axis('equal') # Ensures the pie chart is a circle
 
         # 5. Add Colorbar (Legend for Total Runs)
