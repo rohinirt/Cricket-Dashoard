@@ -657,6 +657,19 @@ with col1:
             loc='upper left',  # Anchor the legend's corner (e.g., upper left of the legend box)
             bbox_to_anchor=(1.05, 1), # Place the anchor point outside the axes (1.05 = slightly right of the chart edge)
             borderaxespad=0) # No padding between the legend and the axes
+        ax_7.tick_params(
+        axis='x',          # Apply to the X-axis
+        which='both',      # Apply to both major and minor ticks
+        labelbottom=False, # Hide the label text
+        bottom=False       # Hide the tick marks
+        )
+
+        # To hide Y-axis labels and ticks:
+        ax_7.tick_params(
+        axis='y',          # Apply to the Y-axis
+        which='both',      # Apply to both major and minor ticks
+        labelleft=False,   # Hide the label text
+        left=False         # Hide the tick marks
+        )
         ax_7.grid(True, linestyle=':', alpha=0.5)
-        ax_7.axis('off')
         st.pyplot(fig_7)
