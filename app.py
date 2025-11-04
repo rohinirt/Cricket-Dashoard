@@ -126,7 +126,7 @@ else:
         ))
 
     wagon.update_layout(
-        title=f"{batsman_name} - Wagon Wheel",
+        title=f"{BatsmanName} - Wagon Wheel",
         polar=dict(
             radialaxis=dict(visible=False, range=[0, agg_df["Runs"].max() * 1.2]),
             angularaxis=dict(direction="clockwise", rotation=90)
