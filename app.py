@@ -681,7 +681,7 @@ with col2:
     if df_interception.empty:
         st.warning("No valid interception data matches the selected filters.")
     else:
-        fig_8, ax_8 = plt.subplots(figsize=(7, 4))
+        fig_8, ax_8 = plt.subplots(figsize=(4, 7))
         
         # 1. Define Axes: X-axis is InterceptionY (Width), Y-axis is InterceptionX + 10 (Distance)
         
@@ -718,12 +718,27 @@ with col2:
 
         # 4. Set Axes Limits and Labels
         ax_8.set_xlim(-1, 1)      # X limit: -1 - 1 (Width)
-        ax_8.set_ylim(0, 3.5)     # Y limit: 0 - 3.5 (Distance)
+        ax_8.set_ylim(-0.2, 3.5)     # Y limit: 0 - 3.5 (Distance)
         ax_8.invert_yaxis()       # REVERSE Y-AXIS as requested
-        ax_8.set_xlabel("Width (m)")
-        ax_8.set_ylabel("Distance from Stumps (m)")
         ax_8.set_title(f"Interception Points Top On - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
-        ax_8.legend(loc='lower right')
+        ax_8.legend(
+            loc='upper left',  # Anchor the legend's corner (e.g., upper left of the legend box)
+            bbox_to_anchor=(1.05, 1), # Place the anchor point outside the axes (1.05 = slightly right of the chart edge)
+            borderaxespad=0) # No padding between the legend and the axes
+        ax_8.tick_params(
+        axis='x',          # Apply to the X-axis
+        which='both',      # Apply to both major and minor ticks
+        labelbottom=False, # Hide the label text
+        bottom=False       # Hide the tick marks
+        )
+
+        # To hide Y-axis labels and ticks:
+        ax_8.tick_params(
+        axis='y',          # Apply to the Y-axis
+        which='both',      # Apply to both major and minor ticks
+        labelleft=False,   # Hide the label text
+        left=False         # Hide the tick marks
+        )
         ax_8.grid(True, linestyle=':', alpha=0.5)
         
         st.pyplot(fig_8)
