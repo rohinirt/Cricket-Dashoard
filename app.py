@@ -444,11 +444,8 @@ with col2:
         
         st.pyplot(fig_boxes)
 
-# ==============================================================================
-# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom - FINAL CORRECTED)
-# ==============================================================================
 # ------------------------------------------------------------------------------
-# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - FINAL FIX
+# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - FINAL CORRECTED VERSION
 # ------------------------------------------------------------------------------
 with col2:
     st.header("Scoring Areas (Wagon Wheel)")
@@ -466,26 +463,31 @@ with col2:
             hole=.3, 
             name=f"Runs by Area for {batsman if batsman != 'All' else 'All Batters'}",
             
-            # --- Marker Definition (Only accepts colors, line, pattern) ---
+            # Marker only contains the 'colors' data array
             marker=dict(
-                # Use runs data array for the colors property
                 colors=wagon_summary["TotalRuns"], 
             ),
             
-            # --- Color Scale Properties (Must be defined at trace level with 'marker_' prefix) ---
-            marker_colorscale='Reds', # The colorscale property (was 'colorscale')
-            marker_cmin=run_min,     # The minimum value for the color scale (was 'cmin')
-            marker_cmax=run_max,     # The maximum value for the color scale (was 'cmax')
-            marker_showscale=True,   # Show the color bar (was 'showscale')
-            marker_colorbar=dict(title="Total Runs", len=0.3, y=0.5), # The colorbar definition (was 'colorbar')
-            
-            # --- Label Formatting ---
+            # Label Formatting
             textinfo='label+percent',
             texttemplate="<b>%{label}</b><br>(%{percent})",
             customdata=wagon_summary["TotalRuns"], 
             hovertemplate="<b>%{label}</b><br>Runs: %{customdata}<br>Angle: %{value}<extra></extra>",
             sort=False
         )])
+        
+        # --- FIX: Apply color scale properties using update_traces ---
+        fig_wagon.update_traces(
+            marker=dict(
+                colorscale='Reds',
+                cmin=run_min,
+                cmax=run_max
+            ),
+            showscale=True,
+            colorbar=dict(title="Total Runs", len=0.3, y=0.5),
+            selector=dict(type='pie') # Ensure we only target the pie trace
+        )
+        # --- END FIX ---
         
         # Layout updates
         fig_wagon.update_layout(
