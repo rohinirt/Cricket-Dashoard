@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
+import numpy as np
 
 # --- 1. SET PAGE CONFIGURATION ---
 st.set_page_config(page_title="Cricket Analysis Dashboard")
