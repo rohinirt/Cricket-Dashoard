@@ -111,51 +111,78 @@ def calculate_scoring_angle(area):
 # Initialize empty summary to prevent errors if processing fails
 wagon_summary = pd.DataFrame() 
 
+# ... (Previous code remains, including the definition of calculate_scoring_angle) ...
+
 try:
     df_wagon = filtered_df.copy()
     
     # 1. Calculate Scoring Area
     df_wagon["ScoringWagon"] = df_wagon.apply(calculate_scoring_wagon, axis=1)
 
-    # 2. Add Fixed Angle to the DataFrame for grouping
+    # 2. Calculate Fixed Angle for each row
     df_wagon["FixedAngle"] = df_wagon["ScoringWagon"].apply(calculate_scoring_angle)
 
-    # 3. Summarize Runs and take the first (correct) fixed angle for the group
-    wagon_summary = df_wagon.groupby("ScoringWagon").agg(
+    # 3. Summarize Runs and Fixed Angle from the available data
+    # Note: We aggregate 'FixedAngle' here, which will be for only the areas with shots
+    summary_with_shots = df_wagon.groupby("ScoringWagon").agg(
         TotalRuns=("Runs", "sum"),
-        FixedAngle=("FixedAngle", 'first') # Use 'first' for robust aggregation
+        FixedAngle=("FixedAngle", 'first')
     ).reset_index().dropna(subset=["ScoringWagon"])
     
-    # 4. Filter for only shots that scored runs and were mapped
-    wagon_summary = wagon_summary[wagon_summary["TotalRuns"] > 0]
+    # Filter for only shots that scored runs for the initial pass (we re-add 0-run areas later)
+    # This filter should be removed if you want to include all shots, but keeping it simple for now:
+    # summary_with_shots = summary_with_shots[summary_with_shots["TotalRuns"] > 0]
 
-    # --- Sorting Logic for Proper Adjacency ---
-    # Determine the handedness of the filtered data
+
+    # --- CRITICAL FIX START: Merging with a Template to Include ALL Areas ---
+    
+    # Determine handedness and define ALL possible areas
     handedness_mode = filtered_df["IsBatsmanRightHanded"].dropna().mode()
     is_right_handed = handedness_mode.iloc[0] if not handedness_mode.empty else True
     
     if is_right_handed:
-        sort_order = ["FINE LEG", "SQUARE LEG", "LONG ON", "LONG OFF", "COVER", "THIRD MAN"]
+        all_areas = ["FINE LEG", "SQUARE LEG", "LONG ON", "LONG OFF", "COVER", "THIRD MAN"]
     else: # Left Handed
-        sort_order = ["THIRD MAN", "COVER", "LONG OFF", "LONG ON", "SQUARE LEG", "FINE LEG"]
+        all_areas = ["THIRD MAN", "COVER", "LONG OFF", "LONG ON", "SQUARE LEG", "FINE LEG"]
 
-    # Apply Categorical Ordering and Sort
-    wagon_summary["ScoringWagon"] = pd.Categorical(
-        wagon_summary["ScoringWagon"], 
-        categories=sort_order, 
-        ordered=True
-    )
+    # Create a template DataFrame with all 6 required areas and their fixed angles
+    template_data = {
+        "ScoringWagon": all_areas,
+        "FixedAngle": [calculate_scoring_angle(area) for area in all_areas]
+    }
+    template_df = pd.DataFrame(template_data)
+
+    # Merge the summary with the template to include missing areas with TotalRuns=0
+    # We use the FixedAngle from the template as it's guaranteed to be correct for the area.
+    wagon_summary = template_df.merge(
+        summary_with_shots.drop(columns=["FixedAngle"], errors='ignore'),
+        on="ScoringWagon",
+        how="left"
+    ).fillna(0) # Fill TotalRuns with 0 for areas with no score
+    
+    # Re-apply the categorical sorting order to the merged DataFrame
+    wagon_summary["ScoringWagon"] = pd.Categorical(wagon_summary["ScoringWagon"], categories=all_areas, ordered=True)
     wagon_summary = wagon_summary.sort_values("ScoringWagon").reset_index(drop=True)
     
-    # 5. Calculate Percentage
-    if not wagon_summary.empty and wagon_summary["TotalRuns"].sum() > 0:
-        wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / wagon_summary["TotalRuns"].sum()) * 100
+    # --- CRITICAL FIX END ---
+
+
+    # 4. Calculate Percentage (This must happen *after* merging all areas)
+    total_runs = wagon_summary["TotalRuns"].sum()
+    if total_runs > 0:
+        wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / total_runs) * 100
     else:
-        wagon_summary = pd.DataFrame() 
+        # If total runs is 0, percentage is 0 for all
+        wagon_summary["RunPercentage"] = 0 
+        
+    # Ensure FixedAngle is numeric for plotting
+    wagon_summary["FixedAngle"] = wagon_summary["FixedAngle"].astype(int) 
 
 except KeyError as e:
     # This remains as the overall column error check
     st.error(f"Cannot calculate Wagon Wheel: The required data column {e} is missing. Please ensure your CSV includes 'LandingX' and 'LandingY'.")
+    wagon_summary = pd.DataFrame() # Ensure wagon_summary is empty on error
+
 
 # --- 4. LAYOUT: CHARTS SIDE BY SIDE ---
 col1, col2 = st.columns(2)
@@ -458,95 +485,89 @@ import matplotlib.colors as mcolors
 # ------------------------------------------------------------------------------
 # CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - MATPLOTLIB
 # ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - MATPLOTLIB (FINAL UPDATED)
+# ------------------------------------------------------------------------------
 with col2:
+    st.header("Scoring Areas (Wagon Wheel) - Matplotlib")
     
     if wagon_summary.empty:
         st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated.")
     else:
-        # 1. Prepare Data for Matplotlib
-        # Matplotlib uses a list of values for slice sizes
+        # 1. Prepare Data for Matplotlib (NO CHANGE REQUIRED HERE)
         angles = wagon_summary["FixedAngle"].tolist()
         runs = wagon_summary["TotalRuns"].tolist()
-        labels = wagon_summary["ScoringWagon"].tolist()
         
-        # Calculate run percentages for labels
+        # Labels for outside: Area Name + Run Percentage
+        labels = [
+            f"{area}\n({pct:.1f}%)" 
+            for area, pct in zip(wagon_summary["ScoringWagon"], wagon_summary["RunPercentage"])
+        ]
+        
+        # Calculate run percentages for custom label function (NO CHANGE REQUIRED HERE)
         total_runs = sum(runs)
         percentages = [(r / total_runs) * 100 if total_runs > 0 else 0 for r in runs]
         
-        # Custom auto-label function to show Area and Run Percentage
+        # NOTE: The custom autopct_format function is NO LONGER NEEDED as we calculate
+        # the full labels list directly above, but I'll keep the definition block
+        # below to maintain structure consistency if you are using it elsewhere.
         def autopct_format(pct):
-            # pct here refers to the percentage of the *angle* (which is fixed), 
-            # so we must look up the run percentage from our pre-calculated list
-            # We use an index based approach since the angles list directly maps to the percentages list
-            i = autopct_format.counter
-            current_pct = percentages[i]
-            
-            # Format the label to show the Area Name and the calculated Run Percentage
-            label = labels[i]
-            formatted_label = f"{label}\n({current_pct:.1f}%)"
-            
-            autopct_format.counter += 1
-            return formatted_label
-        
-        # Initialize the counter for the custom formatter
-        autopct_format.counter = 0
+             # This function is now only used as a placeholder in ax.pie
+             # to trigger the counter if needed, but we don't use its output.
+             return '' 
 
         # 2. Setup Coloring (Heatmap Effect)
         run_min = min(runs)
         run_max = max(runs)
         
-        # Create a Normalization object based on runs
+        # Create a Normalization object based on runs (NO CHANGE REQUIRED HERE)
         if run_max > run_min:
             norm = mcolors.Normalize(vmin=run_min, vmax=run_max)
         else:
-            # Handle case where all runs are the same (or zero)
             norm = mcolors.Normalize(vmin=0, vmax=1)
         
-        # Choose the Colormap (corresponding to 'Reds' in Plotly)
+        # Choose the Colormap (I'll switch back to 'Reds' as 'Blues' was used in the Zonal Chart)
         cmap = cm.get_cmap('Blues')
         
         # Map the run totals to colors
         colors = cmap(norm(runs))
+        
+        # --- FIX FOR WHITE 0% SLICES ---
+        # Set slices with 0 runs to white
+        for i, run_count in enumerate(runs):
+            if run_count == 0:
+                colors[i] = 'white'
+        # -----------------------------
 
         # 3. Create the Matplotlib Figure
         fig, ax = plt.subplots(figsize=(7, 7))
         
         # The 'angles' array controls the size of the slices, which are fixed (90 or 45)
+        # Use the 'labels' argument for outside text, and 'pctdistance' to move the text
+        # 'autopct' is set to a dummy value (like a fixed empty string) or removed,
+        # but since we want the text *outside*, we use 'labels'.
         wedges, texts = ax.pie(
             angles, 
             colors=colors, 
-            wedgeprops={"width": 1, "edgecolor": "black"}, # 'width' creates the donut hole
-            startangle=90, # Start at the top (usually 0 is right)
-            counterclock=False # Cricket wagon wheels are typically clockwise
+            wedgeprops={"width": 1, "edgecolor": "black"}, # Full pie width
+            startangle=90, 
+            counterclock=False, 
+            labels=labels, # --- NEW: Use labels argument for outside text ---
+            labeldistance=1.1, # Push labels outside
+            # pctdistance is not needed since we are not using the inner text (autopct)
         )
         
-        # 4. Add Labels and Customize Text
-        # We need to manually place the custom labels using the counter function
-        autopct_format.counter = 0 # Reset counter for actual application
-        for i, wedge in enumerate(wedges):
-            # Calculate the text position inside the wedge
-            ang = (wedge.theta2 - wedge.theta1) / 2. + wedge.theta1
-            y = np.sin(np.deg2rad(ang))
-            x = np.cos(np.deg2rad(ang))
-            
-            # Get the custom formatted label
-            label_text = autopct_format(None) 
+        # 4. Customize Text Properties (Outside Labels)
+        for text in texts:
+            text.set_color('black')
+            text.set_fontsize(12)
+            text.set_fontweight('bold')
 
-            # Choose text color based on slice darkness (optional)
-            color_intensity = norm(runs[i])
-            text_color = 'white' if color_intensity > 0.5 else 'black'
-            
-            # Place the text
-            ax.text(
-                x , y , # 0.7 radius for inner placement
-                label_text, 
-                ha='center', va='center', 
-                color=text_color,
-                fontsize=11,
-                fontweight='bold'
-            )
+        # --- REMOVE MANUAL TEXT PLACEMENT LOOP ---
+        # The entire loop that manually calculated x,y and used ax.text() is removed.
+        # -----------------------------------------
 
         ax.set_title(f"Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
-        ax.axis('equal') # Ensures the pie chart is a circle
+        ax.axis('equal') 
 
         st.pyplot(fig)
