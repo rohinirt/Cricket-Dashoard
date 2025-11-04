@@ -426,7 +426,6 @@ with col2:
         fig_wagon = go.Figure(data=[go.Pie(
             labels=wagon_summary["ScoringWagon"],
             values=wagon_summary["TotalRuns"],
-            hole=.3, # Donut chart effect
             name=f"Runs by Area for {batsman if batsman != 'All' else 'All Batters'}",
             
             textinfo='label+percent',
