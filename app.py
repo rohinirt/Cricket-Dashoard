@@ -361,8 +361,8 @@ with col2:
 
         # Compute shot angles (assuming CreaseY, CreaseZ as shot directions)
         # Normalize coordinates to get shot direction angles
-        x = filtered_df["CreaseY"]
-        y = filtered_df["CreaseZ"]
+        x = filtered_df["LandingY"]
+        y = filtered_df["LandingX"]
 
         # Convert to angles for polar plotting
         angles = np.degrees(np.arctan2(y, x))
