@@ -532,7 +532,7 @@ with col2:
                 colors[i] = (1.0, 1.0, 1.0, 1.0)
 
         # 3. Create the Matplotlib Figure
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(14, 14))
         
         # The 'angles' array controls the size of the slices, which are fixed (90 or 45)
         # Use the 'labels' argument for outside text, and 'pctdistance' to move the text
@@ -553,7 +553,6 @@ with col2:
         for text in texts:
             text.set_color('black')
             text.set_fontsize(22)
-            text.set_fontweight('bold')
 
         # --- REMOVE MANUAL TEXT PLACEMENT LOOP ---
         # The entire loop that manually calculated x,y and used ax.text() is removed.
