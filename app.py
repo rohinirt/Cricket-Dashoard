@@ -211,7 +211,22 @@ except KeyError as e:
     st.error(f"Cannot calculate Wagon Wheel: The required data column {e} is missing. Please ensure your CSV includes 'LandingX' and 'LandingY'.")
     wagon_summary = pd.DataFrame() # Ensure wagon_summary is empty on error
 
+# --- NEW FILTERING BLOCK FOR INTERCEPTION CHARTS ---
 
+# 1. Filter out invalid interception points (where InterceptionX is < -999)
+df_interception = filtered_df[filtered_df["InterceptionX"] > -999].copy()
+
+# 2. Classify points for coloring
+df_interception["ColorType"] = "Other"
+df_interception.loc[df_interception["Wicket"] == True, "ColorType"] = "Wicket"
+df_interception.loc[df_interception["Runs"].isin([4, 6]), "ColorType"] = "Boundary"
+
+# 3. Define colors for plotting
+color_map = {
+    "Wicket": "red",
+    "Boundary": "royalblue",
+    "Other": "white" # Will be styled with a grey border in the plot
+}
 # --- 4. LAYOUT: CHARTS SIDE BY SIDE ---
 col1, col2 = st.columns(2)
 
@@ -597,7 +612,6 @@ with col2:
 # CHART 5: INTERCEPTION POINTS (SIDE-ON) - Col 1, Bottom
 # ==============================================================================
 with col1:
-
     if df_interception.empty:
         st.warning("No valid interception data matches the selected filters.")
     else:
