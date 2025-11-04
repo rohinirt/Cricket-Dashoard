@@ -56,6 +56,75 @@ delivery_options = ["All"] + sorted(df_batsman["DeliveryType"].dropna().unique()
 delivery = st.sidebar.selectbox("Select Delivery Type", delivery_options)
 filtered_df = df_batsman if delivery == "All" else df_batsman[df_batsman["DeliveryType"] == delivery]
 
+def calculate_scoring_wagon(row):
+    """Translates Tableau's trigonometric scoring wagon logic to Python."""
+    # Columns accessed here: LandingX, LandingY, Runs, IsBatsmanRightHanded
+    
+    LX = row["LandingX"]
+    LY = row["LandingY"]
+    RH = row["IsBatsmanRightHanded"]
+    
+    # Exclude entries where no run was scored
+    if row["Runs"] == 0:
+        return None
+    
+    # Handle division by zero/NaN for ATAN by checking the denominator first
+    def atan_safe(numerator, denominator):
+        if denominator == 0:
+            # If denominator is zero, the original ATAN calculation fails. 
+            # We return NaN to indicate an unmappable angle.
+            return np.nan 
+        # Use np.arctan for the ATAN function
+        return np.arctan(numerator / denominator)
+
+    if RH == True: # Right Handed Batsman
+        if LX <= 0 and LY > 0: return "FINE LEG"
+        elif LX <= 0 and LY <= 0: return "THIRD MAN"
+        
+        elif LX > 0 and LY < 0:
+            if atan_safe(LY, LX) < np.pi / -4: return "COVER"
+            elif atan_safe(LX, LY) <= np.pi / -4: return "LONG OFF"
+        
+        elif LX > 0 and LY >= 0:
+            if atan_safe(LY, LX) >= np.pi / 4: return "SQUARE LEG"
+            elif atan_safe(LY, LX) <= np.pi / 4: return "LONG ON"
+        
+    elif RH == False: # Left Handed Batsman
+        if LX <= 0 and LY > 0: return "THIRD MAN"
+        elif LX <= 0 and LY <= 0: return "FINE LEG"
+            
+        elif LX > 0 and LY < 0:
+            if atan_safe(LY, LX) < np.pi / -4: return "SQUARE LEG"
+            elif atan_safe(LX, LY) <= np.pi / -4: return "LONG ON"
+        
+        elif LX > 0 and LY >= 0:
+            if atan_safe(LY, LX) >= np.pi / 4: return "COVER"
+            elif atan_safe(LY, LX) <= np.pi / 4: return "LONG OFF"
+                
+    return None # Catches the NULL case
+
+# Initialize empty summary to prevent errors if processing fails
+wagon_summary = pd.DataFrame() 
+
+try:
+    df_wagon = filtered_df.copy()
+    # If columns are missing, this will raise a KeyError
+    df_wagon["ScoringWagon"] = df_wagon.apply(calculate_scoring_wagon, axis=1)
+
+    # Summarize Runs by Scoring Area
+    wagon_summary = df_wagon.groupby("ScoringWagon").agg(
+        TotalRuns=("Runs", "sum")
+    ).reset_index().dropna()
+
+    if not wagon_summary.empty and wagon_summary["TotalRuns"].sum() > 0:
+        wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / wagon_summary["TotalRuns"].sum()) * 100
+    else:
+        wagon_summary = pd.DataFrame() # Clear if no runs were scored after filtering
+
+except KeyError as e:
+    # This catches errors if LandingX/Y or Runs are missing from the uploaded file
+    st.error(f"Cannot calculate Wagon Wheel: The required data column {e} is missing. Please ensure your CSV includes 'LandingX' and 'LandingY'.")
+
 # --- 4. LAYOUT: CHARTS SIDE BY SIDE ---
 col1, col2 = st.columns(2)
 
@@ -342,3 +411,44 @@ with col2:
         cbar.set_label("Avg Runs/Wicket")
         
         st.pyplot(fig_boxes)
+
+# ==============================================================================
+# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom - NEW CHART)
+# ==============================================================================
+with col2:
+    st.header("Scoring Areas (Wagon Wheel)")
+    
+    if wagon_summary.empty:
+        st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated. Check the error message above.")
+    else:
+        # Create the Pie Chart
+        fig_wagon = go.Figure(data=[go.Pie(
+            labels=wagon_summary["ScoringWagon"],
+            values=wagon_summary["TotalRuns"],
+            hole=.3, # Donut chart effect
+            name=f"Runs by Area for {batsman if batsman != 'All' else 'All Batters'}",
+            
+            # Label Formatting (Area Name and Percentage)
+            textinfo='label+percent',
+            texttemplate="<b>%{label}</b><br>(%{percent})",
+            hoverinfo='label+value',
+            
+            # Color Mapping
+            marker=dict(colors=wagon_summary["TotalRuns"], coloraxis="coloraxis"),
+            sort=False 
+        )])
+        
+        # Set a color scale based on runs (makes high-run areas stand out)
+        fig_wagon.update_layout(
+            title=dict(
+                text=f"<b>Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}</b>",
+                x=0.5, y=0.95, font=dict(size=18)
+            ),
+            coloraxis=dict(colorscale='Viridis', cmin=wagon_summary["TotalRuns"].min(), cmax=wagon_summary["TotalRuns"].max()),
+            width=500,
+            height=500,
+            margin=dict(l=20, r=20, t=60, b=20),
+            showlegend=True
+        )
+
+        st.plotly_chart(fig_wagon, use_container_width=True)
