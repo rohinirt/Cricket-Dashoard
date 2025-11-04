@@ -451,36 +451,37 @@ with col2:
     st.header("Scoring Areas (Wagon Wheel)")
     
     if wagon_summary.empty:
-        st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated. Check the error message above.")
+        st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated. Please check the data processing section.")
     else:
-        # Define Min/Max for color scaling based on runs
         run_min = wagon_summary["TotalRuns"].min()
         run_max = wagon_summary["TotalRuns"].max()
         
         # Create the Pie Chart
         fig_wagon = go.Figure(data=[go.Pie(
             labels=wagon_summary["ScoringWagon"],
-            # 1. Use FixedAngle for size (Requirement 1)
+            # Use FixedAngle for size (Required slice size)
             values=wagon_summary["FixedAngle"], 
-             
+            hole=.3, 
             name=f"Runs by Area for {batsman if batsman != 'All' else 'All Batters'}",
             
-            # Use TotalRuns for coloring/heat (Requirement 2)
+            # --- Marker for Coloring (Heatmap Effect) ---
             marker=dict(
-                colors=wagon_summary["TotalRuns"], # Use runs for color values
-                colorscale='Reds', # Use a red colorscale for runs
-                cmin=run_min, cmax=run_max,
-                showscale=True, # Show the color bar
-                colorbar=dict(title="Total Runs")
+                colors=wagon_summary["TotalRuns"], # Use runs data array for color values
+                cmin=run_min, 
+                cmax=run_max,
+                showscale=True,
+                colorbar=dict(title="Total Runs", len=0.3, y=0.5)
             ),
             
+            # Use colorscale at the trace level (Fix for ValueError: 'colorscale')
+            colorscale='Reds', 
+            
             # --- Label Formatting ---
-            # Show the Area Name and the Run Percentage 
             textinfo='label+percent',
             texttemplate="<b>%{label}</b><br>(%{percent})",
-            customdata=wagon_summary["TotalRuns"], # Add runs to tooltip data
-            hovertemplate="<b>%{label}</b><br>Runs: %{customdata}<br>Angle: %{value}<extra></extra>", # Customize tooltip
-            sort=False # Keep the sorting defined by the DataFrame (Requirement 3)
+            customdata=wagon_summary["TotalRuns"], 
+            hovertemplate="<b>%{label}</b><br>Runs: %{customdata}<br>Angle: %{value}<extra></extra>",
+            sort=False # Maintain the DataFrame's custom sort order
         )])
         
         # Layout updates
