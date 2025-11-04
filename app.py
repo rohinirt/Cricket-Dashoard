@@ -549,7 +549,7 @@ with col2:
             norm = mcolors.Normalize(vmin=0, vmax=1)
         
         # Choose the Colormap (I'll switch back to 'Reds' as 'Blues' was used in the Zonal Chart)
-        cmap = cm.get_cmap('Green')
+        cmap = cm.get_cmap('green')
         
         # Map the run totals to colors
         colors = cmap(norm(runs))
