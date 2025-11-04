@@ -335,7 +335,7 @@ with col1:
                 x=0, y=0.95, font=dict(size=20)
             ),
             width=40, 
-            height=550, # Increased height for better visualization of lengths
+            height=400, # Increased height for better visualization of lengths
             xaxis=dict(
                 range=[-1.5, 1.5],
                 showgrid=False, zeroline=False,visible = False
