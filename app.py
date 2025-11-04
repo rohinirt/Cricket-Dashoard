@@ -55,14 +55,14 @@ filtered_df = df_batsman if delivery == "All" else df_batsman[df_batsman["Delive
 
 
 # --- Check for required columns ---
-required_cols = ["Landing X", "Landing Y", "Is Batsman Right Handed", "Runs"]
+required_cols = ["LandingX", "LandingY", "IsBatsmanRightHanded", "Runs"]
 if not all(col in df.columns for col in required_cols):
     st.warning(f"Missing columns for wagon wheel. Required: {required_cols}")
 else:
     # --- Apply Tableau logic ---
     def scoring_wagon(row):
         x, y = row["LandingX"], row["LandingY"]
-        right = row["Is Batsman Right Handed"]
+        right = row["IsBatsmanRightHanded"]
         angle = np.arctan2(y, x)
 
         if right:
