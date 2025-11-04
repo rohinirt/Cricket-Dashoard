@@ -414,7 +414,7 @@ with col2:
         st.pyplot(fig_boxes)
 
 # ==============================================================================
-# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom - NEW CHART)
+# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom - CORRECTED)
 # ==============================================================================
 with col2:
     st.header("Scoring Areas (Wagon Wheel)")
@@ -429,22 +429,25 @@ with col2:
             hole=.3, # Donut chart effect
             name=f"Runs by Area for {batsman if batsman != 'All' else 'All Batters'}",
             
-            # Label Formatting (Area Name and Percentage)
             textinfo='label+percent',
             texttemplate="<b>%{label}</b><br>(%{percent})",
             hoverinfo='label+value',
             
-            # Color Mapping
-            marker=dict(colors=wagon_summary["TotalRuns"], coloraxis="coloraxis"),
+            # --- CORRECTION APPLIED HERE ---
+            # REMOVED: coloraxis="coloraxis"
+            marker=dict(colors=wagon_summary["TotalRuns"]), 
+            # -----------
+            
             sort=False 
         )])
         
-        # Set a color scale based on runs (makes high-run areas stand out)
+        # This part correctly defines the color scale in the layout:
         fig_wagon.update_layout(
             title=dict(
                 text=f"<b>Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}</b>",
                 x=0.5, y=0.95, font=dict(size=18)
             ),
+            # This is where 'coloraxis' belongs, defining the colorscale for the figure
             coloraxis=dict(colorscale='Viridis', cmin=wagon_summary["TotalRuns"].min(), cmax=wagon_summary["TotalRuns"].max()),
             width=500,
             height=500,
