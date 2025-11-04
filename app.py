@@ -103,7 +103,56 @@ def calculate_scoring_wagon(row):
             elif atan_safe(LY, LX) <= np.pi / 4: return "LONG OFF"
                 
     return None # Catches the NULL case
+def calculate_scoring_angle(area):
+    if area in ["FINE LEG", "THIRD MAN"]:
+        return 90
+    elif area in ["COVER", "SQUARE LEG", "LONG OFF", "LONG ON"]:
+        return 45
+    return 0 # Default for None/unscored
 
+# Initialize empty summary to prevent errors if processing fails
+wagon_summary = pd.DataFrame() 
+
+try:
+    df_wagon = filtered_df.copy()
+    
+    # 1. Calculate Scoring Area
+    df_wagon["ScoringWagon"] = df_wagon.apply(calculate_scoring_wagon, axis=1)
+
+    # 2. Summarize Runs by Scoring Area
+    wagon_summary = df_wagon.groupby("ScoringWagon").agg(
+        TotalRuns=("Runs", "sum"),
+        # 3. Calculate the fixed angle for each area
+        FixedAngle=("ScoringWagon", lambda x: calculate_scoring_angle(x.iloc[0]))
+    ).reset_index().dropna(subset=["ScoringWagon"])
+    
+    # 4. Filter for only shots that scored runs and were mapped
+    wagon_summary = wagon_summary[wagon_summary["TotalRuns"] > 0]
+
+    # --- Sorting Logic for Proper Adjacency (Requirement 3) ---
+    is_right_handed = filtered_df["IsBatsmanRightHanded"].dropna().mode().iloc[0] if not filtered_df.empty else True
+    
+    if is_right_handed:
+        sort_order = ["FINE LEG", "SQUARE LEG", "LONG ON", "LONG OFF", "COVER", "THIRD MAN"]
+    else: # Left Handed
+        sort_order = ["THIRD MAN", "COVER", "LONG OFF", "LONG ON", "SQUARE LEG", "FINE LEG"]
+
+    # Apply Categorical Ordering
+    wagon_summary["ScoringWagon"] = pd.Categorical(
+        wagon_summary["ScoringWagon"], 
+        categories=sort_order, 
+        ordered=True
+    )
+    # Sort the DataFrame
+    wagon_summary = wagon_summary.sort_values("ScoringWagon").reset_index(drop=True)
+    
+    if not wagon_summary.empty and wagon_summary["TotalRuns"].sum() > 0:
+        wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / wagon_summary["TotalRuns"].sum()) * 100
+    else:
+        wagon_summary = pd.DataFrame() 
+
+except KeyError as e:
+    st.error(f"Cannot calculate Wagon Wheel: The required data column {e} is missing. Please ensure your CSV includes 'LandingX' and 'LandingY'.")
 # Initialize empty summary to prevent errors if processing fails
 wagon_summary = pd.DataFrame() 
 
@@ -414,7 +463,7 @@ with col2:
         st.pyplot(fig_boxes)
 
 # ==============================================================================
-# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom - CORRECTED)
+# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom - FINAL CORRECTED)
 # ==============================================================================
 with col2:
     st.header("Scoring Areas (Wagon Wheel)")
@@ -422,36 +471,46 @@ with col2:
     if wagon_summary.empty:
         st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated. Check the error message above.")
     else:
+        # Define Min/Max for color scaling based on runs
+        run_min = wagon_summary["TotalRuns"].min()
+        run_max = wagon_summary["TotalRuns"].max()
+        
         # Create the Pie Chart
         fig_wagon = go.Figure(data=[go.Pie(
             labels=wagon_summary["ScoringWagon"],
-            values=wagon_summary["TotalRuns"],
+            # 1. Use FixedAngle for size (Requirement 1)
+            values=wagon_summary["FixedAngle"], 
+             
             name=f"Runs by Area for {batsman if batsman != 'All' else 'All Batters'}",
             
+            # Use TotalRuns for coloring/heat (Requirement 2)
+            marker=dict(
+                colors=wagon_summary["TotalRuns"], # Use runs for color values
+                colorscale='Reds', # Use a red colorscale for runs
+                cmin=run_min, cmax=run_max,
+                showscale=True, # Show the color bar
+                colorbar=dict(title="Total Runs")
+            ),
+            
+            # --- Label Formatting ---
+            # Show the Area Name and the Run Percentage 
             textinfo='label+percent',
             texttemplate="<b>%{label}</b><br>(%{percent})",
-            hoverinfo='label+value',
-            
-            # --- CORRECTION APPLIED HERE ---
-            # REMOVED: coloraxis="coloraxis"
-            marker=dict(colors=wagon_summary["TotalRuns"]), 
-            # -----------
-            
-            sort=True 
+            customdata=wagon_summary["TotalRuns"], # Add runs to tooltip data
+            hovertemplate="<b>%{label}</b><br>Runs: %{customdata}<br>Angle: %{value}<extra></extra>", # Customize tooltip
+            sort=False # Keep the sorting defined by the DataFrame (Requirement 3)
         )])
         
-        # This part correctly defines the color scale in the layout:
+        # Layout updates
         fig_wagon.update_layout(
             title=dict(
                 text=f"<b>Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}</b>",
                 x=0.5, y=0.95, font=dict(size=18)
             ),
-            # This is where 'coloraxis' belongs, defining the colorscale for the figure
-            coloraxis=dict(colorscale='Viridis', cmin=wagon_summary["TotalRuns"].min(), cmax=wagon_summary["TotalRuns"].max()),
             width=500,
             height=500,
             margin=dict(l=20, r=20, t=60, b=20),
-            showlegend=False
+            showlegend=True
         )
 
         st.plotly_chart(fig_wagon, use_container_width=True)
