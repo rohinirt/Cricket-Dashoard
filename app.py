@@ -1,5 +1,12 @@
 import numpy as np
 import plotly.graph_objects as go
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
 
 # --- 1. SET PAGE CONFIGURATION ---
 
