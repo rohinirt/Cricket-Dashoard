@@ -59,21 +59,18 @@ filtered_df = df_batsman if delivery == "All" else df_batsman[df_batsman["Delive
 
 def calculate_scoring_wagon(row):
     """Translates Tableau's trigonometric scoring wagon logic to Python."""
-    # Columns accessed here: LandingX, LandingY, Runs, IsBatsmanRightHanded
     
-    LX = row["LandingX"]
-    LY = row["LandingY"]
-    RH = row["IsBatsmanRightHanded"]
+    LX = row.get("LandingX")
+    LY = row.get("LandingY")
+    RH = row.get("IsBatsmanRightHanded")
     
-    # Exclude entries where no run was scored
-    if row["Runs"] == 0:
+    # Exclude entries where data is missing or no run was scored
+    if RH is None or LX is None or LY is None or row.get("Runs", 0) == 0:
         return None
     
     # Handle division by zero/NaN for ATAN by checking the denominator first
     def atan_safe(numerator, denominator):
         if denominator == 0:
-            # If denominator is zero, the original ATAN calculation fails. 
-            # We return NaN to indicate an unmappable angle.
             return np.nan 
         # Use np.arctan for the ATAN function
         return np.arctan(numerator / denominator)
@@ -102,13 +99,14 @@ def calculate_scoring_wagon(row):
             if atan_safe(LY, LX) >= np.pi / 4: return "COVER"
             elif atan_safe(LY, LX) <= np.pi / 4: return "LONG OFF"
                 
-    return None # Catches the NULL case
+    return None
+
 def calculate_scoring_angle(area):
     if area in ["FINE LEG", "THIRD MAN"]:
         return 90
     elif area in ["COVER", "SQUARE LEG", "LONG OFF", "LONG ON"]:
         return 45
-    return 0 # Default for None/unscored
+    return 0 
 
 # Initialize empty summary to prevent errors if processing fails
 wagon_summary = pd.DataFrame() 
@@ -119,60 +117,44 @@ try:
     # 1. Calculate Scoring Area
     df_wagon["ScoringWagon"] = df_wagon.apply(calculate_scoring_wagon, axis=1)
 
-    # 2. Summarize Runs by Scoring Area
+    # 2. Add Fixed Angle to the DataFrame for grouping
+    df_wagon["FixedAngle"] = df_wagon["ScoringWagon"].apply(calculate_scoring_angle)
+
+    # 3. Summarize Runs and take the first (correct) fixed angle for the group
     wagon_summary = df_wagon.groupby("ScoringWagon").agg(
         TotalRuns=("Runs", "sum"),
-        # 3. Calculate the fixed angle for each area
-        FixedAngle=("ScoringWagon", lambda x: calculate_scoring_angle(x.iloc[0]))
+        FixedAngle=("FixedAngle", 'first') # Use 'first' for robust aggregation
     ).reset_index().dropna(subset=["ScoringWagon"])
     
     # 4. Filter for only shots that scored runs and were mapped
     wagon_summary = wagon_summary[wagon_summary["TotalRuns"] > 0]
 
-    # --- Sorting Logic for Proper Adjacency (Requirement 3) ---
-    is_right_handed = filtered_df["IsBatsmanRightHanded"].dropna().mode().iloc[0] if not filtered_df.empty else True
+    # --- Sorting Logic for Proper Adjacency ---
+    # Determine the handedness of the filtered data
+    handedness_mode = filtered_df["IsBatsmanRightHanded"].dropna().mode()
+    is_right_handed = handedness_mode.iloc[0] if not handedness_mode.empty else True
     
     if is_right_handed:
         sort_order = ["FINE LEG", "SQUARE LEG", "LONG ON", "LONG OFF", "COVER", "THIRD MAN"]
     else: # Left Handed
         sort_order = ["THIRD MAN", "COVER", "LONG OFF", "LONG ON", "SQUARE LEG", "FINE LEG"]
 
-    # Apply Categorical Ordering
+    # Apply Categorical Ordering and Sort
     wagon_summary["ScoringWagon"] = pd.Categorical(
         wagon_summary["ScoringWagon"], 
         categories=sort_order, 
         ordered=True
     )
-    # Sort the DataFrame
     wagon_summary = wagon_summary.sort_values("ScoringWagon").reset_index(drop=True)
     
+    # 5. Calculate Percentage
     if not wagon_summary.empty and wagon_summary["TotalRuns"].sum() > 0:
         wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / wagon_summary["TotalRuns"].sum()) * 100
     else:
         wagon_summary = pd.DataFrame() 
 
 except KeyError as e:
-    st.error(f"Cannot calculate Wagon Wheel: The required data column {e} is missing. Please ensure your CSV includes 'LandingX' and 'LandingY'.")
-# Initialize empty summary to prevent errors if processing fails
-wagon_summary = pd.DataFrame() 
-
-try:
-    df_wagon = filtered_df.copy()
-    # If columns are missing, this will raise a KeyError
-    df_wagon["ScoringWagon"] = df_wagon.apply(calculate_scoring_wagon, axis=1)
-
-    # Summarize Runs by Scoring Area
-    wagon_summary = df_wagon.groupby("ScoringWagon").agg(
-        TotalRuns=("Runs", "sum")
-    ).reset_index().dropna()
-
-    if not wagon_summary.empty and wagon_summary["TotalRuns"].sum() > 0:
-        wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / wagon_summary["TotalRuns"].sum()) * 100
-    else:
-        wagon_summary = pd.DataFrame() # Clear if no runs were scored after filtering
-
-except KeyError as e:
-    # This catches errors if LandingX/Y or Runs are missing from the uploaded file
+    # This remains as the overall column error check
     st.error(f"Cannot calculate Wagon Wheel: The required data column {e} is missing. Please ensure your CSV includes 'LandingX' and 'LandingY'.")
 
 # --- 4. LAYOUT: CHARTS SIDE BY SIDE ---
