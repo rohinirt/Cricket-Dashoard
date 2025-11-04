@@ -430,7 +430,7 @@ with col2:
         
         cmap = cm.get_cmap('Blues')
 
-        fig_boxes, ax = plt.subplots(figsize=(7, 7)) # Adjusted size
+        fig_boxes, ax = plt.subplots(figsize=(7, 10)) # Adjusted size
 
         for zone, (x1, y1, x2, y2) in zones_layout.items():
             w, h = x2 - x1, y2 - y1
@@ -480,11 +480,6 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 # ----------------------------------------------------------------------
 
-# ... (Previous code remains, including data processing for wagon_summary) ...
-
-# ------------------------------------------------------------------------------
-# CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - MATPLOTLIB
-# ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 # CHART 4: SCORING WAGON WHEEL (In Column 2, Bottom) - MATPLOTLIB (FINAL UPDATED)
 # ------------------------------------------------------------------------------
