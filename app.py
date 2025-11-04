@@ -8,7 +8,35 @@ import matplotlib.colors as mcolors
 import numpy as np
 
 # --- 1. SET PAGE CONFIGURATION ---
-st.set_page_config(page_title="Cricket Analysis Dashboard")
+st.set_page_config(page_title="Cricket Analysis Dashboard", layout="wide")
+
+# --- 2. INJECT CUSTOM CSS TO REMOVE PADDING (The Fix) ---
+st.markdown("""
+<style>
+    /* 1. Target the main content container and set padding to 0 */
+    .block-container {
+        padding-top: 1rem; /* You can adjust this top padding if needed */
+        padding-right: 1rem;
+        padding-left: 1rem;
+        padding-bottom: 1rem;
+    }
+    
+    /* 2. Target the sidebar container and collapse its reserved space */
+    /* This handles the space reserved for the filters you moved to the sidebar */
+    section.main {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* 3. Reduce top margin for the entire page to pull content up */
+    .css-18e3th9 {
+        padding-top: 1rem; /* Adjust this value */
+        padding-bottom: 1rem;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
 
 # --- 2. DATA UPLOADER AND INITIAL LOAD ---
 # Use the main area for the file uploader for better visibility
