@@ -515,7 +515,7 @@ with col2:
         wedges, texts = ax.pie(
             angles, 
             colors=colors, 
-            wedgeprops={"width": 0.9, "edgecolor": "black"}, # 'width' creates the donut hole
+            wedgeprops={"width": 1, "edgecolor": "black"}, # 'width' creates the donut hole
             startangle=90, # Start at the top (usually 0 is right)
             counterclock=False # Cricket wagon wheels are typically clockwise
         )
@@ -542,17 +542,11 @@ with col2:
                 label_text, 
                 ha='center', va='center', 
                 color=text_color,
-                fontsize=9,
+                fontsize=11,
                 fontweight='bold'
             )
 
         ax.set_title(f"Scoring Distribution - {batsman if batsman != 'All' else 'All Batters'}", fontsize=20, fontweight='bold')
         ax.axis('equal') # Ensures the pie chart is a circle
-
-        # 5. Add Colorbar (Legend for Total Runs)
-        sm = cm.ScalarMappable(cmap=cmap, norm=norm)
-        sm.set_array([]) # Required for Matplotlib colorbars
-        cbar = fig.colorbar(sm, ax=ax, fraction=0.046, pad=0.04)
-        cbar.set_label("Total Runs")
 
         st.pyplot(fig)
