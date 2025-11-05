@@ -243,9 +243,14 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
         label_wkts_avg = f"{wkts}W - Ave {avg:.1f}"
         
         # Calculate text color for contrast
-        r, g, b, a = color
-        luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
-        text_color = 'white' if luminosity < 0.5 and row["Balls"] > 0 else 'black'
+        if row["Balls"] > 0:
+            r, g, b, a = color # This is safe now, as 'color' is an RGBA tuple
+            # Calculate luminosity for RGBA tuples (from cmap)
+            luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            text_color = 'white' if luminosity < 0.5 else 'black'
+        else:
+            # If the color is 'whitesmoke' (from the initial check), use black text
+            text_color = 'black' 
 
         # Label 1: Zone Name (Top of the box)
         ax_boxes.text(left + box_width / 2, 0.75, 
