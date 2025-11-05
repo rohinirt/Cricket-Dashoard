@@ -451,7 +451,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
 def create_interception_side_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
     if df_interception.empty:
-        fig, ax = plt.subplots(figsize=(3, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(2, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
         
     df_interception["ColorType"] = "Other"
     df_interception.loc[df_interception["Wicket"] == True, "ColorType"] = "Wicket"
@@ -468,7 +468,7 @@ def create_interception_side_on(df_in, delivery_type):
     # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on X-axis ===
     ax_7.scatter(
         df_other["InterceptionX"] + 10, df_other["InterceptionZ"], 
-        color='grey', edgecolors='white', linewidths=0.5, s=40, label="Other"
+        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=40, label="Other"
     )
     
     # Plot "Wicket" and "Boundary" (Solid colors)
@@ -496,6 +496,10 @@ def create_interception_side_on(df_in, delivery_type):
     ax_7.set_xlim(-0.2, 3.4) 
     ax_7.set_ylim(0, 1.5) 
     ax_7.tick_params(axis='y', which='both', labelleft=False, left=False); ax_7.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
     plt.tight_layout(pad=0.5)
     return fig_7
 
@@ -548,9 +552,10 @@ def create_interception_front_on(df_in, delivery_type):
     # 3. Set Axes Limits and Labels (FIXED LIMITS: Y-axis -0.2 to 3.5)
     ax_8.set_xlim(-1, 1); ax_8.set_ylim(-0.2, 3.5); ax_8.invert_yaxis()      
     ax_8.tick_params(axis='y', which='both', labelleft=False, left=False); ax_8.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
-    ax_8.set_xlabel("Width (m)", fontsize=8); ax_8.set_ylabel("Distance (m)", fontsize=8) 
-    ax_8.legend(loc='lower right', fontsize=6); ax_8.grid(True, linestyle=':', alpha=0.5); 
-    ax_8.set_title(f"Interception Front-On ({delivery_type})", fontsize=10, weight='bold')
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
     plt.tight_layout(pad=0.5)
     return fig_8
 
