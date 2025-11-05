@@ -11,23 +11,6 @@ from io import StringIO
 import base64
 
 # --- 1. GLOBAL UTILITY FUNCTIONS ---
-# Assuming you have two main sections side-by-side
-col_left, col_divider, col_right = st.columns([4.5, 0.05, 5.45]) # Adjust ratios to fit 10.0 total
-with col_divider:
-    st.markdown(
-        """
-        <style>
-        .vertical-line {
-            border-left: 1px solid #ccc; /* Light grey color, 1px thick */
-            height: 100vh; /* Sets height to 100% of viewport height */
-            margin-left: 20px; /* Optional: Adjusts position */
-        }
-        </style>
-        <div class="vertical-line"></div>
-        """,
-        unsafe_allow_html=True
-    )
-
 
 # Required columns check
 REQUIRED_COLS = [
@@ -984,7 +967,23 @@ if uploaded_file is not None:
 
     # --- RIGHT COLUMN: SPIN ANALYSIS ---
     with col2:
-        st.subheader("SPIN")
+        st.markdown(
+    """
+        <style>
+        /* Target h3 elements globally (Streamlit's subheader default) or use a class for h4 */
+        /* Targetting h4 for smaller size */
+        h4 {
+        margin-top: -10px; /* Adjust this negative value to pull the header up */
+        margin-bottom: -10px; /* Adjust this negative value to pull the content below up */
+        font-size: 1.25em; /* Optional: Adjust font size if h4 is too big */
+        }
+        </style>
+        """,
+         unsafe_allow_html=True
+        )
+
+        # Use a smaller Markdown header (e.g., h4)
+        st.markdown("#### SPIN")
         st.markdown("---")
         
         st.pyplot(create_zonal_analysis(df_spin, batsman, "Spin"), use_container_width=True)
