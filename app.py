@@ -357,19 +357,22 @@ def create_pitch_map(df_in, delivery_type):
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
-    fig_pitch.update_xaxes(
-        showline=True, 
-        linewidth=1, 
-        linecolor='black',  
-        mirror=True, # Draw top and right lines too
-        # If visible was True, we'd set ticks/labels to False, but here axes are already invisible.
-        # This will draw a line at the min/max of the axis range.
+    fig_pitch.update_layout(
+        shapes=[
+            # Outer black rectangle defining the boundary of the pitch area
+            dict(
+                type="rect",
+                # The coordinates match the defined x-axis and y-axis ranges
+                x0=-1.5, y0=-4.0, x1=1.5, y1=16.0, 
+                line=dict(
+                    color="black",
+                    width=1.5, # Adjust width for thickness
+                ),
+                fillcolor="rgba(0,0,0,0)", # Transparent fill
+                layer="below" # Ensure border is visible but doesn't cover dots
+            )
+        ]
     )
-    fig_pitch.update_yaxes(
-        showline=True, 
-        linewidth=1, 
-        linecolor='black', 
-        mirror=True, # Draw top and right lines too
     )
     return fig_pitch
 
