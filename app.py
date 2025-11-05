@@ -350,7 +350,7 @@ def create_pitch_map(df_in, delivery_type):
 
     # 4. Layout
     fig_pitch.update_layout(
-        height = 350,
+        height = 400,
         margin=dict(l=0, r=100, t=0, b=10),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False),
         # Ensure Y-axis range covers the custom bins
@@ -395,7 +395,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     df_summary["RunPercentage"] = (df_summary["Runs"] / total_runs) * 100 if total_runs > 0 else 0
 
     # 2. Chart Setup
-    fig_stack, ax_stack = plt.subplots(figsize=(2, 3.5)) 
+    fig_stack, ax_stack = plt.subplots(figsize=(2, 10)) 
     
     num_regions = len(ordered_keys)
     box_height = 1 / num_regions # Fixed height for each box
