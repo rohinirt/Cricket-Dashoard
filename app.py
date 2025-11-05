@@ -660,7 +660,7 @@ def create_wagon_wheel(df_in, delivery_type):
         
         # Set text color based on background color for contrast
         autotext.set_color('white' if luminosity < 0.5 and colors[i] != COLOR_DEFAULT else 'black')
-        autotext.set_fontsize(7)
+        autotext.set_fontsize(12)
         autotext.set_fontweight('bold')
 
     # Ensure external texts (though labels=None) are handled
