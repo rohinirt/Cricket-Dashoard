@@ -95,7 +95,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
     norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
     cmap = cm.get_cmap('Blues')
 
-    fig_boxes, ax = plt.subplots(figsize=(3, 3), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_boxes, ax = plt.subplots(figsize=(4, 2), subplot_kw={'xticks': [], 'yticks': []}) 
     
     for zone, (x1, y1, x2, y2) in zones_layout.items():
         w, h = x2 - x1, y2 - y1
@@ -110,7 +110,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
         
         color = cmap(norm(avg)) if avg > 0 else 'white'
 
-        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=1))
+        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=0.8))
 
         ax.text(x1 + w / 2, y1 + h / 2, 
         # === REPLACE THIS LINE WITH THE NEW FORMATTING ===
@@ -123,7 +123,6 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
         linespacing=1.2)
 
     ax.set_xlim(-0.75, 0.75); ax.set_ylim(0, 2); ax.axis('off'); 
-    ax.set_title(f"Zonal Analysis ({delivery_type})", fontsize=10, weight='bold')
     plt.tight_layout(pad=0.5) 
     return fig_boxes
 
