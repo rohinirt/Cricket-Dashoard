@@ -525,7 +525,7 @@ def create_interception_front_on(df_in, delivery_type):
     # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
     ax_8.scatter(
         df_other["InterceptionY"], df_other["InterceptionX"] + 10, 
-        color='#D3D3D3', edgecolors='grey', linewidths=0.5, s=40, label="Other"
+        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=40, label="Other"
     ) 
     
     # Plot "Wicket" and "Boundary" (Solid colors)
@@ -564,7 +564,7 @@ def create_interception_front_on(df_in, delivery_type):
 
 # --- CHART 6: SCORING WAGON WHEEL ---
 def create_wagon_wheel(df_in, delivery_type):
-    # ... (Wagon Wheel logic remains the same)
+    # ... (Data preparation and summary calculation remains the same)
     wagon_summary = pd.DataFrame() 
     try:
         df_wagon = df_in.copy()
@@ -592,31 +592,58 @@ def create_wagon_wheel(df_in, delivery_type):
     except Exception:
         fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "No Scoring Data", ha='center', va='center'); ax.axis('off'); return fig
 
+    # --- NEW COLOR AND LABEL LOGIC ---
+    
+    # 1. Identify Top 2 Regions by Percentage
+    wagon_summary['SortKey'] = wagon_summary['RunPercentage']
+    top_regions = wagon_summary.nlargest(2, 'SortKey')
+    
+    # Define Blue Color Hue
+    COLOR_HIGH = 'darkblue'
+    COLOR_SECOND_HIGH = 'cornflowerblue'
+    COLOR_DEFAULT = 'lightgrey'
+
+    # 2. Assign Colors
+    colors = []
+    for index, row in wagon_summary.iterrows():
+        if row['ScoringWagon'] == top_regions.iloc[0]['ScoringWagon']:
+            colors.append(COLOR_HIGH)
+        elif len(top_regions) > 1 and row['ScoringWagon'] == top_regions.iloc[1]['ScoringWagon']:
+            colors.append(COLOR_SECOND_HIGH)
+        else:
+            colors.append(COLOR_DEFAULT)
 
     angles = wagon_summary["FixedAngle"].tolist()
-    runs = wagon_summary["TotalRuns"].tolist()
-    labels = [f"{area}\n({pct:.0f}%)" for area, pct in zip(wagon_summary["ScoringWagon"], wagon_summary["RunPercentage"])]
     
-    run_min = min(runs) if runs else 0
-    run_max = max(runs) if runs else 1
-    norm = mcolors.Normalize(vmin=run_min, vmax=run_max) if run_max > run_min else mcolors.Normalize(vmin=0, vmax=1)
-    cmap = cm.get_cmap('Greens')
-    colors = cmap(norm(runs))
-    for i, run_count in enumerate(runs):
-        if run_count == 0: colors[i] = (1.0, 1.0, 1.0, 1.0) 
-
+    # 3. Labels: Only percentage for label inside the chart (autopct)
+    # The 'labels' variable is now irrelevant for exterior labels.
+    
     fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
-    wedges, texts = ax.pie(
+    # Use autopct to display labels inside the wedge. Set labels=None to hide external labels.
+    wedges, texts, autotexts = ax.pie(
         angles, 
         colors=colors, 
         wedgeprops={"width": 1, "edgecolor": "black"}, 
         startangle=90, 
         counterclock=False, 
-        labels=labels, 
-        labeldistance=1.1
+        labels=None, # Remove external labels
+        labeldistance=1.1,
+        # Display percentage inside the wedge, formatted to zero decimals
+        autopct=lambda p: f'{p:.0f}%' if p > 0 else '', 
+        pctdistance=0.5 # Place percentage label inside the wedge
     )
     
+    # Styling for percentage labels (autotexts)
+    for i, autotext in enumerate(autotexts):
+        color_rgb = mcolors.to_rgb(colors[i])
+        luminosity = 0.2126 * color_rgb[0] + 0.7152 * color_rgb[1] + 0.0722 * color_rgb[2]
+        
+        autotext.set_color('white' if luminosity < 0.5 and colors[i] != COLOR_DEFAULT else 'black')
+        autotext.set_fontsize(7)
+        autotext.set_fontweight('bold')
+
+    # Styling for external labels (now removed, so this is just cleanup)
     for text in texts:
         text.set_color('black'); text.set_fontsize(8); text.set_fontweight('bold')
 
