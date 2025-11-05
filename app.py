@@ -822,12 +822,10 @@ if uploaded_file is not None:
         pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
 
         with pitch_map_col:
-            st.markdown("##### 3. Pitch Map (Bounce Location)")
             # CORRECTED: Use df_spin and "Spin"
             st.plotly_chart(create_pitch_map(df_spin, "Spin"), use_container_width=True) 
             
         with run_pct_col:
-            st.markdown("##### 8. Length Run %")
             # CORRECTED: Use df_spin and "Spin"
             st.pyplot(create_pitch_length_run_pct(df_spin, "Spin"), use_container_width=True)
         
@@ -850,12 +848,10 @@ if uploaded_file is not None:
         final_col_swing, final_col_deviation = st.columns(2)
 
         with final_col_swing:
-            st.markdown("##### 9. Swing Direction Performance")
             # CORRECTED: Use df_spin and "Spin"
             st.pyplot(create_directional_split(df_spin, "Swing", "Swing Direction", "Spin"), use_container_width=True)
 
         with final_col_deviation:
-            st.markdown("##### 10. Deviation Direction Performance")
             # CORRECTED: Use df_spin and "Spin"
             st.pyplot(create_directional_split(df_spin, "Deviation", "Deviation Direction", "Spin"), use_container_width=True)    
         # --- NEW LAYOUT END ---
