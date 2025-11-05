@@ -129,7 +129,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
 def create_crease_beehive(df_in, delivery_type):
     # ... (Crease Beehive logic remains the same)
     if df_in.empty:
-        return go.Figure().update_layout(title="No data for Beehive", height=300)
+        return go.Figure().update_layout(title="No data for Beehive", height=400)
 
     wickets = df_in[df_in["Wicket"] == True]
     non_wickets = df_in[df_in["Wicket"] == False]
@@ -151,12 +151,20 @@ def create_crease_beehive(df_in, delivery_type):
     fig_cbh.add_vline(x=-0.92, line=dict(color="grey", width=0.8)) 
     fig_cbh.add_vline(x=0.92, line=dict(color="grey", width=0.8))
     fig_cbh.add_hline(y=0.78, line=dict(color="grey", width=0.8)) 
-    
+    fig_cbh.add_annotation(
+        x=-1.5,                 # X-position on the far left
+        y=0.78,                 # Y-position (on the line)
+        text="Stump line",      # The label text
+        showarrow=False,
+        font=dict(size=8, color="grey"),
+        xanchor='left',         # Anchor text to the left
+        yanchor='bottom'        # Place text slightly above the line
+    )
     fig_cbh.update_layout(
         height=300, 
-        margin=dict(l=0, r=0, t=30, b=10),
-        xaxis=dict(range=[-1.5, 1.5], showgrid=True, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
-        yaxis=dict(range=[0, 2], showgrid=True, zeroline=False, visible=False),
+        margin=dict(l=0, r=0, t=0, b=0),
+        xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
+        yaxis=dict(range=[0, 2], showgrid=False, zeroline=True, visible=False),
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
     return fig_cbh
