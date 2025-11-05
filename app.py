@@ -170,20 +170,17 @@ def create_crease_beehive(df_in, delivery_type):
     return fig_cbh
 
 # --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
-# --- CHART X: LATERAL PERFORMANCE STACKED BAR (Fixed Blue Color) ---
-def create_lateral_performance_stacked(df_in, delivery_type, batsman_name):
+# --- CHART X: LATERAL PERFORMANCE BOXES (Horizontal Heatmap) ---
+def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
+    from matplotlib import cm, colors, patches
+    
     df_lateral = df_in.copy()
     if df_lateral.empty:
-        fig, ax = plt.subplots(figsize=(4, 2)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(7, 1.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
         
-    # Determine handedness for zoning logic (needed for zone calculation, not plotting)
-    handed_data = df_lateral["IsBatsmanRightHanded"].dropna().mode()
-    is_right_handed = handed_data.iloc[0] if not handed_data.empty else True
-    
-    # Define Zoning Logic
+    # 1. Define Zoning Logic (Same as before)
     def assign_lateral_zone(row):
         y = row["CreaseY"]
-        # Logic remains the same
         if row["IsBatsmanRightHanded"] == True:
             if y > 0.18: return "LEG"
             elif y >= -0.18: return "STUMPS"
@@ -197,7 +194,7 @@ def create_lateral_performance_stacked(df_in, delivery_type, batsman_name):
     
     df_lateral["LateralZone"] = df_lateral.apply(assign_lateral_zone, axis=1)
     
-    # Calculate Summary Metrics
+    # 2. Calculate Summary Metrics
     summary = (
         df_lateral.groupby("LateralZone").agg(
             Runs=("Runs", "sum"), 
@@ -206,61 +203,76 @@ def create_lateral_performance_stacked(df_in, delivery_type, batsman_name):
         )
     )
     
-    # Order for Right-Handed (most common scenario)
+    # Order the zones from Way Outside Off to Leg (Left to Right)
     ordered_zones = ["WAY OUTSIDE OFF", "OUTSIDE OFF", "STUMPS", "LEG"]
     summary = summary.reindex(ordered_zones).fillna(0)
 
-    # Calculate Average for labeling
+    # Calculate Average for coloring and labeling
     summary["Avg Runs/Wicket"] = summary.apply(lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0, axis=1)
     
-    # Create the stacked bar chart (Matplotlib)
-    fig_stack, ax_stack = plt.subplots(figsize=(4, 2)) 
-
-    # --- Plotting Stacked Bars with Fixed Blue Color ---
-    bar_heights = summary["Balls"]
-    bottom = np.zeros(len(bar_heights))
+    # 3. Chart Setup
+    fig_boxes, ax_boxes = plt.subplots(figsize=(7, 1.5)) 
     
-    # Use a fixed blue color for all bars
-    bars = ax_stack.bar(
-        summary.index, 
-        bar_heights, 
-        bottom=bottom, 
-        color='royalblue', # Fixed Blue Color
-        edgecolor='black', 
-        linewidth=0.5
-    )
-
-    # Add labels for runs/wickets/average on top of the bars
-    for i, bar in enumerate(bars):
-        zone = summary.index[i]
-        wickets = int(summary.loc[zone, "Wickets"])
-        avg = summary.loc[zone, "Avg Runs/Wicket"]
+    num_regions = len(ordered_zones)
+    box_width = 1 / num_regions # Fixed width for each box (total width = 1)
+    left = 0
+    
+    # Color Normalization (based on Average)
+    avg_values = summary["Avg Runs/Wicket"]
+    # Normalize color range: Use 0 to 50 for a reasonable cap on average
+    avg_max = avg_values.max() if avg_values.max() > 0 else 50
+    norm = mcolors.Normalize(vmin=0, vmax=avg_max if avg_max > 50 else 50)
+    cmap = cm.get_cmap('Reds_r') # Use inverted Reds_r: lower avg (good) is darker/redder
+    
+    # 4. Plotting Equal Boxes (Horizontal Heatmap)
+    for index, row in summary.iterrows():
+        avg = row["Avg Runs/Wicket"]
+        wkts = int(row["Wickets"])
         
-        # Text label (Average and Wickets)
-        label = f"Avg: {avg:.1f}\nWkts: {wickets}"
-        ax_stack.text(
-            bar.get_x() + bar.get_width() / 2, 
-            bar.get_y() + bar.get_height() / 2, 
-            label,
-            ha='center', va='center', fontsize=7, color='white', weight='bold' # Set text color to white for contrast
+        # Color hue based on Average
+        # Use white/light color if no data (zero balls)
+        color = cmap(norm(avg)) if row["Balls"] > 0 else 'whitesmoke' 
+        
+        # Draw the Rectangle (Fixed width, full height)
+        ax_boxes.add_patch(
+            patches.Rectangle((left, 0), box_width, 1, 
+                              edgecolor="black", facecolor=color, linewidth=1)
         )
         
-    ax_stack.set_ylim(0, bar_heights.max() * 1.1 if bar_heights.max() > 0 else 1)
+        # Add labels (Zone Name, Wickets, Average)
+        label_wkts_avg = f"{wkts}W - Ave {avg:.1f}"
+        
+        # Calculate text color for contrast
+        r, g, b, a = color
+        luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        text_color = 'white' if luminosity < 0.5 and row["Balls"] > 0 else 'black'
+
+        # Label 1: Zone Name (Top of the box)
+        ax_boxes.text(left + box_width / 2, 0.75, 
+                      index,
+                      ha='center', va='center', fontsize=7, color='black', weight='bold')
+                      
+        # Label 2: Wickets and Average (Middle of the box)
+        ax_boxes.text(left + box_width / 2, 0.4, 
+                      label_wkts_avg,
+                      ha='center', va='center', fontsize=7, color=text_color, weight='bold')
+        
+        left += box_width
+        
+    # 5. Styling
+    ax_boxes.set_xlim(0, 1); ax_boxes.set_ylim(0, 1)
+    ax_boxes.axis('off') # Hide all axes/ticks/labels
     
-    # --- AXIS LABEL CHANGE ---
-    ax_stack.tick_params(axis='y', which='both', labelleft=False, left=False) # Hide Y-axis labels/ticks
-    ax_stack.tick_params(axis='x', rotation=0, labelsize=6) # KEEP X-AXIS LABELS AND ADJUST FONT SIZE
+    ax_boxes.set_title(f"Lateral Performance (Run Average - {delivery_type})", fontsize=8, weight='bold')
+
+    # Remove the border (spines)
+    ax_boxes.spines['right'].set_visible(False)
+    ax_boxes.spines['top'].set_visible(False)
+    ax_boxes.spines['left'].set_visible(False)
+    ax_boxes.spines['bottom'].set_visible(False)
     
-    # === CHANGES TO REMOVE CHART BORDER ===
-    ax_stack.spines['right'].set_visible(False)
-    ax_stack.spines['top'].set_visible(False)
-    ax_stack.spines['left'].set_visible(False)
-    ax_stack.spines['bottom'].set_visible(False)
-    # ======================================
-    # ======================================
-    ax_stack.set_title(f"Lateral Performance ({delivery_type})", fontsize=8, weight='bold')
     plt.tight_layout(pad=0.5)
-    return fig_stack
+    return fig_boxes
 
 # --- CHART 3: PITCH MAP ---
 def create_pitch_map(df_in, delivery_type):
@@ -786,7 +798,7 @@ if uploaded_file is not None:
 
         st.plotly_chart(create_crease_beehive(df_seam, "Seam"), use_container_width=True)
 
-        st.pyplot(create_lateral_performance_stacked(df_seam, "Seam", batsman), use_container_width=True)
+        st.pyplot(create_lateral_performance_boxes(df_seam, "Seam", batsman), use_container_width=True)
         
         # Charts 3: Pitch Map and Vertical Run % Bar (Side-by-Side)
         pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
@@ -835,7 +847,7 @@ if uploaded_file is not None:
         
         st.plotly_chart(create_crease_beehive(df_spin, "Spin"), use_container_width=True)
 
-        st.pyplot(create_lateral_performance_stacked(df_spin, "Spin", batsman), use_container_width=True)
+        st.pyplot(create_lateral_performance_boxes(df_spin, "Spin", batsman), use_container_width=True)
 
         # Charts 3 & 8: Pitch Map and Vertical Run % Bar (Side-by-Side)
         pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
