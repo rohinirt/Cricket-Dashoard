@@ -360,7 +360,7 @@ def create_pitch_map(df_in, delivery_type):
     fig_pitch.update_xaxes(
         showline=True, 
         linewidth=1, 
-        linecolor='black', 
+        linecolor='black',  
         mirror=True, # Draw top and right lines too
         # If visible was True, we'd set ticks/labels to False, but here axes are already invisible.
         # This will draw a line at the min/max of the axis range.
