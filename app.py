@@ -694,60 +694,57 @@ st.set_page_config(layout="wide")
 
 st.title("🏏 Cricket Bowling Delivery Analysis Dashboard")
 
+# --- 3. MAIN STREAMLIT APP STRUCTURE ---
+# ... (st.set_page_config and st.title calls)
+
 # --- File Uploader ---
 uploaded_file = st.file_uploader("Upload your CSV file here", type=["csv"])
 
 if uploaded_file is not None:
-    # Read the data from the uploaded file
-    try:
-        data = uploaded_file.getvalue().decode("utf-8")
-        df_raw = pd.read_csv(StringIO(data))
-    except Exception as e:
-        st.error(f"Error reading file: {e}")
-        st.stop()
+    # ... (File reading and validation code)
     
-    # Initial validation and required column check
-    if not all(col in df_raw.columns for col in REQUIRED_COLS):
-        missing_cols = [col for col in REQUIRED_COLS if col not in df_raw.columns]
-        st.error(f"The CSV file is missing required columns: {', '.join(missing_cols)}")
-        st.stop()
-
     # Data separation
     df_seam = df_raw[df_raw["DeliveryType"] == "Seam"].copy()
     df_spin = df_raw[df_raw["DeliveryType"] == "Spin"].copy()
 
-    # --- Global Filters (Apply to both Seam and Spin data) ---
-    st.sidebar.header("Global Filters")
-    
-    all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
-    bat_team = st.sidebar.selectbox("Batting Team", all_teams, index=0)
+    # =========================================================
+    # 🌟 NEW FILTER LOCATION: TOP OF MAIN BODY 🌟
+    # =========================================================
+    st.header("Global Filters")
+    filter_col1, filter_col2, filter_col3 = st.columns(3) # Arrange 3 filters horizontally
 
+    # --- Filter Logic ---
+    all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
+    
+    # 1. Batting Team Filter
+    with filter_col1:
+        # Changed from st.sidebar.selectbox to st.selectbox
+        bat_team = st.selectbox("Batting Team", all_teams, index=0, key="bat_team_filter") 
+
+    # 2. Batsman Name Filter (Logic depends on Batting Team)
     if bat_team != "All":
         batsmen_options = ["All"] + sorted(df_raw[df_raw["BattingTeam"] == bat_team]["BatsmanName"].dropna().unique().tolist())
     else:
         batsmen_options = ["All"] + sorted(df_raw["BatsmanName"].dropna().unique().tolist())
         
-    batsman = st.sidebar.selectbox("Batsman Name", batsmen_options, index=0)
+    with filter_col2:
+        # Changed from st.sidebar.selectbox to st.selectbox
+        batsman = st.selectbox("Batsman Name", batsmen_options, index=0, key="batsman_filter")
 
+    # 3. Over Filter
     all_overs = ["All"] + sorted(df_raw["Over"].dropna().unique().tolist())
-    selected_over = st.sidebar.selectbox("Over", all_overs, index=0)
+    with filter_col3:
+        # Changed from st.sidebar.selectbox to st.selectbox
+        selected_over = st.selectbox("Over", all_overs, index=0, key="over_filter")
+
+    # Ensure the key arguments are added to prevent potential Streamlit warnings,
+    # though it might not be strictly necessary for simple selects.
+    # =========================================================
 
     # --- Apply Filters to Seam and Spin dataframes ---
-    def apply_filters(df):
-        if bat_team != "All":
-            df = df[df["BattingTeam"] == bat_team]
-        if batsman != "All":
-            df = df[df["BatsmanName"] == batsman]
-        if selected_over != "All":
-            df = df[df["Over"] == selected_over]
-        return df
-
-    df_seam = apply_filters(df_seam)
-    df_spin = apply_filters(df_spin)
+    # ... (apply_filters function remains the same)
     
-    heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
-    st.header(f"Analysis for: **{heading_text}**")
-    st.markdown("---")
+    # ... (The rest of the dashboard code follows, starting with st.header(f"Analysis for:...") )
 
 
     # --- 4. DISPLAY CHARTS IN TWO COLUMNS ---
@@ -756,7 +753,7 @@ if uploaded_file is not None:
     
     # --- LEFT COLUMN: SEAM ANALYSIS ---
     with col1:
-        st.subheader("LEFT COLUMN: SEAM ANALYSIS 🥎")
+        st.subheader("SEAM")
         st.markdown("---")
 
         st.pyplot(create_zonal_analysis(df_seam, batsman, "Seam"), use_container_width=True)
@@ -805,7 +802,7 @@ if uploaded_file is not None:
 
     # --- RIGHT COLUMN: SPIN ANALYSIS ---
     with col2:
-        st.subheader("RIGHT COLUMN: SPIN ANALYSIS 🌀")
+        st.subheader("SPIN")
         st.markdown("---")
         
         st.pyplot(create_zonal_analysis(df_spin, batsman, "Spin"), use_container_width=True)
