@@ -301,7 +301,7 @@ def get_pitch_bins(delivery_type):
 # --- CHART 3: PITCH MAP (BOUNCE LOCATION) ---
 def create_pitch_map(df_in, delivery_type):
     if df_in.empty:
-        return go.Figure().update_layout(title=f"No data for Pitch Map ({delivery_type})", height=350)
+        return go.Figure().update_layout(title=f"No data for Pitch Map ({delivery_type})", height=300)
 
     PITCH_BINS = get_pitch_bins(delivery_type)
     
@@ -332,6 +332,7 @@ def create_pitch_map(df_in, delivery_type):
     # 2. Add Stump lines
     fig_pitch.add_vline(x=-0.18, line=dict(color="#777777", dash="dot", width=1.2))
     fig_pitch.add_vline(x=0.18, line=dict(color="#777777", dash="dot", width=1.2))
+    fig_pitch.add_vline(x=0, line=dict(color="#777777", dash="dot", width=1.2))
 
     # 3. Plot Data
     pitch_wickets = df_in[df_in["Wicket"] == True]
@@ -339,19 +340,17 @@ def create_pitch_map(df_in, delivery_type):
 
     fig_pitch.add_trace(go.Scatter(
         x=pitch_non_wickets["BounceY"], y=pitch_non_wickets["BounceX"], mode='markers', name="No Wicket",
-        marker=dict(color='white', size=4, line=dict(width=1, color="grey"), opacity=0.9)
+        marker=dict(color='grey', size=10, line=dict(width=1, color="white"), opacity=0.9)
     ))
 
     fig_pitch.add_trace(go.Scatter(
         x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"], mode='markers', name="Wicket",
-        marker=dict(color='red', size=8, line=dict(width=0), opacity=0.95)
+        marker=dict(color='red', size=12, line=dict(width=0), opacity=0.95)
     ))
 
     # 4. Layout
     fig_pitch.update_layout(
-        title=f"Pitch Map (Bounce Location - {delivery_type})",
-        height=350, 
-        margin=dict(l=0, r=0, t=30, b=10),
+        margin=dict(l=0, r=0, t=0, b=10),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False),
         # Ensure Y-axis range covers the custom bins
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
