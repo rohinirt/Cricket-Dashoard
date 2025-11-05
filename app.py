@@ -277,27 +277,57 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     return fig_boxes
 
 # --- CHART 3: PITCH MAP ---
-def create_pitch_map(df_in, delivery_type):
-    # ... (Pitch Map logic remains the same)
-    if df_in.empty:
-        return go.Figure().update_layout(title="No data for Pitch Map", height=350)
 
-    PITCH_BINS = {
-        "Short": {"y0": 8.60, "y1": 16.0},
-        "Length": {"y0": 5.0, "y1": 8.60},
-        "Slot": {"y0": 2.8, "y1": 5.0},
-        "Yorker": {"y0": 0.9, "y1": 2.8},
-        "Full Toss": {"y0": -4.0, "y1": 0.9},
-    }
+# --- Helper function for Pitch Bins (Centralized) ---
+def get_pitch_bins(delivery_type):
+    if delivery_type == "Seam":
+        # Seam Bins: 1.2-6: Full, 6-8 Length, 8-10 Short, 10-15 Bouncer
+        return {
+            "Full": [1.2, 6.0],
+            "Length": [6.0, 8.0],
+            "Short": [8.0, 10.0],
+            "Bouncer": [10.0, 15.0],
+        }
+    elif delivery_type == "Spin":
+        # Spin Bins: 1.22-2.22: OP, 2.22-4: full, 4-6: Good, 6-15: short
+        return {
+            "Over Pitched": [1.22, 2.22],
+            "Full": [2.22, 4.0],
+            "Good": [4.0, 6.0],
+            "Short": [6.0, 15.0],
+        }
+    return {} # Default
+
+# --- CHART 3: PITCH MAP (BOUNCE LOCATION) ---
+def create_pitch_map(df_in, delivery_type):
+    if df_in.empty:
+        return go.Figure().update_layout(title=f"No data for Pitch Map ({delivery_type})", height=350)
+
+    PITCH_BINS = get_pitch_bins(delivery_type)
     
+    # Add a catch-all bin for plotting range/data outside the defined bins if needed
+    if delivery_type == "Seam":
+        PITCH_BINS["Full Toss"] = [-4.0, 1.2] 
+    elif delivery_type == "Spin":
+        PITCH_BINS["Full Toss"] = [-4.0, 1.22] 
+        
     fig_pitch = go.Figure()
     
-    # 1. Add Zone Lines & Labels
-    for length, params in PITCH_BINS.items():
-        fig_pitch.add_hline(y=params["y0"], line=dict(color="lightgrey", width=1.0, dash="dot"))
-        mid_y = (params["y0"] + params["y1"]) / 2
-        fig_pitch.add_annotation(x=-1.45, y=mid_y, text=length.upper(), showarrow=False,
-            font=dict(size=8, color="grey", weight='bold'), xanchor='left')
+    # 1. Add Zone Lines & Labels (using y0, which is the start of the zone)
+    # The dictionary keys must be sorted to ensure labels appear correctly if not iterating directly
+    
+    # Determine boundary keys for lines (excluding the start of the lowest bin)
+    boundary_y_values = sorted([v[0] for v in PITCH_BINS.values() if v[0] > -4.0])
+
+    for y_val in boundary_y_values:
+        fig_pitch.add_hline(y=y_val, line=dict(color="lightgrey", width=1.0, dash="dot"))
+
+    # Add zone labels
+    for length, bounds in PITCH_BINS.items():
+        if length != "Full Toss": # Skip full toss for placement of label
+            mid_y = (bounds[0] + bounds[1]) / 2
+            fig_pitch.add_annotation(x=-1.45, y=mid_y, text=length.upper(), showarrow=False,
+                font=dict(size=8, color="grey", weight='bold'), xanchor='left')
 
     # 2. Add Stump lines
     fig_pitch.add_vline(x=-0.18, line=dict(color="#777777", dash="dot", width=1.2))
@@ -323,33 +353,35 @@ def create_pitch_map(df_in, delivery_type):
         height=350, 
         margin=dict(l=0, r=0, t=30, b=10),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False),
+        # Ensure Y-axis range covers the custom bins
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
     return fig_pitch
 
-# --- CHART 3b: PITCH LENGTH RUN % (Vertical Stacked Bar) ---
-# --- CHART 8: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
+# --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
 def create_pitch_length_run_pct(df_in, delivery_type):
-    df_pitch = df_in.copy()
+    if df_in.empty:
+        fig, ax = plt.subplots(figsize=(2, 3.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); ax.axis('off'); return fig
+
+    PITCH_BINS_DICT = get_pitch_bins(delivery_type)
     
-    PITCH_BINS = {
-        "Short": 0,    # Placeholder for ordering/labeling
-        "Length": 1,
-        "Slot": 2,
-        "Yorker": 3,
-        "Full Toss": 4,
-    }
+    # Define ordered keys for reindexing/plotting order (far to near)
+    if delivery_type == "Seam":
+        ordered_keys = ["Bouncer", "Short", "Length", "Full"] 
+    elif delivery_type == "Spin":
+        ordered_keys = ["Short", "Good", "Full", "Over Pitched"]
+    else:
+        # Fallback if delivery type is not recognized
+        fig, ax = plt.subplots(figsize=(2, 3.5)); ax.text(0.5, 0.5, "Invalid Type", ha='center', va='center', rotation=90); ax.axis('off'); return fig
 
     # 1. Data Preparation
     def assign_pitch_length(x):
-        if 8.60 <= x < 16.0: return "Short"
-        elif 5.0 <= x < 8.60: return "Length"
-        elif 2.8 <= x < 5.0: return "Slot"
-        elif 0.9 <= x < 2.8: return "Yorker"
-        elif -4.0 <= x < 0.9: return "Full Toss"
+        for length, bounds in PITCH_BINS_DICT.items():
+            if bounds[0] <= x < bounds[1]: return length
         return None
 
+    df_pitch = df_in.copy()
     df_pitch["PitchLength"] = df_pitch["BounceX"].apply(assign_pitch_length)
     
     # Aggregate data
@@ -357,18 +389,15 @@ def create_pitch_length_run_pct(df_in, delivery_type):
         Runs=("Runs", "sum"), 
         Wickets=("Wicket", lambda x: (x == True).sum()), 
         Balls=("Wicket", "count")
-    ).reset_index().set_index("PitchLength").reindex(PITCH_BINS.keys()).fillna(0)
+    ).reset_index().set_index("PitchLength").reindex(ordered_keys).fillna(0)
     
     total_runs = df_summary["Runs"].sum()
     df_summary["RunPercentage"] = (df_summary["Runs"] / total_runs) * 100 if total_runs > 0 else 0
 
-    if df_summary.empty:
-        fig, ax = plt.subplots(figsize=(2, 3.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); ax.axis('off'); return fig
-
     # 2. Chart Setup
     fig_stack, ax_stack = plt.subplots(figsize=(2, 3.5)) 
     
-    num_regions = len(PITCH_BINS)
+    num_regions = len(ordered_keys)
     box_height = 1 / num_regions # Fixed height for each box
     bottom = 0
     
@@ -395,7 +424,6 @@ def create_pitch_length_run_pct(df_in, delivery_type):
         label_text = f"{index}\n{pct:.0f}%\nWkts: {wkts}"
         
         # Calculate text color for contrast
-        # Note: If cmap is 'Reds', dark colors (high Run%) should use white text
         r, g, b, a = color
         luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
         text_color = 'white' if luminosity < 0.5 else 'black'
