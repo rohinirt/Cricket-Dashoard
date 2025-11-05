@@ -459,7 +459,7 @@ def create_interception_side_on(df_in, delivery_type):
     # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_7, ax_7 = plt.subplots(figsize=(4, 2), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_7, ax_7 = plt.subplots(figsize=(3, 2), subplot_kw={'xticks': [], 'yticks': []}) 
     
     # 1. Plot Data (Layered for correct border visibility)
     
@@ -675,47 +675,73 @@ def create_wagon_wheel(df_in, delivery_type):
 
 # --- CHART 7: LEFT/RIGHT SCORING SPLIT (100% Bar) ---
 def create_left_right_split(df_in, delivery_type):
+    import matplotlib.colors as mcolors
+    import matplotlib.cm as cm
+    
     df_split = df_in.copy()
     
     # 1. Define Side
+    # Assuming 'LandingY' < 0 is the batsman's right side (Off-side for RHB)
+    # Since you label it LEFT/RIGHT, we'll keep that.
     df_split["Side"] = np.where(df_split["LandingY"] < 0, "LEFT", "RIGHT")
     
     # 2. Calculate Runs and Percentage
     summary = df_split.groupby("Side")["Runs"].sum().reset_index()
     total_runs = summary["Runs"].sum()
     
+    # --- Check for No Runs (Remains the same) ---
     if total_runs == 0:
-        fig, ax = plt.subplots(figsize=(4, 1.5)); ax.text(0.5, 0.5, "No Runs Scored", ha='center', va='center'); ax.axis('off'); return fig
+        # Decreased height applied here too
+        fig, ax = plt.subplots(figsize=(4, 1.0)); ax.text(0.5, 0.5, "No Runs Scored", ha='center', va='center'); ax.axis('off'); return fig
         
     summary["Percentage"] = (summary["Runs"] / total_runs) * 100
     
     # Order the summary for consistent plotting
     summary = summary.set_index("Side").reindex(["LEFT", "RIGHT"]).fillna(0)
     
-    # 3. Create the 100% Stacked Bar Chart
-    fig_split, ax_split = plt.subplots(figsize=(4, 1.5)) 
-
     left_pct = summary.loc["LEFT", "Percentage"]
     right_pct = summary.loc["RIGHT", "Percentage"]
+
+    # 3. Apply Blue Hue Based on Percentage
     
-    # Define colors
-    colors = ['indianred', 'royalblue'] # Left (Reddish) and Right (Blueish)
+    # Normalize percentage values (0 to 100)
+    norm = mcolors.Normalize(vmin=0, vmax=100)
+    # Use a sequential blue colormap. Use Blues_r if you want a lower percentage to be darker blue.
+    cmap = cm.get_cmap('Blues') 
     
+    # Map the percentages to the colormap
+    left_color = cmap(norm(left_pct))
+    right_color = cmap(norm(right_pct))
+    
+    # 4. Create the 100% Stacked Bar Chart
+    # DECREASED HEIGHT: Changed figsize to (4, 1.0)
+    fig_split, ax_split = plt.subplots(figsize=(4, 1.0)) 
+
     # Plotting the left side
-    ax_split.barh("Total", left_pct, color=colors[0], edgecolor='black', linewidth=0.5)
+    ax_split.barh("Total", left_pct, color=left_color, edgecolor='black', linewidth=0.5)
     
     # Plotting the right side stacked on the left side
-    ax_split.barh("Total", right_pct, left=left_pct, color=colors[1], edgecolor='black', linewidth=0.5)
+    ax_split.barh("Total", right_pct, left=left_pct, color=right_color, edgecolor='black', linewidth=0.5)
     
     # Add labels
-    if left_pct > 0:
-        ax_split.text(left_pct / 2, 0, f"LEFT\n{left_pct:.0f}%", 
-                      ha='center', va='center', color='white', weight='bold', fontsize=7)
-    if right_pct > 0:
-        ax_split.text(left_pct + right_pct / 2, 0, f"RIGHT\n{right_pct:.0f}%", 
-                      ha='center', va='center', color='white', weight='bold', fontsize=7)
+    # Use a luminosity check to ensure white text on dark blue and black text on light blue
+    
+    def get_text_color(rgb_color):
+        r, g, b, a = rgb_color
+        luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return 'white' if luminosity < 0.5 else 'black'
 
-    # 4. Styling
+    if left_pct > 0:
+        text_color_left = get_text_color(mcolors.to_rgb(left_color))
+        ax_split.text(left_pct / 2, 0, f"LEFT\n{left_pct:.0f}%", 
+                      ha='center', va='center', color=text_color_left, weight='bold', fontsize=7)
+                      
+    if right_pct > 0:
+        text_color_right = get_text_color(mcolors.to_rgb(right_color))
+        ax_split.text(left_pct + right_pct / 2, 0, f"RIGHT\n{right_pct:.0f}%", 
+                      ha='center', va='center', color=text_color_right, weight='bold', fontsize=7)
+
+    # 5. Styling (Remains the same)
     ax_split.set_xlim(0, 100)
     ax_split.set_title(f"Run Split (Left/Right - {delivery_type})", fontsize=8, weight='bold')
     
@@ -731,6 +757,7 @@ def create_left_right_split(df_in, delivery_type):
     
     plt.tight_layout(pad=0.5)
     return fig_split
+
 # --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
 def create_directional_split(df_in, direction_col, title, delivery_type):
     df_dir = df_in.copy()
