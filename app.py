@@ -170,14 +170,12 @@ def create_crease_beehive(df_in, delivery_type):
     return fig_cbh
 
 # --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
-# --- CHART X: LATERAL PERFORMANCE BOXES (Horizontal Heatmap) ---
 def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     from matplotlib import cm, colors, patches
     
     df_lateral = df_in.copy()
     if df_lateral.empty:
-        fig, ax = plt.subplots(figsize=(7, 1)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
-        
+        fig, ax = plt.subplots(figsize=(7, 1)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig     
     # 1. Define Zoning Logic (Same as before)
     def assign_lateral_zone(row):
         y = row["CreaseY"]
@@ -267,8 +265,7 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     # 5. Styling
     ax_boxes.set_xlim(0, 1); ax_boxes.set_ylim(0, 1)
     ax_boxes.axis('off') # Hide all axes/ticks/labels
-    
-    ax_boxes.set_title(f"Lateral Performance (Run Average - {delivery_type})", fontsize=8, weight='bold')
+
 
     # Remove the border (spines)
     ax_boxes.spines['right'].set_visible(False)
