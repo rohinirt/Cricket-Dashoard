@@ -509,7 +509,7 @@ def create_interception_side_on(df_in, delivery_type):
 def create_interception_front_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
     if df_interception.empty:
-        fig, ax = plt.subplots(figsize=(3, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(3, 5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
         
     df_interception["ColorType"] = "Other"
     df_interception.loc[df_interception["Wicket"] == True, "ColorType"] = "Wicket"
@@ -517,7 +517,7 @@ def create_interception_front_on(df_in, delivery_type):
     # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_8, ax_8 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_8, ax_8 = plt.subplots(figsize=(3, 5), subplot_kw={'xticks': [], 'yticks': []}) 
 
     # 1. Plot Data
     # Plot "Other" (White with Grey Border)
@@ -760,10 +760,15 @@ def create_left_right_split(df_in, delivery_type):
     return fig_split
 
 # --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd # Ensure pandas is imported if not globally
+
 def create_directional_split(df_in, direction_col, title, delivery_type):
     df_dir = df_in.copy()
     if df_dir.empty:
-        fig, ax = plt.subplots(figsize=(4, 2)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        # Increased figsize height slightly for better label placement
+        fig, ax = plt.subplots(figsize=(4, 2.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
     
     # Define Direction
     df_dir["Direction"] = np.where(df_dir[direction_col] < 0, "LEFT", "RIGHT")
@@ -775,37 +780,52 @@ def create_directional_split(df_in, direction_col, title, delivery_type):
         Balls=("Wicket", "count")
     ).reset_index().set_index("Direction").reindex(["LEFT", "RIGHT"]).fillna(0)
     
-    summary["StrikeRate"] = (summary["Runs"] / summary["Balls"]) * 100
+    # CALCULATE AVERAGE: Replaces StrikeRate calculation
+    summary["Average"] = summary.apply(
+        lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else (row["Runs"] if row["Balls"] > 0 else 0), axis=1
+    )
     
     # Create the Bar Chart (Side-by-Side)
-    fig_dir, ax_dir = plt.subplots(figsize=(4, 2)) 
+    fig_dir, ax_dir = plt.subplots(figsize=(4, 2.5)) 
 
     directions = summary.index.tolist()
-    strike_rates = summary["StrikeRate"].tolist()
+    # USE AVERAGE FOR BAR HEIGHT
+    averages = summary["Average"].tolist()
     wickets = summary["Wickets"].tolist()
     
     # Colors: LEFT=Reddish, RIGHT=Blueish
     colors = ['indianred', 'royalblue'] 
     
-    bars = ax_dir.bar(directions, strike_rates, color=colors, edgecolor='black', linewidth=0.5)
+    # Plot bars using Average for height
+    bars = ax_dir.bar(directions, averages, color=colors, edgecolor='black', linewidth=0.5)
     
-    # Add labels (Strike Rate and Wickets)
+    # Add labels (Wickets and Average)
     for i, bar in enumerate(bars):
-        sr = strike_rates[i]
+        avg = averages[i]
         wkts = wickets[i]
         
-        label = f"SR: {sr:.1f}\nWkts: {int(wkts)}"
-        ax_dir.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), 
-                      label,
-                      ha='center', va='bottom', fontsize=7, color='black', weight='bold')
+        # New label format: "4W\n22.5 Ave"
+        label = f"{int(wkts)}W\n{avg:.1f} Ave"
+        
+        # Use a slightly higher position for better visibility
+        ax_dir.text(bar.get_x() + bar.get_width() / 2, 
+                    bar.get_height() + (max(averages) * 0.02), # Place slightly above the bar
+                    label,
+                    ha='center', va='bottom', 
+                    fontsize=12, # INCREASED FONTSIZE
+                    color='black', weight='bold')
 
     # Styling
-    ax_dir.set_ylim(0, max(strike_rates) * 1.2 if max(strike_rates) > 0 else 100)
-    ax_dir.set_title(f"{title} ({delivery_type})", fontsize=8, weight='bold')
+    # Set y-limit based on max average, plus padding
+    max_avg = max(averages) if averages else 0
+    ax_dir.set_ylim(0, max_avg * 1.3 if max_avg > 0 else 10) 
     
-    # Remove axis ticks and labels, keep X labels
+    # REMOVED TITLE: ax_dir.set_title(...)
+    
+    # Update axis ticks and labels font size
     ax_dir.tick_params(axis='y', which='both', labelleft=False, left=False)
-    ax_dir.tick_params(axis='x', rotation=0, labelsize=7)
+    # INCREASED AXIS LABEL FONTSIZE
+    ax_dir.tick_params(axis='x', rotation=0, labelsize=12) 
     
     # Remove all spines/borders
     ax_dir.spines['right'].set_visible(False)
@@ -815,6 +835,7 @@ def create_directional_split(df_in, direction_col, title, delivery_type):
     
     plt.tight_layout(pad=0.5)
     return fig_dir
+
 
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
