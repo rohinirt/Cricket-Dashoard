@@ -769,11 +769,9 @@ if uploaded_file is not None:
         pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
 
         with pitch_map_col:
-            st.markdown("##### 3. Pitch Map (Bounce Location)")
             st.plotly_chart(create_pitch_map(df_seam, "Seam"), use_container_width=True)
             
         with run_pct_col:
-            st.markdown("##### 8. Length Run %")
             st.pyplot(create_pitch_length_run_pct(df_seam, "Seam"), use_container_width=True)
         
         # --- NEW LAYOUT START ---
