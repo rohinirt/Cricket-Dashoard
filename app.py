@@ -10,40 +10,38 @@ import numpy as np
 # --- 1. SET PAGE CONFIGURATION ---
 st.set_page_config(page_title="Cricket Analysis Dashboard", layout="wide")
 
-# --- 2. INJECT CUSTOM CSS TO REMOVE PADDING AND ALIGNMENT FIXES (Optimized) ---
+# --- 2. INJECT CUSTOM CSS FOR ABSOLUTE MINIMUM SPACING ---
 st.markdown("""
 <style>
     /* 1. Target the main content container and set absolute minimum padding */
     .block-container {
-        padding-top: 0.25rem; 
-        padding-right: 0.25rem;
-        padding-left: 0.25rem;
-        padding-bottom: 0.25rem;
+        padding-top: 0.1rem; 
+        padding-right: 0.1rem;
+        padding-left: 0.1rem;
+        padding-bottom: 0.1rem;
     }
     
-    /* 2. Collapse vertical space reserved by Streamlit elements */
+    /* 2. Target the main section and reduce vertical margins */
     section.main, .css-18e3th9 {
-        padding-left: 0;
-        padding-right: 0;
-        padding-top: 0.25rem; 
-        padding-bottom: 0.25rem;
+        padding-top: 0.1rem; 
+        padding-bottom: 0.1rem;
     }
     
-    /* 3. Reduce vertical space around markdown text/headers */
-    h2, h3, h4, p {
-        margin-top: 0.25rem;
-        margin-bottom: 0.25rem;
+    /* 3. Reduce vertical space around markdown text/headers/captions */
+    h1, h2, h3, h4, p, .stCaption {
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
     }
     
-    /* 4. Remove padding from columns for tighter chart spacing */
+    /* 4. Remove padding from columns for tight chart spacing */
     .st-emotion-cache-1om0885 { 
         padding: 0px !important; 
     }
-    
+
     /* 5. Reduce spacing for the separator line */
     hr {
-        margin-top: 0.5rem;
-        margin-bottom: 0.5rem;
+        margin-top: 0.2rem;
+        margin-bottom: 0.2rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -70,37 +68,39 @@ if df is None:
     st.info("👆 Please upload a CSV file with the required Hawkeye data columns to view the dashboard.")
     st.stop() 
 
-# --- 4. TOP FILTERS (COMMON TO BOTH CHARTS) ---
-filter_col1, filter_col2, filter_col3 = st.columns([1, 1, 1])
+# --- 4. TOP FILTERS (COMPACT ROW) ---
+filter_col1, filter_col2 = st.columns([1.5, 1.5])
 
-# Filter 1: Batting Team
-bat_team_options = ["All"] + sorted(df["BattingTeam"].dropna().unique().tolist())
+# Filter 1 & 2: Batting Team & Batsman Name
 with filter_col1:
-    bat_team = st.selectbox("Select Batting Team", bat_team_options)
-df_bat_team = df if bat_team == "All" else df[df["BattingTeam"] == bat_team]
-
-# Filter 2: Batsman Name (Cascading based on Batting Team)
-batsman_options = ["All"] + sorted(df_bat_team["BatsmanName"].dropna().unique().tolist())
-with filter_col2:
-    batsman = st.selectbox("Select Batsman", batsman_options)
-df_batsman = df_bat_team if batsman == "All" else df_bat_team[df_bat_team["BatsmanName"] == batsman]
+    bat_team_options = ["All"] + sorted(df["BattingTeam"].dropna().unique().tolist())
+    bat_team = st.selectbox("Batting Team", bat_team_options, label_visibility="collapsed")
+    df_bat_team = df if bat_team == "All" else df[df["BattingTeam"] == bat_team]
+    st.caption(f"**Team:** {bat_team}") 
+    
+    batsman_options = ["All"] + sorted(df_bat_team["BatsmanName"].dropna().unique().tolist())
+    batsman = st.selectbox("Batsman", batsman_options, label_visibility="collapsed")
+    df_batsman = df_bat_team if batsman == "All" else df_bat_team[df_bat_team["BatsmanName"] == batsman]
+    st.caption(f"**Batsman:** {batsman}") 
 
 # Filter 3: Over
-over_options = ["All"] + sorted(df_batsman["Over"].dropna().unique().tolist())
-with filter_col3:
-    selected_over = st.selectbox("Select Over", over_options)
-df_over = df_batsman if selected_over == "All" else df_batsman[df_batsman["Over"] == selected_over]
+with filter_col2:
+    over_options = ["All"] + sorted(df_batsman["Over"].dropna().unique().tolist())
+    selected_over = st.selectbox("Over", over_options, label_visibility="collapsed")
+    df_over = df_batsman if selected_over == "All" else df_batsman[df_batsman["Over"] == selected_over]
+    st.caption(f"**Over:** {selected_over}") 
+    
+    # Static info display
+    st.caption(f"**Analysis Filter:** Seam")
 
 # --- FIXED FILTER: DELIVERY TYPE = 'Seam' ---
 filtered_df = df_over[df_over["DeliveryType"] == "Seam"]
 
-# Set the heading based on the selected batsman
-st.markdown(f"## Analysis for: **{batsman}** (Filter: Seam)")
 st.markdown("---")
 
-
-# --- WAGON WHEEL UTILITY FUNCTIONS (NO CHANGE) ---
+# --- WAGON WHEEL UTILITY FUNCTIONS (Retained) ---
 def calculate_scoring_wagon(row):
+    # ... [Function body remains the same] ...
     LX = row.get("LandingX")
     LY = row.get("LandingY")
     RH = row.get("IsBatsmanRightHanded")
@@ -146,7 +146,7 @@ def calculate_scoring_angle(area):
         return 45
     return 0 
 
-# --- WAGON WHEEL DATA PROCESSING (CRITICAL FIX RETAINED) ---
+# --- WAGON WHEEL DATA PROCESSING (Retained) ---
 wagon_summary = pd.DataFrame() 
 try:
     df_wagon = filtered_df.copy()
@@ -190,11 +190,9 @@ try:
     wagon_summary["FixedAngle"] = wagon_summary["FixedAngle"].astype(int) 
 
 except KeyError as e:
-    # Use st.exception for better error display if critical data is missing
-    st.exception(f"Cannot calculate Wagon Wheel: Missing required column {e}.")
     wagon_summary = pd.DataFrame()
 
-# --- INTERCEPTION DATA FILTERING (NO CHANGE) ---
+# --- INTERCEPTION DATA FILTERING (Retained) ---
 df_interception = filtered_df[filtered_df["InterceptionX"] > -999].copy()
 df_interception["ColorType"] = "Other"
 df_interception.loc[df_interception["Wicket"] == True, "ColorType"] = "Wicket"
@@ -205,18 +203,20 @@ color_map = {
     "Other": "white" 
 }
 
-
-# --- MAIN CHART COLUMN ---
-# We use a single column container for sequential layout
-main_col = st.columns(1)[0]
-
 # ==============================================================================
-# 1. CHART: ZONAL BOXES (CREASE BEEHIVE BOXES)
+# 5. CHART GRID LAYOUT (2 ROWS, 3 COLUMNS)
 # ==============================================================================
-with main_col:
-    st.markdown("#### 1. Zonal Analysis")
+# --- ROW 1: Zonal, Crease Beehive, Pitch Map ---
+st.markdown("#### **Row 1:** Zonal, Crease Beehive, Pitch Map")
+col_r1_c1, col_r1_c2, col_r1_c3 = st.columns(3)
+
+# ------------------------------------------------------------------------------
+# 1. CHART: ZONAL BOXES (CREASE BEEHIVE BOXES) - Col 1
+# ------------------------------------------------------------------------------
+with col_r1_c1:
+    st.caption("**1. Zonal Analysis**")
     if filtered_df.empty:
-        st.warning("No data matches the selected filters for Zonal Analysis.")
+        st.warning("No data.")
     else:
         # --- Zonal Calculation Logic (retained) ---
         right_hand_zones = {
@@ -230,18 +230,14 @@ with main_col:
             "Z5": (-0.18, 0.71, 0.18, 1.31), "Z6": (-0.18, 1.31, 0.45, 1.91), 
         }
 
-        is_right_handed = True
         handed_data = filtered_df["IsBatsmanRightHanded"].dropna().mode()
-        if not handed_data.empty and batsman != "All":
-            is_right_handed = handed_data.iloc[0]
-        
+        is_right_handed = handed_data.iloc[0] if not handed_data.empty and batsman != "All" else True
         zones_layout = right_hand_zones if is_right_handed else left_hand_zones
         
         def assign_zone(row):
             x, y = row["CreaseY"], row["CreaseZ"]
             for zone, (x1, y1, x2, y2) in zones_layout.items():
-                if x1 <= x <= x2 and y1 <= y <= y2:
-                    return zone
+                if x1 <= x <= x2 and y1 <= y <= y2: return zone
             return "Other"
 
         df_chart2 = filtered_df.copy()
@@ -250,79 +246,58 @@ with main_col:
         
         summary = (
             df_chart2.groupby("Zone")
-            .agg(Runs=("Runs", "sum"), Wickets=("Wicket", lambda x: (x == True).sum()), Balls=("Wicket", "count"))
+            .agg(Runs=("Runs", "sum"), Wickets=("Wicket", lambda x: (x == True).sum()))
             .reindex(["Z1", "Z2", "Z3", "Z4", "Z5", "Z6"]).fillna(0)
         )
         summary["Avg Runs/Wicket"] = summary.apply(lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0, axis=1)
 
         # --- Matplotlib Plotting: EXTREME REDUCTION ---
         avg_values = summary["Avg Runs/Wicket"]
-        if avg_values.empty or avg_values.max() == 0:
-             norm = mcolors.Normalize(vmin=0, vmax=1)
-        else:
-            norm = mcolors.Normalize(vmin=avg_values[avg_values > 0].min(), vmax=avg_values.max())
-            
+        norm = mcolors.Normalize(vmin=avg_values[avg_values > 0].min(), vmax=avg_values.max()) if avg_values.max() > 0 else mcolors.Normalize(vmin=0, vmax=1)
         cmap = cm.get_cmap('Blues')
         
         # *** REDUCED SIZE ***
-        fig_boxes, ax = plt.subplots(figsize=(2.5, 3.5)) 
+        fig_boxes, ax = plt.subplots(figsize=(2.5, 3.0)) # Width 2.5, Height 3.0
 
         for zone, (x1, y1, x2, y2) in zones_layout.items():
             w, h = x2 - x1, y2 - y1
-            
-            if zone not in summary.index:
-                runs, wkts, avg = 0, 0, 0
-                color = 'white' 
+            if zone not in summary.index: runs, wkts, avg, color = 0, 0, 0, 'white' 
             else:
-                runs = int(summary.loc[zone, "Runs"])
-                wkts = int(summary.loc[zone, "Wickets"])
-                avg = summary.loc[zone, "Avg Runs/Wicket"]
-                color = cmap(norm(avg))
+                runs = int(summary.loc[zone, "Runs"]); wkts = int(summary.loc[zone, "Wickets"])
+                avg = summary.loc[zone, "Avg Runs/Wicket"]; color = cmap(norm(avg))
 
             ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=0.5))
 
-            ax.text(
-                x1 + w / 2, y1 + h / 2,
+            ax.text(x1 + w / 2, y1 + h / 2,
                 f"{zone}\nR:{runs} W:{wkts}\nA:{avg:.1f}",
                 ha="center", va="center", weight="bold", 
-                fontsize=5, # Reduced font size for compactness
+                fontsize=5, # Reduced font size 
                 color="black" if norm(avg) < 0.6 else "white"
             )
         
-        ax.set_xlim(-0.75, 0.75)
-        ax.set_ylim(0, 2)
-        ax.axis('off') 
-        plt.tight_layout(pad=0) # Tighter padding
+        ax.set_xlim(-0.75, 0.75); ax.set_ylim(0, 2); ax.axis('off') 
+        plt.tight_layout(pad=0) 
         st.pyplot(fig_boxes)
-# --- Removed divider ---
 
-
-# ==============================================================================
-# 2. CHART: CREASE BEEHIVE (SCATTER PLOT)
-# ==============================================================================
-with main_col:
-    st.markdown("#### 2. Crease Beehive Scatter")
+# ------------------------------------------------------------------------------
+# 2. CHART: CREASE BEEHIVE (SCATTER PLOT) - Col 2
+# ------------------------------------------------------------------------------
+with col_r1_c2:
+    st.caption("**2. Crease Beehive**")
     if filtered_df.empty:
-        st.warning("No data matches the selected filters for CBH.")
+        st.warning("No data.")
     else:
-        wickets = filtered_df[filtered_df["Wicket"] == True]
-        non_wickets = filtered_df[filtered_df["Wicket"] == False]
+        wickets = filtered_df[filtered_df["Wicket"] == True]; non_wickets = filtered_df[filtered_df["Wicket"] == False]
         fig_cbh = go.Figure()
 
         # Reduced marker size
-        fig_cbh.add_trace(go.Scatter(
-            x=non_wickets["StumpsY"], y=non_wickets["StumpsZ"],
-            mode='markers', name="No Wicket",
-            marker=dict(color='lightgrey', size=4, line=dict(width=0), opacity=0.8) 
-        ))
+        fig_cbh.add_trace(go.Scatter(x=non_wickets["StumpsY"], y=non_wickets["StumpsZ"], mode='markers', name="No Wicket",
+            marker=dict(color='lightgrey', size=4, line=dict(width=0), opacity=0.8)))
 
-        fig_cbh.add_trace(go.Scatter(
-            x=wickets["StumpsY"], y=wickets["StumpsZ"],
-            mode='markers', name="Wicket",
-            marker=dict(color='red', size=6, line=dict(width=0), opacity=0.95) 
-        ))
+        fig_cbh.add_trace(go.Scatter(x=wickets["StumpsY"], y=wickets["StumpsZ"], mode='markers', name="Wicket",
+            marker=dict(color='red', size=6, line=dict(width=0), opacity=0.95)))
 
-        # --- KEEP ONLY LINES ---
+        # Keep only lines
         fig_cbh.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1))
         fig_cbh.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1))
         fig_cbh.add_vline(x=-0.92, line=dict(color="grey", width=0.8))
@@ -332,94 +307,75 @@ with main_col:
 
         # --- ADJUSTED SIZE (Fixed width, minimal height/margins) ---
         fig_cbh.update_layout(
-            width=300, height=250, # EXTREME REDUCTION
+            width=300, height=300, # EXTREME REDUCTION
             xaxis=dict(range=[-1.6, 1.6], showgrid=True, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
             yaxis=dict(range=[0.5, 2], showgrid=True, zeroline=False, visible=False),
             plot_bgcolor="white", paper_bgcolor="white",
-            margin=dict(l=5, r=5, t=5, b=5), 
-            showlegend=False
+            margin=dict(l=5, r=5, t=5, b=5), showlegend=False
         )
-        st.plotly_chart(fig_cbh, use_container_width=False) # Use False for fixed width
-# --- Removed divider ---
+        st.plotly_chart(fig_cbh, use_container_width=False) 
 
-
-# ==============================================================================
-# 3. CHART: PITCH MAP
-# ==============================================================================
-with main_col:
-    st.markdown("#### 3. Pitch Map (Bounce Location)")
+# ------------------------------------------------------------------------------
+# 3. CHART: PITCH MAP - Col 3
+# ------------------------------------------------------------------------------
+with col_r1_c3:
+    st.caption("**3. Pitch Map (Bounce)**")
     if filtered_df.empty:
-        st.warning("No data matches the selected filters for Pitch Map.")
+        st.warning("No data.")
     else:
         fig_pitch = go.Figure()
-        
-        # 1. Add Background Lines (Keeping only lines)
-        PITCH_Y_LINES = [8.60, 5.0, 2.8, 0.9]
-        PITCH_Y_LABELS = ["Short", "Length", "Slot", "Yorker"]
+        PITCH_Y_LINES = [8.60, 5.0, 2.8, 0.9]; PITCH_Y_LABELS = ["Short", "Length", "Slot", "Yorker"]
         
         for y_val in PITCH_Y_LINES:
              fig_pitch.add_hline(y=y_val, line=dict(color="lightgrey", width=1.0, dash="dot"))
         
-        # Labeling the pitch map length sections
         for i, y_val in enumerate(PITCH_Y_LINES):
              fig_pitch.add_annotation(
                 x=-1.4, y=y_val - 0.5 if i==0 else y_val - 1.8,
                 text=PITCH_Y_LABELS[i], showarrow=False,
-                font=dict(size=7, color="grey", weight='bold'), # Reduced font size
-                yref="y", xref="x", xanchor='left'
+                font=dict(size=7, color="grey", weight='bold'), xanchor='left'
             )
              
-        # Add Crease Line (Y=0)
         fig_pitch.add_hline(y=0.0, line=dict(color="black", width=2))
-
-        # 2. Add Stump Lines
         fig_pitch.add_vline(x=-0.18, line=dict(color="#777777", dash="dot", width=1.2))
         fig_pitch.add_vline(x=0.18, line=dict(color="#777777", dash="dot", width=1.2))
         
-        # 3. Separate Data by Wicket Status and Plot
-        pitch_wickets = filtered_df[filtered_df["Wicket"] == True]
-        pitch_non_wickets = filtered_df[filtered_df["Wicket"] == False]
+        pitch_wickets = filtered_df[filtered_df["Wicket"] == True]; pitch_non_wickets = filtered_df[filtered_df["Wicket"] == False]
 
-        # Reduced marker size
-        fig_pitch.add_trace(go.Scatter(
-            x=pitch_non_wickets["BounceY"], y=pitch_non_wickets["BounceX"],
-            mode='markers', name="No Wicket",
-            marker=dict(color='white', size=4, line=dict(width=0.5, color="grey"), opacity=0.8)
-        ))
+        fig_pitch.add_trace(go.Scatter(x=pitch_non_wickets["BounceY"], y=pitch_non_wickets["BounceX"], mode='markers', name="No Wicket",
+            marker=dict(color='white', size=4, line=dict(width=0.5, color="grey"), opacity=0.8)))
 
-        fig_pitch.add_trace(go.Scatter(
-            x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"],
-            mode='markers', name="Wicket",
-            marker=dict(color='red', size=7, line=dict(width=0), opacity=0.95)
-        ))
+        fig_pitch.add_trace(go.Scatter(x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"], mode='markers', name="Wicket",
+            marker=dict(color='red', size=7, line=dict(width=0), opacity=0.95)))
 
-        # 4. Layout Configuration
-        # *** ADJUSTED SIZE (Fixed width, minimal height/margins) ***
+        # --- ADJUSTED SIZE (Fixed width, minimal height/margins) ---
         fig_pitch.update_layout(
             width=300, height=300, # EXTREME REDUCTION
             xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False,visible = False),
             yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False,visible = False), 
             plot_bgcolor="white", paper_bgcolor="white",
-            margin=dict(l=5, r=5, t=5, b=5), 
-            showlegend=True,
-            legend=dict(font=dict(size=7)) # Reduced legend font size
+            margin=dict(l=5, r=5, t=5, b=5), showlegend=True,
+            legend=dict(font=dict(size=7)) 
         )
-        st.plotly_chart(fig_pitch, use_container_width=False) # Use False for fixed width
-# --- Removed divider ---
+        st.plotly_chart(fig_pitch, use_container_width=False) 
 
+st.markdown("---")
 
-# ==============================================================================
-# 4. CHART: INTERCEPTION POINTS (SIDE-ON - Vertical View)
-# ==============================================================================
-with main_col:
-    st.markdown("#### 4. Interception Side-On (H/D)")
+# --- ROW 2: Interception Side, Interception Front, Wagon Wheel ---
+st.markdown("#### **Row 2:** Interception Side, Interception Front, Wagon Wheel")
+col_r2_c1, col_r2_c2, col_r2_c3 = st.columns(3)
+
+# ------------------------------------------------------------------------------
+# 4. CHART: INTERCEPTION POINTS (SIDE-ON - Vertical View) - Col 1
+# ------------------------------------------------------------------------------
+with col_r2_c1:
+    st.caption("**4. Interception Side-On (H/D)**")
     if df_interception.empty:
-        st.warning("No valid interception data matches the selected filters.")
+        st.warning("No valid data.")
     else:
         # *** ADJUSTED SIZE ***
-        fig_7, ax_7 = plt.subplots(figsize=(4, 2.5)) # Reduced height to 2.5
+        fig_7, ax_7 = plt.subplots(figsize=(3, 3)) # Square plot for balance
         
-        # Reduced marker size
         df_other = df_interception[df_interception["ColorType"] == "Other"]
         ax_7.scatter(df_other["InterceptionX"] + 10, df_other["InterceptionZ"], 
                      color='white', edgecolors='grey', linewidths=0.5, s=15, label="Other") 
@@ -433,40 +389,31 @@ with main_col:
         line_specs = {0.0: "Stumps", 1.250: "Crease", 2.000: "2m", 3.000: "3m"}
         for x_val, label in line_specs.items():
             ax_7.axvline(x=x_val, color='grey', linestyle='--', linewidth=0.8, alpha=0.7)    
-            ax_7.text(x_val, 1.4, label.split(':')[-1].strip(), 
-                      ha='center', va='center', fontsize=5, color='grey', # Reduced font size
+            ax_7.text(x_val, 1.45, label.split(':')[-1].strip(), 
+                      ha='center', va='center', fontsize=5, color='grey', 
                       bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
-        # Set Fixed Limits and hide Y-axis ticks/labels
-        ax_7.set_xlim(-0.2, 3.4) 
-        ax_7.set_ylim(0, 1.5) 
+        ax_7.set_xlim(-0.2, 3.4); ax_7.set_ylim(0, 1.5) 
         ax_7.tick_params(axis='y', which='both', labelleft=False, left=False)
         ax_7.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
         ax_7.set_xlabel("Distance (m)", fontsize=7) 
         ax_7.set_ylabel("Height (m)", fontsize=7) 
-        ax_7.legend(loc='upper right', fontsize=6) # Reduced legend font size
+        ax_7.legend(loc='upper right', fontsize=6) 
         ax_7.grid(True, linestyle=':', alpha=0.5)
         plt.tight_layout(pad=0)
         st.pyplot(fig_7)
-# --- Removed divider ---
 
-
-# ==============================================================================
-# 5. CHART: INTERCEPTION POINTS (TOP-DOWN) & 6. SCORING AREAS (WAGON WHEEL)
-# ==============================================================================
-# Use two columns for this row (5 and 6)
-st.markdown("#### 5. Interception Front-On (W/D) & 6. Scoring Areas")
-chart_row5_col1, chart_row5_col2 = st.columns([1, 1])
-
-# --- INTERCEPTION FRONT ON (TOP VIEW) - CHART 5 ---
-with chart_row5_col1:
+# ------------------------------------------------------------------------------
+# 5. CHART: INTERCEPTION POINTS (TOP-DOWN) - Col 2
+# ------------------------------------------------------------------------------
+with col_r2_c2:
+    st.caption("**5. Interception Front-On (W/D)**")
     if df_interception.empty:
-        st.warning("No valid interception data matches the selected filters.")
+        st.warning("No valid data.")
     else:
         # *** ADJUSTED SIZE ***
-        fig_8, ax_8 = plt.subplots(figsize=(3, 4)) # Reduced width
+        fig_8, ax_8 = plt.subplots(figsize=(3, 3)) # Square plot for balance
         
-        # Reduced marker size
         df_other = df_interception[df_interception["ColorType"] == "Other"]
         ax_8.scatter(df_other["InterceptionY"], df_other["InterceptionX"] + 10, 
                      color='white', edgecolors='grey', linewidths=0.5, s=15, label="Other") 
@@ -488,10 +435,7 @@ with chart_row5_col1:
         ax_8.axvline(x=-0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
         ax_8.axvline(x= 0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
         
-        # Set Fixed Limits and hide Y-axis ticks/labels
-        ax_8.set_xlim(-1, 1)      
-        ax_8.set_ylim(-0.2, 3.5) 
-        ax_8.invert_yaxis()      
+        ax_8.set_xlim(-1, 1); ax_8.set_ylim(-0.2, 3.5); ax_8.invert_yaxis()      
         
         ax_8.tick_params(axis='y', which='both', labelleft=False, left=False)
         ax_8.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
@@ -502,30 +446,29 @@ with chart_row5_col1:
         plt.tight_layout(pad=0)
         st.pyplot(fig_8)
 
-# --- SCORING AREAS (WAGON WHEEL) - CHART 6 ---
-with chart_row5_col2:
+# ------------------------------------------------------------------------------
+# 6. CHART: SCORING AREAS (WAGON WHEEL) - Col 3
+# ------------------------------------------------------------------------------
+with col_r2_c3:
+    st.caption("**6. Scoring Areas (Wagon)**")
     if wagon_summary.empty:
-        st.warning("No scoring shots or missing columns prevent the Wagon Wheel from being calculated.")
+        st.warning("No scoring shots.")
     else:
-        # Prepare Data
         angles = wagon_summary["FixedAngle"].tolist()
         runs = wagon_summary["TotalRuns"].tolist()
         labels = [f"{area}\n({pct:.0f}%)" for area, pct in zip(wagon_summary["ScoringWagon"], wagon_summary["RunPercentage"])]
         
-        # Setup Coloring
-        run_min = min(runs)
-        run_max = max(runs)
+        run_min = min(runs); run_max = max(runs)
         norm = mcolors.Normalize(vmin=run_min, vmax=run_max) if run_max > run_min else mcolors.Normalize(vmin=0, vmax=1)
         cmap = cm.get_cmap('Greens')
         colors = cmap(norm(runs))
         
-        # FIX FOR WHITE 0% SLICES
         for i, run_count in enumerate(runs):
             if run_count == 0:
-                colors[i] = (1.0, 1.0, 1.0, 1.0)
+                colors[i] = (1.0, 1.0, 1.0, 1.0) # White for 0 runs
 
         # *** ADJUSTED SIZE ***
-        fig, ax = plt.subplots(figsize=(4, 4)) # Reduced size to fit beside the other chart
+        fig, ax = plt.subplots(figsize=(3, 3)) # Square plot for balance
         
         # Create the Pie Chart
         wedges, texts = ax.pie(
