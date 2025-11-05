@@ -13,7 +13,7 @@ st.set_page_config(page_title="Cricket Analysis Dashboard (Comparative)", layout
 # --- 2. INJECT CUSTOM CSS FOR ABSOLUTE MINIMUM SPACING ---
 st.markdown("""
 <style>
-    /* 1. Target the main content container and set absolute minimum padding */
+    /* ... (CSS remains the same for compactness) ... */
     .block-container {
         padding-top: 0.1rem; 
         padding-right: 0.1rem;
@@ -21,24 +21,20 @@ st.markdown("""
         padding-bottom: 0.1rem;
     }
     
-    /* 2. Reduce vertical space around markdown text/headers/captions */
     h1, h2, h3, h4, p, .stCaption {
         margin-top: 0.1rem !important;
         margin-bottom: 0.1rem !important;
     }
     
-    /* 3. Remove padding from columns for tight chart spacing */
     .st-emotion-cache-1om0885 { 
         padding: 0px !important; 
     }
 
-    /* 4. Ensure the two main columns (the left/right panels) also have minimal padding */
-    .st-emotion-cache-n3wfc { /* Selector for st.columns wrapper */
+    .st-emotion-cache-n3wfc { 
         padding-left: 0.2rem;
         padding-right: 0.2rem;
     }
     
-    /* 5. Reduce spacing for the separator line */
     hr {
         margin-top: 0.2rem;
         margin-bottom: 0.2rem;
@@ -47,7 +43,32 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# --- 3. DATA UPLOADER AND INITIAL LOAD (CRITICAL BLOCK) ---
+st.header("Comparative Batting Analysis: Seam vs. Spin")
+uploaded_file = st.file_uploader("Upload your data", type=["csv"])
+
+# Define df outside the condition to ensure it exists for the scope
+df = None 
+
+if uploaded_file is None:
+    st.info("👆 Please upload a **CSV file** with the required Hawkeye data columns to view the dashboard.")
+    # **THIS LINE IS CRITICAL:** Stop execution until a file is uploaded
+    st.stop()
+
+# --- DATA PROCESSING AFTER FILE IS UPLOADED ---
+try:
+    df = pd.read_csv(uploaded_file)
+    required_cols = ["BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ", "BattingTeam", "CreaseY", "CreaseZ", "Runs", "IsBatsmanRightHanded", "LandingX", "LandingY", "BounceX", "BounceY", "InterceptionX", "InterceptionZ", "InterceptionY", "Over"]
+    if not all(col in df.columns for col in required_cols):
+        st.error(f"Missing one or more required columns. Required: {', '.join(required_cols)}. Please ensure your columns are named correctly.")
+        st.stop()
+except Exception as e:
+    st.error(f"Error reading file: {e}")
+    st.stop() 
+
 # --- WAGON WHEEL UTILITY FUNCTIONS (Retained) ---
+# ... (calculate_scoring_wagon and calculate_scoring_angle functions are placed here)
+
 def calculate_scoring_wagon(row):
     LX = row.get("LandingX"); LY = row.get("LandingY"); RH = row.get("IsBatsmanRightHanded")
     if RH is None or LX is None or LY is None or row.get("Runs", 0) == 0: return None
@@ -78,12 +99,13 @@ def calculate_scoring_angle(area):
     elif area in ["COVER", "SQUARE LEG", "LONG OFF", "LONG ON"]: return 45
     return 0 
 
-# --- CORE CHART GENERATION FUNCTION ---
-def generate_charts(df, panel_title, panel_col):
+# --- CORE CHART GENERATION FUNCTION (Remains the same) ---
+def generate_charts(df_input, panel_title, panel_col, batsman_name):
     """Generates the six charts within the specified Streamlit column."""
     
     # 1. DATA PREP
     # Filter for Interception data
+    df = df_input.copy()
     df_interception = df[df["InterceptionX"] > -999].copy()
     df_interception["ColorType"] = "Other"
     df_interception.loc[df_interception["Wicket"] == True, "ColorType"] = "Wicket"
@@ -102,7 +124,7 @@ def generate_charts(df, panel_title, panel_col):
         ).reset_index().dropna(subset=["ScoringWagon"])
         
         handedness_mode = df["IsBatsmanRightHanded"].dropna().mode()
-        is_right_handed = handedness_mode.iloc[0] if not handedness_mode.empty and batsman != "All" else True
+        is_right_handed = handedness_mode.iloc[0] if not handedness_mode.empty and batsman_name != "All" else True
         
         all_areas = ["FINE LEG", "SQUARE LEG", "LONG ON", "LONG OFF", "COVER", "THIRD MAN"] if is_right_handed else ["THIRD MAN", "COVER", "LONG OFF", "LONG ON", "SQUARE LEG", "FINE LEG"]
         template_df = pd.DataFrame({"ScoringWagon": all_areas, "FixedAngle": [calculate_scoring_angle(area) for area in all_areas]})
@@ -115,7 +137,7 @@ def generate_charts(df, panel_title, panel_col):
         wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / total_runs) * 100 if total_runs > 0 else 0 
         wagon_summary["FixedAngle"] = wagon_summary["FixedAngle"].astype(int) 
     except Exception:
-        pass # Keep empty dataframe if error occurs
+        pass 
 
     # Set the Panel Header
     panel_col.markdown(f"### {panel_title}")
@@ -297,15 +319,9 @@ def generate_charts(df, panel_title, panel_col):
             ax.axis('equal'); plt.tight_layout(pad=0)
             st.pyplot(fig)
 
-
-# --- 3. DATA UPLOADER AND INITIAL LOAD ---
-if 'df' not in locals():
-    st.info("👆 Please upload a CSV file with the required Hawkeye data columns to view the dashboard.")
-    st.stop()
-
 # --- 4. TOP FILTERS (COMPACT ROW) ---
-st.header("Comparative Batting Analysis: Seam vs. Spin")
-filter_col1, filter_col2, filter_col3 = st.columns([1, 1, 1])
+
+filter_col1, filter_col2, filter_col3 = st.columns(3)
 
 # Filter 1: Batting Team (Combined)
 with filter_col1:
@@ -333,12 +349,12 @@ col_seam, col_spin = st.columns(2)
 # --- LEFT PANEL: SEAM ANALYSIS ---
 filtered_df_seam = df_over[df_over["DeliveryType"] == "Seam"]
 with col_seam:
-    generate_charts(filtered_df_seam, "Left Panel: **Seam Analysis**", col_seam)
+    generate_charts(filtered_df_seam, "Left Panel: **Seam Analysis** (Delivery Type = Seam)", col_seam, batsman)
 
 # --- RIGHT PANEL: SPIN ANALYSIS ---
 filtered_df_spin = df_over[df_over["DeliveryType"] == "Spin"]
 with col_spin:
-    generate_charts(filtered_df_spin, "Right Panel: **Spin Analysis**", col_spin)
+    generate_charts(filtered_df_spin, "Right Panel: **Spin Analysis** (Delivery Type = Spin)", col_spin, batsman)
 
 st.markdown("---")
 st.caption("Dashboard End. Data is filtered by Team, Batsman, and Over (if selected) for both panels.")
