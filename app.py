@@ -610,17 +610,17 @@ def create_wagon_wheel(df_in, delivery_type):
     
         # Check if run percentage is greater than 0, otherwise it stays white (default)
         if row['RunPercentage'] == 0:
-        colors.append(COLOR_DEFAULT)
+            colors.append(COLOR_DEFAULT)
         continue
         
         # Check for Rank 1 (Highest)
         if current_rank == 1:
-        colors.append(COLOR_HIGH)
+            colors.append(COLOR_HIGH)
         # Check for Rank 2 (Second Highest)
         elif current_rank == 2:
-        colors.append(COLOR_SECOND_HIGH)
+            colors.append(COLOR_SECOND_HIGH)
         else:
-        colors.append(COLOR_DEFAULT)
+            colors.append(COLOR_DEFAULT)
 
     angles = wagon_summary["FixedAngle"].tolist()
     
