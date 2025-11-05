@@ -493,30 +493,24 @@ if uploaded_file is not None:
         st.subheader("RIGHT COLUMN: SPIN ANALYSIS 🌀")
         st.markdown("---")
         
-        st.markdown("##### 1. Zonal Analysis (Crease Impact)")
         st.pyplot(create_zonal_analysis(df_spin, batsman, "Spin"), use_container_width=True)
-
-        st.markdown("##### 2. Crease Beehive")
+        
         st.plotly_chart(create_crease_beehive(df_spin, "Spin"), use_container_width=True)
 
-        st.markdown("##### 3. Pitch Map (Bounce Location)")
         st.plotly_chart(create_pitch_map(df_spin, "Spin"), use_container_width=True)
         
         # --- NEW LAYOUT START (Mirroring Left Column) ---
         
         # Chart 4: Interception Side-On (Wide View) - Takes full width
-        st.markdown("##### 4. Interception Side-On (Wide View)")
         st.pyplot(create_interception_side_on(df_spin, "Spin"), use_container_width=True)
 
         # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
         bottom_col_left, bottom_col_right = st.columns(2)
 
         with bottom_col_left:
-            st.markdown("##### 5. Interception Front-On")
             st.pyplot(create_interception_front_on(df_spin, "Spin"), use_container_width=True)
         
         with bottom_col_right:
-            st.markdown("##### 6. Scoring Areas (Wagon Wheel)")
             st.pyplot(create_wagon_wheel(df_spin, "Spin"), use_container_width=True)
             
         # --- NEW LAYOUT END ---
