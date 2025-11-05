@@ -525,7 +525,7 @@ def create_interception_front_on(df_in, delivery_type):
     # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
     ax_8.scatter(
         df_other["InterceptionY"], df_other["InterceptionX"] + 10, 
-        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=50, label="Other"
+        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=60, label="Other"
     ) 
     
     # Plot "Wicket" and "Boundary" (Solid colors)
@@ -534,7 +534,7 @@ def create_interception_front_on(df_in, delivery_type):
         # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
         ax_8.scatter(
             df_slice["InterceptionY"], df_slice["InterceptionX"] + 10, 
-            color=color_map[ctype], s=70, label=ctype
+            color=color_map[ctype], s=80, label=ctype
         ) 
 
     # 2. Draw Horizontal Dashed Lines with Labels (FIXED LINES: 0.0, 1.25)
