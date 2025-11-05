@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -109,13 +110,17 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
         
         color = cmap(norm(avg)) if avg > 0 else 'white'
 
-        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=1.5))
+        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="white", facecolor=color, linewidth=1))
 
         ax.text(x1 + w / 2, y1 + h / 2, 
-                f"{z_key}\nR:{runs} W:{wkts}\nA:{avg:.1f} SR:{sr:.1f}", 
-                ha="center", va="center", weight="bold", fontsize=7,
-                color="black" if norm(avg) < 0.6 else "white", 
-                linespacing=1.2)
+        # === REPLACE THIS LINE WITH THE NEW FORMATTING ===
+        f"R: {runs}\nW: {wkts}\nSR: {sr:.0f}\nA: {avg:.0f}", 
+        # ===============================================
+        ha="center", 
+        va="center", 
+        fontsize=7,
+        color="black" if norm(avg) < 0.6 else "white", 
+        linespacing=1.2)
 
     ax.set_xlim(-0.75, 0.75); ax.set_ylim(0, 2); ax.axis('off'); 
     ax.set_title(f"Zonal Analysis ({delivery_type})", fontsize=10, weight='bold')
