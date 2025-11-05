@@ -63,7 +63,7 @@ def fig_to_image(fig):
 def create_zonal_analysis(df_in, batsman_name, delivery_type):
     # ... (Zonal Analysis logic remains the same)
     if df_in.empty:
-        fig, ax = plt.subplots(figsize=(2, 2)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
 
     is_right_handed = True
     handed_data = df_in["IsBatsmanRightHanded"].dropna().unique()
@@ -95,7 +95,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
     norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
     cmap = cm.get_cmap('Blues')
 
-    fig_boxes, ax = plt.subplots(figsize=(2,3), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_boxes, ax = plt.subplots(figsize=(4,2), subplot_kw={'xticks': [], 'yticks': []}) 
     
     for zone, (x1, y1, x2, y2) in zones_layout.items():
         w, h = x2 - x1, y2 - y1
