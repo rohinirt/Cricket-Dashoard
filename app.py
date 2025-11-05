@@ -357,22 +357,6 @@ def create_pitch_map(df_in, delivery_type):
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
-    fig_pitch.update_layout(
-        shapes=[
-            # Outer black rectangle defining the boundary of the pitch area
-            dict(
-                type="rect",
-                # The coordinates match the defined x-axis and y-axis ranges
-                x0=-1.5, y0=-4.0, x1=1.5, y1=16.0, 
-                line=dict(
-                    color="black",
-                    width=1.5, # Adjust width for thickness
-                ),
-                fillcolor="rgba(0,0,0,0)", # Transparent fill
-                layer="below" # Ensure border is visible but doesn't cover dots
-            )
-        ]
-    )
     return fig_pitch
 
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
