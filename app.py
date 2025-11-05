@@ -242,10 +242,11 @@ def create_lateral_performance_stacked(df_in, delivery_type, batsman_name):
     ax_stack.tick_params(axis='x', rotation=0, labelsize=6) # KEEP X-AXIS LABELS AND ADJUST FONT SIZE
     
     # === CHANGES TO REMOVE CHART BORDER ===
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
+    ax_stack.spines['right'].set_visible(False)
+    ax_stack.spines['top'].set_visible(False)
+    ax_stack.spines['left'].set_visible(False)
+    ax_stack.spines['bottom'].set_visible(False)
+    # ======================================
     # ======================================
     ax_stack.set_title(f"Lateral Performance ({delivery_type})", fontsize=8, weight='bold')
     plt.tight_layout(pad=0.5)
