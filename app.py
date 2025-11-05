@@ -496,10 +496,10 @@ def create_interception_side_on(df_in, delivery_type):
     ax_7.set_xlim(-0.2, 3.4) 
     ax_7.set_ylim(0, 1.5) 
     ax_7.tick_params(axis='y', which='both', labelleft=False, left=False); ax_7.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
+    ax_7.spines['right'].set_visible(False)
+    ax_7.spines['top'].set_visible(False)
+    ax_7.spines['left'].set_visible(False)
+    ax_7.spines['bottom'].set_visible(False)
     plt.tight_layout(pad=0.5)
     return fig_7
 
@@ -552,10 +552,10 @@ def create_interception_front_on(df_in, delivery_type):
     # 3. Set Axes Limits and Labels (FIXED LIMITS: Y-axis -0.2 to 3.5)
     ax_8.set_xlim(-1, 1); ax_8.set_ylim(-0.2, 3.5); ax_8.invert_yaxis()      
     ax_8.tick_params(axis='y', which='both', labelleft=False, left=False); ax_8.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
+    ax_8.spines['right'].set_visible(False)
+    ax_8.spines['top'].set_visible(False)
+    ax_8.spines['left'].set_visible(False)
+    ax_8.spines['bottom'].set_visible(False)
     plt.tight_layout(pad=0.5)
     return fig_8
 
