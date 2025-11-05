@@ -437,9 +437,6 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     # 4. Styling
     ax_stack.set_xlim(0, 1); ax_stack.set_ylim(0, 1)
     ax_stack.axis('off') # Hide all axes/ticks/labels
-    
-    # Title rotated 90 degrees to fit beside the pitch map
-    ax_stack.set_title(f"Length Run % ({delivery_type})", fontsize=8, weight='bold', rotation=90, x=1.0, y=0.5)
 
     # Remove the border (spines)
     ax_stack.spines['right'].set_visible(False)
@@ -447,7 +444,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     ax_stack.spines['left'].set_visible(False)
     ax_stack.spines['bottom'].set_visible(False)
     
-    plt.tight_layout(pad=0.5)
+    plt.tight_layout(pad=0.9)
     return fig_stack
     
 # --- CHART 4: INTERCEPTION SIDE-ON --- (Wide View)
