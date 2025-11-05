@@ -110,7 +110,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
         
         color = cmap(norm(avg)) if avg > 0 else 'white'
 
-        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="white", facecolor=color, linewidth=1))
+        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=1))
 
         ax.text(x1 + w / 2, y1 + h / 2, 
         # === REPLACE THIS LINE WITH THE NEW FORMATTING ===
