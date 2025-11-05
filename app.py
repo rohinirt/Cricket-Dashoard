@@ -332,7 +332,7 @@ def create_pitch_map(df_in, delivery_type):
     # 2. Add Stump lines
     fig_pitch.add_vline(x=-0.18, line=dict(color="#777777", dash="dot", width=1.2))
     fig_pitch.add_vline(x=0.18, line=dict(color="#777777", dash="dot", width=1.2))
-    fig_pitch.add_vline(x=0, line=dict(color="#777777", dash="dot", width=1.2))
+    fig_pitch.add_vline(x=0, line=dict(color="#777777", dash="dot", width=0.8))
 
     # 3. Plot Data
     pitch_wickets = df_in[df_in["Wicket"] == True]
@@ -350,7 +350,7 @@ def create_pitch_map(df_in, delivery_type):
 
     # 4. Layout
     fig_pitch.update_layout(
-        margin=dict(l=0, r=0, t=0, b=10),
+        margin=dict(l=0, r=20, t=0, b=10),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False),
         # Ensure Y-axis range covers the custom bins
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
