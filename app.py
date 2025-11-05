@@ -305,25 +305,30 @@ def create_pitch_map(df_in, delivery_type):
     return fig_pitch
 
 # --- CHART 3b: PITCH LENGTH RUN % (Vertical Stacked Bar) ---
+# --- CHART 8: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
 def create_pitch_length_run_pct(df_in, delivery_type):
     df_pitch = df_in.copy()
-    if df_pitch.empty:
-        fig, ax = plt.subplots(figsize=(2, 3.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); ax.axis('off'); return fig
-
+    
     PITCH_BINS = {
-        "Full Toss": {"x0": -4.0, "x1": 0.9},
-        "Yorker": {"x0": 0.9, "x1": 2.8},
-        "Slot": {"x0": 2.8, "x1": 5.0},
-        "Length": {"x0": 5.0, "x1": 8.60},
-        "Short": {"x0": 8.60, "x1": 16.0},
+        "Short": 0,    # Placeholder for ordering/labeling
+        "Length": 1,
+        "Slot": 2,
+        "Yorker": 3,
+        "Full Toss": 4,
     }
 
+    # 1. Data Preparation
     def assign_pitch_length(x):
-        for length, params in PITCH_BINS.items():
-            if params["x0"] <= x < params["x1"]: return length
+        if 8.60 <= x < 16.0: return "Short"
+        elif 5.0 <= x < 8.60: return "Length"
+        elif 2.8 <= x < 5.0: return "Slot"
+        elif 0.9 <= x < 2.8: return "Yorker"
+        elif -4.0 <= x < 0.9: return "Full Toss"
         return None
 
     df_pitch["PitchLength"] = df_pitch["BounceX"].apply(assign_pitch_length)
+    
+    # Aggregate data
     df_summary = df_pitch.groupby("PitchLength").agg(
         Runs=("Runs", "sum"), 
         Wickets=("Wicket", lambda x: (x == True).sum()), 
@@ -333,33 +338,58 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     total_runs = df_summary["Runs"].sum()
     df_summary["RunPercentage"] = (df_summary["Runs"] / total_runs) * 100 if total_runs > 0 else 0
 
+    if df_summary.empty:
+        fig, ax = plt.subplots(figsize=(2, 3.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); ax.axis('off'); return fig
+
+    # 2. Chart Setup
     fig_stack, ax_stack = plt.subplots(figsize=(2, 3.5)) 
     
-    # Plotting the stacked bar (100% height)
+    num_regions = len(PITCH_BINS)
+    box_height = 1 / num_regions # Fixed height for each box
     bottom = 0
-    bar_width = 0.8
+    
+    # Color Normalization (based on Run Percentage)
+    run_pct_max = df_summary["RunPercentage"].max() if df_summary["RunPercentage"].max() > 0 else 100
+    norm = mcolors.Normalize(vmin=0, vmax=run_pct_max)
+    cmap = cm.get_cmap('Reds') # Using Reds for runs percentage
+
+    # 3. Plotting Equal Boxes (Stacked Heat Map)
     for index, row in df_summary.iterrows():
         pct = row["RunPercentage"]
-        runs = int(row["Runs"])
         wkts = int(row["Wickets"])
         
-        # Color based on percentage (e.g., higher % = deeper color)
-        color = plt.cm.Blues(pct / 100) if pct > 0 else 'lightgrey'
+        # Color hue based on Run %
+        color = cmap(norm(pct)) 
         
-        ax_stack.bar(0.5, pct, bottom=bottom, width=bar_width, color=color, edgecolor='black', linewidth=0.5)
+        # Draw the Rectangle (Fixed height, full width)
+        ax_stack.add_patch(
+            patches.Rectangle((0, bottom), 1, box_height, 
+                              edgecolor="black", facecolor=color, linewidth=1)
+        )
         
-        if pct > 0:
-            ax_stack.text(0.5, bottom + pct / 2, 
-                          f"{index}\n{pct:.0f}%\nWkts: {wkts}",
-                          ha='center', va='center', fontsize=7, color='white' if pct > 30 else 'black', weight='bold')
+        # Add labels
+        label_text = f"{index}\n{pct:.0f}%\nWkts: {wkts}"
         
-        bottom += pct
+        # Calculate text color for contrast
+        # Note: If cmap is 'Reds', dark colors (high Run%) should use white text
+        r, g, b, a = color
+        luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        text_color = 'white' if luminosity < 0.5 else 'black'
+
+        ax_stack.text(0.5, bottom + box_height / 2, 
+                      label_text,
+                      ha='center', va='center', fontsize=7, color=text_color, weight='bold', linespacing=1.2)
         
-    ax_stack.set_xlim(0, 1); ax_stack.set_ylim(0, 100)
+        bottom += box_height
+        
+    # 4. Styling
+    ax_stack.set_xlim(0, 1); ax_stack.set_ylim(0, 1)
     ax_stack.axis('off') # Hide all axes/ticks/labels
+    
+    # Title rotated 90 degrees to fit beside the pitch map
     ax_stack.set_title(f"Length Run % ({delivery_type})", fontsize=8, weight='bold', rotation=90, x=1.0, y=0.5)
 
-    # Remove the border
+    # Remove the border (spines)
     ax_stack.spines['right'].set_visible(False)
     ax_stack.spines['top'].set_visible(False)
     ax_stack.spines['left'].set_visible(False)
@@ -367,7 +397,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     
     plt.tight_layout(pad=0.5)
     return fig_stack
-
+    
 # --- CHART 4: INTERCEPTION SIDE-ON --- (Wide View)
 def create_interception_side_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
