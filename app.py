@@ -517,7 +517,7 @@ def create_interception_front_on(df_in, delivery_type):
     # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_8, ax_8 = plt.subplots(figsize=(3, 5), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_8, ax_8 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
 
     # 1. Plot Data
     # Plot "Other" (White with Grey Border)
@@ -525,7 +525,7 @@ def create_interception_front_on(df_in, delivery_type):
     # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
     ax_8.scatter(
         df_other["InterceptionY"], df_other["InterceptionX"] + 10, 
-        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=40, label="Other"
+        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=50, label="Other"
     ) 
     
     # Plot "Wicket" and "Boundary" (Solid colors)
@@ -534,7 +534,7 @@ def create_interception_front_on(df_in, delivery_type):
         # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
         ax_8.scatter(
             df_slice["InterceptionY"], df_slice["InterceptionX"] + 10, 
-            color=color_map[ctype], s=60, label=ctype
+            color=color_map[ctype], s=70, label=ctype
         ) 
 
     # 2. Draw Horizontal Dashed Lines with Labels (FIXED LINES: 0.0, 1.25)
@@ -547,9 +547,9 @@ def create_interception_front_on(df_in, delivery_type):
         ax_8.text(-0.95, y_val, label.split(':')[-1].strip(), ha='left', va='center', fontsize=6, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
     # Boundary lines (FIXED LINES: -0.18, 0.18)
-    ax_8.axvline(x=-0.18, color='lightgrey', linestyle='-', linewidth=1, alpha=0.7)
-    ax_8.axvline(x= 0.18, color='lightgrey', linestyle='-', linewidth=1, alpha=0.7)
-    ax_8.axvline(x= 0, color='lightgrey', linestyle='-', linewidth=0.8, alpha=0.7)
+    ax_8.axvline(x=-0.18, color='lightgrey', linestyle='--', linewidth=0.8, alpha=0.7)
+    ax_8.axvline(x= 0.18, color='lightgrey', linestyle='--', linewidth=0.8, alpha=0.7)
+    ax_8.axvline(x= 0, color='lightgrey', linestyle='--', linewidth=0.8, alpha=0.7)
     
     # 3. Set Axes Limits and Labels (FIXED LIMITS: Y-axis -0.2 to 3.5)
     ax_8.set_xlim(-1, 1); ax_8.set_ylim(-0.2, 3.5); ax_8.invert_yaxis()      
@@ -668,7 +668,6 @@ def create_wagon_wheel(df_in, delivery_type):
         text.set_color('black'); text.set_fontsize(8); text.set_fontweight('bold')
 
     ax.axis('equal'); 
-    ax.set_title(f"Scoring Areas ({delivery_type})", fontsize=10, weight='bold')
     plt.tight_layout(pad=0.5)
     
     return fig
@@ -737,12 +736,12 @@ def create_left_right_split(df_in, delivery_type):
     if left_pct > 0:
         text_color_left = get_text_color(mcolors.to_rgb(left_color))
         ax_split.text(left_pct / 2, 0, f"LEFT\n{left_pct:.0f}%", 
-                      ha='center', va='center', color=text_color_left, weight='bold', fontsize=7)
+                      ha='center', va='center', color=text_color_left, weight='bold', fontsize=12)
                       
     if right_pct > 0:
         text_color_right = get_text_color(mcolors.to_rgb(right_color))
         ax_split.text(left_pct + right_pct / 2, 0, f"RIGHT\n{right_pct:.0f}%", 
-                      ha='center', va='center', color=text_color_right, weight='bold', fontsize=7)
+                      ha='center', va='center', color=text_color_right, weight='bold', fontsize=12)
 
     # 5. Styling (Remains the same)
     ax_split.set_xlim(0, 100)
