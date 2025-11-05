@@ -1,4 +1,3 @@
-2-col layout
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -20,7 +19,7 @@ REQUIRED_COLS = [
     "InterceptionZ", "InterceptionY", "Over"
 ]
 
-# Wagon Wheel Calculation
+# Wagon Wheel Calculation (Function remains the same)
 def calculate_scoring_wagon(row):
     LX = row.get("LandingX"); LY = row.get("LandingY"); RH = row.get("IsBatsmanRightHanded")
     if RH is None or LX is None or LY is None or row.get("Runs", 0) == 0: return None
@@ -55,13 +54,13 @@ def calculate_scoring_angle(area):
 
 # Function to encode Matplotlib figure to image for Streamlit
 def fig_to_image(fig):
-    # Streamlit uses st.pyplot() or fig, no need for base64
     return fig
 
-# --- 2. CHART GENERATION FUNCTIONS ---
+# --- 2. CHART GENERATION FUNCTIONS (REMAINS THE SAME, BUT INTERCEPTION LOGIC IS NOW CORRECTED) ---
 
 # --- CHART 1: ZONAL ANALYSIS (CBH Boxes) ---
 def create_zonal_analysis(df_in, batsman_name, delivery_type):
+    # ... (Zonal Analysis logic remains the same)
     if df_in.empty:
         fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
 
@@ -69,7 +68,6 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
     handed_data = df_in["IsBatsmanRightHanded"].dropna().unique()
     if len(handed_data) > 0 and batsman_name != "All": is_right_handed = handed_data[0]
         
-    # Zones Layout (Fixed boundaries based on handedness)
     right_hand_zones = { "Z1": (-0.72, 0, -0.45, 1.91), "Z2": (-0.45, 0, -0.18, 0.71), "Z3": (-0.18, 0, 0.18, 0.71), "Z4": (-0.45, 0.71, -0.18, 1.31), "Z5": (-0.18, 0.71, 0.18, 1.31), "Z6": (-0.45, 1.31, 0.18, 1.91)}
     left_hand_zones = { "Z1": (0.45, 0, 0.72, 1.91), "Z2": (0.18, 0, 0.45, 0.71), "Z3": (-0.18, 0, 0.18, 0.71), "Z4": (0.18, 0.71, 0.45, 1.31), "Z5": (-0.18, 0.71, 0.18, 1.31), "Z6": (-0.18, 1.31, 0.45, 1.91)}
     zones_layout = right_hand_zones if is_right_handed else left_hand_zones
@@ -90,9 +88,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
     summary["Avg Runs/Wicket"] = summary.apply(lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0, axis=1)
     summary["StrikeRate"] = summary.apply(lambda row: (row["Runs"] / row["Balls"]) * 100 if row["Balls"] > 0 else 0, axis=1)
 
-    # Visualization
     avg_values = summary["Avg Runs/Wicket"]
-    # Handle the case where all averages might be 0 or there are no wickets
     avg_max = avg_values.max() if avg_values.max() > 0 else 1
     avg_min = avg_values[avg_values > 0].min() if avg_values[avg_values > 0].min() < avg_max else 0
     norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
@@ -118,7 +114,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
         ax.text(x1 + w / 2, y1 + h / 2, 
                 f"{z_key}\nR:{runs} W:{wkts}\nA:{avg:.1f} SR:{sr:.1f}", 
                 ha="center", va="center", weight="bold", fontsize=7,
-                color="black" if norm(avg) < 0.6 else "white", # Adaptive text color
+                color="black" if norm(avg) < 0.6 else "white", 
                 linespacing=1.2)
 
     ax.set_xlim(-0.75, 0.75); ax.set_ylim(0, 2); ax.axis('off'); 
@@ -128,6 +124,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
 
 # --- CHART 2: CREASE BEEHIVE ---
 def create_crease_beehive(df_in, delivery_type):
+    # ... (Crease Beehive logic remains the same)
     if df_in.empty:
         return go.Figure().update_layout(title="No data for Beehive", height=300)
 
@@ -165,6 +162,7 @@ def create_crease_beehive(df_in, delivery_type):
 
 # --- CHART 3: PITCH MAP ---
 def create_pitch_map(df_in, delivery_type):
+    # ... (Pitch Map logic remains the same)
     if df_in.empty:
         return go.Figure().update_layout(title="No data for Pitch Map", height=350)
 
@@ -214,110 +212,95 @@ def create_pitch_map(df_in, delivery_type):
     )
     return fig_pitch
 
-# --- CHART 4: INTERCEPTION SIDE-ON ---
+# --- CHART 4: INTERCEPTION SIDE-ON --- (Wide View)
 def create_interception_side_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
     if df_interception.empty:
-        fig, ax = plt.subplots(figsize=(3, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(7, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
         
     df_interception["ColorType"] = "Other"
     df_interception.loc[df_interception["Wicket"] == True, "ColorType"] = "Wicket"
     df_interception.loc[df_interception["Runs"].isin([4, 6]), "ColorType"] = "Boundary"
-    # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_7, ax_7 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
+    # Use a wider figure size (7, 4) for the wide view
+    fig_7, ax_7 = plt.subplots(figsize=(7, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
-    # 1. Plot Data (Layered for correct border visibility)
-    
-    # Plot "Other" (White with Grey Border)
+    # 1. Plot Data 
     df_other = df_interception[df_interception["ColorType"] == "Other"]
-    # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on X-axis ===
+    # Plotting: InterceptionX + 10 on X-axis
     ax_7.scatter(
         df_other["InterceptionX"] + 10, df_other["InterceptionZ"], 
         color='white', edgecolors='grey', linewidths=0.5, s=40, label="Other"
-    )
+    ) 
     
-    # Plot "Wicket" and "Boundary" (Solid colors)
     for ctype in ["Boundary", "Wicket"]:
         df_slice = df_interception[df_interception["ColorType"] == ctype]
-        # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on X-axis ===
+        # Plotting: InterceptionX + 10 on X-axis
         ax_7.scatter(
             df_slice["InterceptionX"] + 10, df_slice["InterceptionZ"], 
             color=color_map[ctype], s=40, label=ctype
-        )
+        ) 
 
-    # 2. Draw Vertical Dashed Lines with Labels (FIXED LINES: 0.0, 1.25, 2.0, 3.0)
-    line_specs = {
-        0.0: "Stumps",
-        1.250: "Crease",
-        2.000: "2m",     
-        3.000: "3m"      
-    }
-    
+    # 2. Draw Vertical Dashed Lines with Labels (Shifted by +10 to match the data)
+    line_specs = {10.0: "Stumps", 11.250: "Crease", 12.000: "2m", 13.000: "3m"}
     for x_val, label in line_specs.items():
         ax_7.axvline(x=x_val, color='grey', linestyle='--', linewidth=1, alpha=0.7)    
         ax_7.text(x_val, 1.45, label.split(':')[-1].strip(), ha='center', va='center', fontsize=6, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
-    # 3. Set Axes Limits and Labels (FIXED LIMITS: -0.2 to 3.4)
-    ax_7.set_xlim(-0.2, 3.4) 
-    ax_7.set_ylim(0, 1.5) 
+    # 3. Set Axes Limits (Shifted by +10 to match the data)
+    ax_7.set_xlim(9.8, 13.4); ax_7.set_ylim(0, 1.5) 
     ax_7.tick_params(axis='y', which='both', labelleft=False, left=False); ax_7.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
-    ax_7.set_xlabel("Distance (m)", fontsize=8); ax_7.set_ylabel("Height (m)", fontsize=8) 
+    ax_7.set_xlabel("Distance (m) [+10 Shift]", fontsize=8); ax_7.set_ylabel("Height (m)", fontsize=8) 
     ax_7.legend(loc='upper right', fontsize=6); ax_7.grid(True, linestyle=':', alpha=0.5); 
-    ax_7.set_title(f"Interception Side-On ({delivery_type})", fontsize=10, weight='bold')
+    ax_7.set_title(f"Interception Side-On (Wide - {delivery_type})", fontsize=10, weight='bold')
     plt.tight_layout(pad=0.5)
     return fig_7
 
-# --- CHART 5: INTERCEPTION FRONT-ON ---
+# --- CHART 5: INTERCEPTION FRONT-ON --- (Distance vs Width)
 def create_interception_front_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
     if df_interception.empty:
-        fig, ax = plt.subplots(figsize=(3, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(4, 7)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
         
     df_interception["ColorType"] = "Other"
     df_interception.loc[df_interception["Wicket"] == True, "ColorType"] = "Wicket"
     df_interception.loc[df_interception["Runs"].isin([4, 6]), "ColorType"] = "Boundary"
-    # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_8, ax_8 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
+    # Use a taller figure size (4, 7) for the distance view
+    fig_8, ax_8 = plt.subplots(figsize=(4, 7), subplot_kw={'xticks': [], 'yticks': []}) 
 
     # 1. Plot Data
-    # Plot "Other" (White with Grey Border)
     df_other = df_interception[df_interception["ColorType"] == "Other"]
-    # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
+    # Plotting: InterceptionX + 10 on Y-axis
     ax_8.scatter(
         df_other["InterceptionY"], df_other["InterceptionX"] + 10, 
         color='white', edgecolors='grey', linewidths=0.5, s=40, label="Other"
     ) 
     
-    # Plot "Wicket" and "Boundary" (Solid colors)
     for ctype in ["Boundary", "Wicket"]:
         df_slice = df_interception[df_interception["ColorType"] == ctype]
-        # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
+        # Plotting: InterceptionX + 10 on Y-axis
         ax_8.scatter(
             df_slice["InterceptionY"], df_slice["InterceptionX"] + 10, 
             color=color_map[ctype], s=40, label=ctype
         ) 
 
-    # 2. Draw Horizontal Dashed Lines with Labels (FIXED LINES: 0.0, 1.25)
-    line_specs = {
-        0.00: "Stumps",
-        1.25: "Crease"        
-    }
+    # 2. Draw Horizontal Dashed Lines with Labels (Shifted by +10 to match the data)
+    line_specs = {10.00: "Stumps", 11.25: "Crease"}
     for y_val, label in line_specs.items():
         ax_8.axhline(y=y_val, color='grey', linestyle='--', linewidth=1, alpha=0.7)
         ax_8.text(-0.95, y_val, label.split(':')[-1].strip(), ha='left', va='center', fontsize=6, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
-    # Boundary lines (FIXED LINES: -0.18, 0.18)
+    # Boundary lines (not shifted)
     ax_8.axvline(x=-0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
     ax_8.axvline(x= 0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
     
-    # 3. Set Axes Limits and Labels (FIXED LIMITS: Y-axis -0.2 to 3.5)
-    ax_8.set_xlim(-1, 1); ax_8.set_ylim(-0.2, 3.5); ax_8.invert_yaxis()      
+    # 3. Set Axes Limits (Shifted by +10 on Y-axis)
+    ax_8.set_xlim(-1, 1); ax_8.set_ylim(9.8, 13.5); ax_8.invert_yaxis()      
     ax_8.tick_params(axis='y', which='both', labelleft=False, left=False); ax_8.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
-    ax_8.set_xlabel("Width (m)", fontsize=8); ax_8.set_ylabel("Distance (m)", fontsize=8) 
+    ax_8.set_xlabel("Width (m)", fontsize=8); ax_8.set_ylabel("Distance (m) [+10 Shift]", fontsize=8) 
     ax_8.legend(loc='lower right', fontsize=6); ax_8.grid(True, linestyle=':', alpha=0.5); 
     ax_8.set_title(f"Interception Front-On ({delivery_type})", fontsize=10, weight='bold')
     plt.tight_layout(pad=0.5)
@@ -325,6 +308,7 @@ def create_interception_front_on(df_in, delivery_type):
 
 # --- CHART 6: SCORING WAGON WHEEL ---
 def create_wagon_wheel(df_in, delivery_type):
+    # ... (Wagon Wheel logic remains the same)
     wagon_summary = pd.DataFrame() 
     try:
         df_wagon = df_in.copy()
@@ -335,7 +319,6 @@ def create_wagon_wheel(df_in, delivery_type):
         handedness_mode = df_in["IsBatsmanRightHanded"].dropna().mode()
         is_right_handed = handedness_mode.iloc[0] if not handedness_mode.empty else True
         
-        # Define areas based on handedness for correct order
         if is_right_handed:
             all_areas = ["FINE LEG", "SQUARE LEG", "LONG ON", "LONG OFF", "COVER", "THIRD MAN"] 
         else:
@@ -358,7 +341,6 @@ def create_wagon_wheel(df_in, delivery_type):
     runs = wagon_summary["TotalRuns"].tolist()
     labels = [f"{area}\n({pct:.0f}%)" for area, pct in zip(wagon_summary["ScoringWagon"], wagon_summary["RunPercentage"])]
     
-    # Color mapping
     run_min = min(runs) if runs else 0
     run_max = max(runs) if runs else 1
     norm = mcolors.Normalize(vmin=run_min, vmax=run_max) if run_max > run_min else mcolors.Normalize(vmin=0, vmax=1)
@@ -423,7 +405,6 @@ if uploaded_file is not None:
     all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
     bat_team = st.sidebar.selectbox("Batting Team", all_teams, index=0)
 
-    # Note: Batsman filter needs to be dynamic based on the selected team
     if bat_team != "All":
         batsmen_options = ["All"] + sorted(df_raw[df_raw["BattingTeam"] == bat_team]["BatsmanName"].dropna().unique().tolist())
     else:
@@ -447,7 +428,6 @@ if uploaded_file is not None:
     df_seam = apply_filters(df_seam)
     df_spin = apply_filters(df_spin)
     
-    # Set the main title/heading for the analysis
     heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
     st.header(f"Analysis for: **{heading_text}**")
     st.markdown("---")
@@ -470,16 +450,25 @@ if uploaded_file is not None:
 
         st.markdown("##### 3. Pitch Map (Bounce Location)")
         st.plotly_chart(create_pitch_map(df_seam, "Seam"), use_container_width=True)
+        
+        # --- NEW LAYOUT START ---
+        
+        # Chart 4: Interception Side-On (Wide View) - Takes full width
+        st.markdown("##### 4. Interception Side-On (Wide View)")
+        st.pyplot(create_interception_side_on(df_seam, "Seam"), use_container_width=True)
 
-        st.markdown("##### 4. Scoring Areas (Wagon Wheel)")
-        st.pyplot(create_wagon_wheel(df_seam, "Seam"), use_container_width=True)
+        # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
+        bottom_col_left, bottom_col_right = st.columns(2)
 
-        st.markdown("##### 5. Interception Analysis (Side-On & Front-On)")
-        int_col1, int_col2 = st.columns(2)
-        with int_col1:
-            st.pyplot(create_interception_side_on(df_seam, "Seam"), use_container_width=True)
-        with int_col2:
+        with bottom_col_left:
+            st.markdown("##### 5. Interception Front-On")
             st.pyplot(create_interception_front_on(df_seam, "Seam"), use_container_width=True)
+        
+        with bottom_col_right:
+            st.markdown("##### 6. Scoring Areas (Wagon Wheel)")
+            st.pyplot(create_wagon_wheel(df_seam, "Seam"), use_container_width=True)
+            
+        # --- NEW LAYOUT END ---
 
 
     # --- RIGHT COLUMN: SPIN ANALYSIS ---
@@ -495,16 +484,25 @@ if uploaded_file is not None:
 
         st.markdown("##### 3. Pitch Map (Bounce Location)")
         st.plotly_chart(create_pitch_map(df_spin, "Spin"), use_container_width=True)
+        
+        # --- NEW LAYOUT START (Mirroring Left Column) ---
+        
+        # Chart 4: Interception Side-On (Wide View) - Takes full width
+        st.markdown("##### 4. Interception Side-On (Wide View)")
+        st.pyplot(create_interception_side_on(df_spin, "Spin"), use_container_width=True)
 
-        st.markdown("##### 4. Scoring Areas (Wagon Wheel)")
-        st.pyplot(create_wagon_wheel(df_spin, "Spin"), use_container_width=True)
+        # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
+        bottom_col_left, bottom_col_right = st.columns(2)
 
-        st.markdown("##### 5. Interception Analysis (Side-On & Front-On)")
-        int_col1, int_col2 = st.columns(2)
-        with int_col1:
-            st.pyplot(create_interception_side_on(df_spin, "Spin"), use_container_width=True)
-        with int_col2:
+        with bottom_col_left:
+            st.markdown("##### 5. Interception Front-On")
             st.pyplot(create_interception_front_on(df_spin, "Spin"), use_container_width=True)
+        
+        with bottom_col_right:
+            st.markdown("##### 6. Scoring Areas (Wagon Wheel)")
+            st.pyplot(create_wagon_wheel(df_spin, "Spin"), use_container_width=True)
+            
+        # --- NEW LAYOUT END ---
 
 else:
     st.info("⬆️ Please upload a CSV file to begin the analysis.")
