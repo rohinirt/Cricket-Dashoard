@@ -459,7 +459,7 @@ def create_interception_side_on(df_in, delivery_type):
     # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_7, ax_7 = plt.subplots(figsize=(4, 3), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_7, ax_7 = plt.subplots(figsize=(4, 2), subplot_kw={'xticks': [], 'yticks': []}) 
     
     # 1. Plot Data (Layered for correct border visibility)
     
