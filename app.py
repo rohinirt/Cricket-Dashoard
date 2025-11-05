@@ -775,6 +775,8 @@ if uploaded_file is not None:
         # --- NEW LAYOUT END ---
 
 
+
+
     # --- RIGHT COLUMN: SPIN ANALYSIS ---
     with col2:
         st.subheader("RIGHT COLUMN: SPIN ANALYSIS 🌀")
@@ -786,16 +788,18 @@ if uploaded_file is not None:
 
         st.pyplot(create_lateral_performance_stacked(df_spin, "Spin", batsman), use_container_width=True)
 
-        # Charts 3: Pitch Map and Vertical Run % Bar (Side-by-Side)
+        # Charts 3 & 8: Pitch Map and Vertical Run % Bar (Side-by-Side)
         pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
 
         with pitch_map_col:
             st.markdown("##### 3. Pitch Map (Bounce Location)")
-            st.plotly_chart(create_pitch_map(df_seam, "Seam"), use_container_width=True)
+            # CORRECTED: Use df_spin and "Spin"
+            st.plotly_chart(create_pitch_map(df_spin, "Spin"), use_container_width=True) 
             
         with run_pct_col:
             st.markdown("##### 8. Length Run %")
-            st.pyplot(create_pitch_length_run_pct(df_seam, "Seam"), use_container_width=True)
+            # CORRECTED: Use df_spin and "Spin"
+            st.pyplot(create_pitch_length_run_pct(df_spin, "Spin"), use_container_width=True)
         
         # --- NEW LAYOUT START (Mirroring Left Column) ---
         
@@ -811,16 +815,19 @@ if uploaded_file is not None:
         with bottom_col_right:
             st.pyplot(create_wagon_wheel(df_spin, "Spin"), use_container_width=True)
             st.pyplot(create_left_right_split(df_spin, "Spin"), use_container_width=True)
+            
         # Charts 9 & 10: Swing/Deviation Direction Analysis (Side-by-Side)
         final_col_swing, final_col_deviation = st.columns(2)
 
         with final_col_swing:
             st.markdown("##### 9. Swing Direction Performance")
-            st.pyplot(create_directional_split(df_seam, "Swing", "Swing Direction", "Seam"), use_container_width=True)
+            # CORRECTED: Use df_spin and "Spin"
+            st.pyplot(create_directional_split(df_spin, "Swing", "Swing Direction", "Spin"), use_container_width=True)
 
         with final_col_deviation:
             st.markdown("##### 10. Deviation Direction Performance")
-            st.pyplot(create_directional_split(df_seam, "Deviation", "Deviation Direction", "Seam"), use_container_width=True)  
+            # CORRECTED: Use df_spin and "Spin"
+            st.pyplot(create_directional_split(df_spin, "Deviation", "Deviation Direction", "Spin"), use_container_width=True)    
         # --- NEW LAYOUT END ---
 
 else:
