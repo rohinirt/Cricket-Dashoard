@@ -95,7 +95,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
     norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
     cmap = cm.get_cmap('Blues')
 
-    fig_boxes, ax = plt.subplots(figsize=(1,1), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_boxes, ax = plt.subplots(figsize=(3,3), subplot_kw={'xticks': [], 'yticks': []}) 
     
     for zone, (x1, y1, x2, y2) in zones_layout.items():
         w, h = x2 - x1, y2 - y1
