@@ -160,18 +160,20 @@ def create_crease_beehive(df_in, delivery_type):
     return fig_cbh
 
 # --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
+# --- CHART X: LATERAL PERFORMANCE STACKED BAR (Fixed Blue Color) ---
 def create_lateral_performance_stacked(df_in, delivery_type, batsman_name):
     df_lateral = df_in.copy()
     if df_lateral.empty:
         fig, ax = plt.subplots(figsize=(4, 2)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
         
-    # Determine handedness for zoning logic
+    # Determine handedness for zoning logic (needed for zone calculation, not plotting)
     handed_data = df_lateral["IsBatsmanRightHanded"].dropna().mode()
     is_right_handed = handed_data.iloc[0] if not handed_data.empty else True
     
     # Define Zoning Logic
     def assign_lateral_zone(row):
         y = row["CreaseY"]
+        # Logic remains the same
         if row["IsBatsmanRightHanded"] == True:
             if y > 0.18: return "LEG"
             elif y >= -0.18: return "STUMPS"
@@ -198,35 +200,29 @@ def create_lateral_performance_stacked(df_in, delivery_type, batsman_name):
     ordered_zones = ["WAY OUTSIDE OFF", "OUTSIDE OFF", "STUMPS", "LEG"]
     summary = summary.reindex(ordered_zones).fillna(0)
 
-    # Calculate Average for coloring
+    # Calculate Average for labeling
     summary["Avg Runs/Wicket"] = summary.apply(lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0, axis=1)
     
     # Create the stacked bar chart (Matplotlib)
-    fig_stack, ax_stack = plt.subplots(figsize=(4, 2), subplot_kw={'xticks': []}) 
+    fig_stack, ax_stack = plt.subplots(figsize=(4, 2)) 
 
-    # --- Coloring based on Average (Similar to Zonal Analysis) ---
-    avg_values = summary["Avg Runs/Wicket"]
-    # Adjust max/min for color normalization to handle zero/low data
-    avg_max = avg_values.max() if avg_values.max() > 0 else 1
-    avg_min = avg_values[avg_values > 0].min() if avg_values[avg_values > 0].min() < avg_max else 0
-    norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
-    cmap = cm.get_cmap('Reds') # Use a red colormap as seen in the reference
-    
-    colors = [cmap(norm(avg)) if avg > 0 else 'lightgrey' for avg in summary["Avg Runs/Wicket"]]
-    
-    # --- Plotting Stacked Bars ---
-    # We will stack Runs on top of Wickets (or just use one bar height for visualization and label data)
-    
+    # --- Plotting Stacked Bars with Fixed Blue Color ---
     bar_heights = summary["Balls"]
     bottom = np.zeros(len(bar_heights))
     
-    # Plot the full bar height (Balls), colored by Average
-    bars = ax_stack.bar(summary.index, bar_heights, bottom=bottom, color=colors, edgecolor='black', linewidth=0.5)
+    # Use a fixed blue color for all bars
+    bars = ax_stack.bar(
+        summary.index, 
+        bar_heights, 
+        bottom=bottom, 
+        color='royalblue', # Fixed Blue Color
+        edgecolor='black', 
+        linewidth=0.5
+    )
 
-    # Add labels for runs/wickets on top of the bars
+    # Add labels for runs/wickets/average on top of the bars
     for i, bar in enumerate(bars):
         zone = summary.index[i]
-        runs = int(summary.loc[zone, "Runs"])
         wickets = int(summary.loc[zone, "Wickets"])
         avg = summary.loc[zone, "Avg Runs/Wicket"]
         
@@ -236,12 +232,14 @@ def create_lateral_performance_stacked(df_in, delivery_type, batsman_name):
             bar.get_x() + bar.get_width() / 2, 
             bar.get_y() + bar.get_height() / 2, 
             label,
-            ha='center', va='center', fontsize=7, color='black', weight='bold'
+            ha='center', va='center', fontsize=7, color='white', weight='bold' # Set text color to white for contrast
         )
         
     ax_stack.set_ylim(0, bar_heights.max() * 1.1 if bar_heights.max() > 0 else 1)
+    
+    # --- AXIS LABEL CHANGE ---
     ax_stack.tick_params(axis='y', which='both', labelleft=False, left=False) # Hide Y-axis labels/ticks
-    ax_stack.tick_params(axis='x', rotation=0, labelsize=7) # Small X-axis labels
+    ax_stack.tick_params(axis='x', rotation=0, labelsize=6) # KEEP X-AXIS LABELS AND ADJUST FONT SIZE
 
     ax_stack.set_title(f"Lateral Performance ({delivery_type})", fontsize=8, weight='bold')
     plt.tight_layout(pad=0.5)
