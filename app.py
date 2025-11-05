@@ -425,12 +425,12 @@ col_seam, col_spin = st.columns(2)
 # --- LEFT PANEL: SEAM ANALYSIS ---
 filtered_df_seam = df_over[df_over["DeliveryType"] == "Seam"]
 with col_seam:
-    generate_charts(filtered_df_seam, "OUTSIDE OFF                                                                                      LEG SIDE", col_seam, batsman) # Panel title as per reference
+    generate_charts(filtered_df_seam, "OUTSIDE OFF LEG SIDE", col_seam, batsman) # Panel title as per reference
 
 # --- RIGHT PANEL: SPIN ANALYSIS ---
 filtered_df_spin = df_over[df_over["DeliveryType"] == "Spin"]
 with col_spin:
-    generate_charts(filtered_df_spin, "VERY FINE OFF                                                                             LONG OFF", col_spin, batsman) # Panel title as per reference
+    generate_charts(filtered_df_spin, "VERY FINE OFF LONG OFF", col_spin, batsman) # Panel title as per reference
 
 st.markdown("---")
 st.caption("Dashboard End. Data is filtered by Team, Batsman, and Over (if selected) for both panels.")
