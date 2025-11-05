@@ -596,22 +596,31 @@ def create_wagon_wheel(df_in, delivery_type):
     
     # 1. Identify Top 2 Regions by Percentage
     wagon_summary['SortKey'] = wagon_summary['RunPercentage']
-    top_regions = wagon_summary.nlargest(2, 'SortKey')
+    wagon_summary['Rank'] = wagon_summary['RunPercentage'].rank(method='dense', ascending=False)
     
     # Define Blue Color Hue
     COLOR_HIGH = 'darkblue'
     COLOR_SECOND_HIGH = 'cornflowerblue'
-    COLOR_DEFAULT = 'lightgrey'
+    COLOR_DEFAULT = 'white'
 
     # 2. Assign Colors
     colors = []
     for index, row in wagon_summary.iterrows():
-        if row['ScoringWagon'] == top_regions.iloc[0]['ScoringWagon']:
-            colors.append(COLOR_HIGH)
-        elif len(top_regions) > 1 and row['ScoringWagon'] == top_regions.iloc[1]['ScoringWagon']:
-            colors.append(COLOR_SECOND_HIGH)
+        current_rank = row['Rank']
+    
+        # Check if run percentage is greater than 0, otherwise it stays white (default)
+        if row['RunPercentage'] == 0:
+        colors.append(COLOR_DEFAULT)
+        continue
+        
+        # Check for Rank 1 (Highest)
+        if current_rank == 1:
+        colors.append(COLOR_HIGH)
+        # Check for Rank 2 (Second Highest)
+        elif current_rank == 2:
+        colors.append(COLOR_SECOND_HIGH)
         else:
-            colors.append(COLOR_DEFAULT)
+        colors.append(COLOR_DEFAULT)
 
     angles = wagon_summary["FixedAngle"].tolist()
     
