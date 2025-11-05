@@ -11,6 +11,8 @@ from io import StringIO
 import base64
 
 # --- 1. GLOBAL UTILITY FUNCTIONS ---
+# Assuming you have two main sections side-by-side
+col_left, col_divider, col_right = st.columns([4.5, 0.05, 5.45]) # Adjust ratios to fit 10.0 total
 with col_divider:
     st.markdown(
         """
