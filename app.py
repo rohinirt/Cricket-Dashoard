@@ -771,7 +771,7 @@ if uploaded_file is not None:
 
         with final_col_deviation:
             st.markdown("##### 10. Deviation Direction Performance")
-            st.pyplot(create_directional_split(df_seam, "Deviation1", "Deviation Direction", "Seam"), use_container_width=True)   
+            st.pyplot(create_directional_split(df_seam, "Deviation", "Deviation Direction", "Seam"), use_container_width=True)   
         # --- NEW LAYOUT END ---
 
 
@@ -820,7 +820,7 @@ if uploaded_file is not None:
 
         with final_col_deviation:
             st.markdown("##### 10. Deviation Direction Performance")
-            st.pyplot(create_directional_split(df_seam, "Deviation1", "Deviation Direction", "Seam"), use_container_width=True)  
+            st.pyplot(create_directional_split(df_seam, "Deviation", "Deviation Direction", "Seam"), use_container_width=True)  
         # --- NEW LAYOUT END ---
 
 else:
