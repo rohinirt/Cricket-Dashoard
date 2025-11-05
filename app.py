@@ -137,12 +137,12 @@ def create_crease_beehive(df_in, delivery_type):
 
     fig_cbh.add_trace(go.Scatter(
         x=non_wickets["StumpsY"], y=non_wickets["StumpsZ"], mode='markers', name="No Wicket",
-        marker=dict(color='lightgrey', size=4, line=dict(width=0), opacity=0.95)
+        marker=dict(color='lightgrey', size=10, line=dict(width=0), opacity=0.95)
     ))
 
     fig_cbh.add_trace(go.Scatter(
-        x=wickets["StumpsY"], y=wickets["StumpsZ"], mode='markers', name="Wicket",
-        marker=dict(color='red', size=8, line=dict(width=0), opacity=0.95)
+        x=wickets["CreaseY"], y=wickets["CreaseZ"], mode='markers', name="Wicket",
+        marker=dict(color='red', size=12, line=dict(width=0), opacity=0.95)
     ))
 
     # Stump lines & Crease lines
@@ -153,11 +153,10 @@ def create_crease_beehive(df_in, delivery_type):
     fig_cbh.add_hline(y=0.78, line=dict(color="grey", width=0.8)) 
     
     fig_cbh.update_layout(
-        title=f"Crease Beehive ({delivery_type})",
         height=300, 
         margin=dict(l=0, r=0, t=30, b=10),
-        xaxis=dict(range=[-1.6, 1.6], showgrid=True, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
-        yaxis=dict(range=[0.5, 2], showgrid=True, zeroline=False, visible=False),
+        xaxis=dict(range=[-1.5, 1.5], showgrid=True, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
+        yaxis=dict(range=[0, 2], showgrid=True, zeroline=False, visible=False),
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
     return fig_cbh
