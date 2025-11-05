@@ -219,7 +219,7 @@ def create_interception_side_on(df_in, delivery_type):
     if df_interception.empty:
         fig, ax = plt.subplots(figsize=(3, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
     
-    # --- CORRECTION: Add 10 to InterceptionX for analysis ---
+    # --- Data Shift: Apply +10 to InterceptionX (Distance) ---
     df_interception["InterceptionX_Shifted"] = df_interception["InterceptionX"] + 10
     
     df_interception["ColorType"] = "Other"
@@ -229,21 +229,29 @@ def create_interception_side_on(df_in, delivery_type):
     
     fig_7, ax_7 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
+    # 1. Plot Data
+    # Plot "Other" (White with Grey Border)
     df_other = df_interception[df_interception["ColorType"] == "Other"]
-    # PLOTTING SHIFTED X-DATA
-    ax_7.scatter(df_other["InterceptionX_Shifted"], df_other["InterceptionZ"], color='white', edgecolors='grey', linewidths=0.5, s=25, label="Other") 
+    ax_7.scatter(
+        df_other["InterceptionX_Shifted"], df_other["InterceptionZ"], 
+        color='white', edgecolors='grey', linewidths=0.5, s=40, label="Other"
+    ) 
     
+    # Plot "Wicket" and "Boundary" (Solid colors, plotted last to be on top)
     for ctype in ["Boundary", "Wicket"]:
         df_slice = df_interception[df_interception["ColorType"] == ctype]
-        # PLOTTING SHIFTED X-DATA
-        ax_7.scatter(df_slice["InterceptionX_Shifted"], df_slice["InterceptionZ"], color=color_map[ctype], s=40, label=ctype) 
+        ax_7.scatter(
+            df_slice["InterceptionX_Shifted"], df_slice["InterceptionZ"], 
+            color=color_map[ctype], s=40, label=ctype
+        ) 
 
-    # --- CORRECTION: Shift vertical lines and X-limits by 10 ---
+    # 2. Draw Vertical Dashed Lines with Labels (Shifted by +10)
     line_specs = {10.0: "Stumps", 11.250: "Crease", 12.000: "2m", 13.000: "3m"}
     for x_val, label in line_specs.items():
         ax_7.axvline(x=x_val, color='grey', linestyle='--', linewidth=1, alpha=0.7)    
         ax_7.text(x_val, 1.45, label.split(':')[-1].strip(), ha='center', va='center', fontsize=6, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
+    # 3. Set Axes Limits (Shifted by +10)
     ax_7.set_xlim(9.8, 13.4); ax_7.set_ylim(0, 1.5) 
     ax_7.tick_params(axis='y', which='both', labelleft=False, left=False); ax_7.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
     ax_7.set_xlabel("Distance (m) [+10 Shift]", fontsize=8); ax_7.set_ylabel("Height (m)", fontsize=8) 
@@ -258,7 +266,7 @@ def create_interception_front_on(df_in, delivery_type):
     if df_interception.empty:
         fig, ax = plt.subplots(figsize=(3, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
         
-    # --- CORRECTION: Add 10 to InterceptionX for analysis ---
+    # --- Data Shift: Apply +10 to InterceptionX (Distance) ---
     df_interception["InterceptionX_Shifted"] = df_interception["InterceptionX"] + 10
 
     df_interception["ColorType"] = "Other"
@@ -268,24 +276,35 @@ def create_interception_front_on(df_in, delivery_type):
     
     fig_8, ax_8 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
 
+    # 1. Plot Data
+    # Plot "Other" (White with Grey Border)
     df_other = df_interception[df_interception["ColorType"] == "Other"]
-    # PLOTTING SHIFTED Y-DATA (InterceptionX is plotted on the Y-axis)
-    ax_8.scatter(df_other["InterceptionY"], df_other["InterceptionX_Shifted"], color='white', edgecolors='grey', linewidths=0.5, s=25, label="Other") 
+    # InterceptionX (Distance) is on the Y-axis
+    ax_8.scatter(
+        df_other["InterceptionY"], df_other["InterceptionX_Shifted"], 
+        color='white', edgecolors='grey', linewidths=0.5, s=40, label="Other"
+    ) 
     
+    # Plot "Wicket" and "Boundary" (Solid colors, plotted last to be on top)
     for ctype in ["Boundary", "Wicket"]:
         df_slice = df_interception[df_interception["ColorType"] == ctype]
-        # PLOTTING SHIFTED Y-DATA (InterceptionX is plotted on the Y-axis)
-        ax_8.scatter(df_slice["InterceptionY"], df_slice["InterceptionX_Shifted"], color=color_map[ctype], s=40, label=ctype) 
+        # InterceptionX (Distance) is on the Y-axis
+        ax_8.scatter(
+            df_slice["InterceptionY"], df_slice["InterceptionX_Shifted"], 
+            color=color_map[ctype], s=40, label=ctype
+        ) 
 
-    # --- CORRECTION: Shift horizontal lines and Y-limits by 10 ---
+    # 2. Draw Horizontal Dashed Lines with Labels (Shifted by +10)
     line_specs = {10.00: "Stumps", 11.25: "Crease"}
     for y_val, label in line_specs.items():
         ax_8.axhline(y=y_val, color='grey', linestyle='--', linewidth=1, alpha=0.7)
         ax_8.text(-0.95, y_val, label.split(':')[-1].strip(), ha='left', va='center', fontsize=6, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
+    # Boundary lines (not shifted)
     ax_8.axvline(x=-0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
     ax_8.axvline(x= 0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
     
+    # 3. Set Axes Limits (Shifted by +10 on Y-axis)
     ax_8.set_xlim(-1, 1); ax_8.set_ylim(9.8, 13.5); ax_8.invert_yaxis()      
     ax_8.tick_params(axis='y', which='both', labelleft=False, left=False); ax_8.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
     ax_8.set_xlabel("Width (m)", fontsize=8); ax_8.set_ylabel("Distance (m) [+10 Shift]", fontsize=8) 
