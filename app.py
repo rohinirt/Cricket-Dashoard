@@ -113,12 +113,11 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
         ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=0.8))
 
         ax.text(x1 + w / 2, y1 + h / 2, 
-        # === REPLACE THIS LINE WITH THE NEW FORMATTING ===
         f"R: {runs}\nW: {wkts}\nSR: {sr:.0f}\nA: {avg:.0f}", 
         # ===============================================
         ha="center", 
         va="center", 
-        fontsize=7,
+        fontsize=5,
         color="black" if norm(avg) < 0.6 else "white", 
         linespacing=1.2)
 
