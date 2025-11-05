@@ -136,7 +136,7 @@ def create_crease_beehive(df_in, delivery_type):
     fig_cbh = go.Figure()
 
     fig_cbh.add_trace(go.Scatter(
-        x=non_wickets["Crease"], y=non_wickets["Crease"], mode='markers', name="No Wicket",
+        x=non_wickets["CreaseY"], y=non_wickets["CreaseZ"], mode='markers', name="No Wicket",
         marker=dict(color='lightgrey', size=15, line=dict(width=1, color="white"), opacity=0.95)
     ))
 
