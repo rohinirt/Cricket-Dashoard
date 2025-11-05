@@ -357,6 +357,20 @@ def create_pitch_map(df_in, delivery_type):
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
+    fig_pitch.update_xaxes(
+        showline=True, 
+        linewidth=1, 
+        linecolor='black', 
+        mirror=True, # Draw top and right lines too
+        # If visible was True, we'd set ticks/labels to False, but here axes are already invisible.
+        # This will draw a line at the min/max of the axis range.
+    )
+    fig_pitch.update_yaxes(
+        showline=True, 
+        linewidth=1, 
+        linecolor='black', 
+        mirror=True, # Draw top and right lines too
+    )
     return fig_pitch
 
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
