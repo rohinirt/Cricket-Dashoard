@@ -479,6 +479,64 @@ def create_wagon_wheel(df_in, delivery_type):
     
     return fig
 
+# --- CHART 7: LEFT/RIGHT SCORING SPLIT (100% Bar) ---
+def create_left_right_split(df_in, delivery_type):
+    df_split = df_in.copy()
+    
+    # 1. Define Side
+    df_split["Side"] = np.where(df_split["LandingY"] < 0, "LEFT", "RIGHT")
+    
+    # 2. Calculate Runs and Percentage
+    summary = df_split.groupby("Side")["Runs"].sum().reset_index()
+    total_runs = summary["Runs"].sum()
+    
+    if total_runs == 0:
+        fig, ax = plt.subplots(figsize=(4, 1.5)); ax.text(0.5, 0.5, "No Runs Scored", ha='center', va='center'); ax.axis('off'); return fig
+        
+    summary["Percentage"] = (summary["Runs"] / total_runs) * 100
+    
+    # Order the summary for consistent plotting
+    summary = summary.set_index("Side").reindex(["LEFT", "RIGHT"]).fillna(0)
+    
+    # 3. Create the 100% Stacked Bar Chart
+    fig_split, ax_split = plt.subplots(figsize=(4, 1.5)) 
+
+    left_pct = summary.loc["LEFT", "Percentage"]
+    right_pct = summary.loc["RIGHT", "Percentage"]
+    
+    # Define colors
+    colors = ['indianred', 'royalblue'] # Left (Reddish) and Right (Blueish)
+    
+    # Plotting the left side
+    ax_split.barh("Total", left_pct, color=colors[0], edgecolor='black', linewidth=0.5)
+    
+    # Plotting the right side stacked on the left side
+    ax_split.barh("Total", right_pct, left=left_pct, color=colors[1], edgecolor='black', linewidth=0.5)
+    
+    # Add labels
+    if left_pct > 0:
+        ax_split.text(left_pct / 2, 0, f"LEFT\n{left_pct:.0f}%", 
+                      ha='center', va='center', color='white', weight='bold', fontsize=7)
+    if right_pct > 0:
+        ax_split.text(left_pct + right_pct / 2, 0, f"RIGHT\n{right_pct:.0f}%", 
+                      ha='center', va='center', color='white', weight='bold', fontsize=7)
+
+    # 4. Styling
+    ax_split.set_xlim(0, 100)
+    ax_split.set_title(f"Run Split (Left/Right - {delivery_type})", fontsize=8, weight='bold')
+    
+    # Remove all spines/borders
+    ax_split.spines['right'].set_visible(False)
+    ax_split.spines['top'].set_visible(False)
+    ax_split.spines['left'].set_visible(False)
+    ax_split.spines['bottom'].set_visible(False)
+    
+    # Hide ticks and labels
+    ax_split.tick_params(axis='both', which='both', length=0)
+    ax_split.set_yticklabels([]); ax_split.set_xticklabels([])
+    
+    plt.tight_layout(pad=0.5)
+    return fig_split
 
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
@@ -573,6 +631,8 @@ if uploaded_file is not None:
         with bottom_col_right:
 
             st.pyplot(create_wagon_wheel(df_seam, "Seam"), use_container_width=True)
+            st.pyplot(create_left_right_split(df_seam, "Seam"), use_container_width=True)
+    
             
         # --- NEW LAYOUT END ---
 
@@ -603,6 +663,7 @@ if uploaded_file is not None:
         
         with bottom_col_right:
             st.pyplot(create_wagon_wheel(df_spin, "Spin"), use_container_width=True)
+            st.pyplot(create_left_right_split(df_spin, "Spin"), use_container_width=True)
             
         # --- NEW LAYOUT END ---
 
