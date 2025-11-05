@@ -176,7 +176,7 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     
     df_lateral = df_in.copy()
     if df_lateral.empty:
-        fig, ax = plt.subplots(figsize=(7, 1.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(7, 1)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
         
     # 1. Define Zoning Logic (Same as before)
     def assign_lateral_zone(row):
@@ -255,12 +255,12 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
         # Label 1: Zone Name (Top of the box)
         ax_boxes.text(left + box_width / 2, 0.75, 
                       index,
-                      ha='center', va='center', fontsize=7, color='black', weight='bold')
+                      ha='center', va='center', fontsize=8, color=text_color)
                       
         # Label 2: Wickets and Average (Middle of the box)
         ax_boxes.text(left + box_width / 2, 0.4, 
                       label_wkts_avg,
-                      ha='center', va='center', fontsize=7, color=text_color, weight='bold')
+                      ha='center', va='center', fontsize=8, color=text_color)
         
         left += box_width
         
