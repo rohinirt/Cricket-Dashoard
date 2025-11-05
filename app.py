@@ -350,7 +350,7 @@ def create_pitch_map(df_in, delivery_type):
 
     # 4. Layout
     fig_pitch.update_layout(
-        height = 300
+        height = 300,
         margin=dict(l=0, r=50, t=0, b=10),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False),
         # Ensure Y-axis range covers the custom bins
