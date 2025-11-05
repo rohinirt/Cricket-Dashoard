@@ -459,7 +459,7 @@ def create_interception_side_on(df_in, delivery_type):
     # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_7, ax_7 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_7, ax_7 = plt.subplots(figsize=(4, 3), subplot_kw={'xticks': [], 'yticks': []}) 
     
     # 1. Plot Data (Layered for correct border visibility)
     
@@ -468,7 +468,7 @@ def create_interception_side_on(df_in, delivery_type):
     # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on X-axis ===
     ax_7.scatter(
         df_other["InterceptionX"] + 10, df_other["InterceptionZ"], 
-        color='white', edgecolors='grey', linewidths=0.5, s=40, label="Other"
+        color='grey', edgecolors='white', linewidths=0.5, s=40, label="Other"
     )
     
     # Plot "Wicket" and "Boundary" (Solid colors)
@@ -496,9 +496,6 @@ def create_interception_side_on(df_in, delivery_type):
     ax_7.set_xlim(-0.2, 3.4) 
     ax_7.set_ylim(0, 1.5) 
     ax_7.tick_params(axis='y', which='both', labelleft=False, left=False); ax_7.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
-    ax_7.set_xlabel("Distance (m)", fontsize=8); ax_7.set_ylabel("Height (m)", fontsize=8) 
-    ax_7.legend(loc='upper right', fontsize=6); ax_7.grid(True, linestyle=':', alpha=0.5); 
-    ax_7.set_title(f"Interception Side-On ({delivery_type})", fontsize=10, weight='bold')
     plt.tight_layout(pad=0.5)
     return fig_7
 
