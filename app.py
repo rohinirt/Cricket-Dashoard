@@ -227,7 +227,7 @@ def create_interception_side_on(df_in, delivery_type):
     fig_7, ax_7 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
     df_other = df_interception[df_interception["ColorType"] == "Other"]
-    ax_7.scatter(df_other["InterceptionX"], df_other["InterceptionZ"], color='white', edgecolors='grey', linewidths=0.5, s=25, label="Other") 
+    ax_7.scatter(df_other["InterceptionX"]+10, df_other["InterceptionZ"], color='white', edgecolors='grey', linewidths=0.5, s=25, label="Other") 
     
     for ctype in ["Boundary", "Wicket"]:
         df_slice = df_interception[df_interception["ColorType"] == ctype]
@@ -260,7 +260,7 @@ def create_interception_front_on(df_in, delivery_type):
     fig_8, ax_8 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
 
     df_other = df_interception[df_interception["ColorType"] == "Other"]
-    ax_8.scatter(df_other["InterceptionY"], df_other["InterceptionX"], color='white', edgecolors='grey', linewidths=0.5, s=25, label="Other") 
+    ax_8.scatter(df_other["InterceptionY"], df_other["InterceptionX"]+10, color='white', edgecolors='grey', linewidths=0.5, s=25, label="Other") 
     
     for ctype in ["Boundary", "Wicket"]:
         df_slice = df_interception[df_interception["ColorType"] == ctype]
