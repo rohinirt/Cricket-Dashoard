@@ -517,7 +517,7 @@ def create_interception_front_on(df_in, delivery_type):
     # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_8, ax_8 = plt.subplots(figsize=(3, 4), subplot_kw={'xticks': [], 'yticks': []}) 
+    fig_8, ax_8 = plt.subplots(figsize=(3, 5), subplot_kw={'xticks': [], 'yticks': []}) 
 
     # 1. Plot Data
     # Plot "Other" (White with Grey Border)
@@ -525,7 +525,7 @@ def create_interception_front_on(df_in, delivery_type):
     # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
     ax_8.scatter(
         df_other["InterceptionY"], df_other["InterceptionX"] + 10, 
-        color='white', edgecolors='grey', linewidths=0.5, s=40, label="Other"
+        color='#D3D3D3', edgecolors='grey', linewidths=0.5, s=40, label="Other"
     ) 
     
     # Plot "Wicket" and "Boundary" (Solid colors)
@@ -534,7 +534,7 @@ def create_interception_front_on(df_in, delivery_type):
         # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
         ax_8.scatter(
             df_slice["InterceptionY"], df_slice["InterceptionX"] + 10, 
-            color=color_map[ctype], s=40, label=ctype
+            color=color_map[ctype], s=60, label=ctype
         ) 
 
     # 2. Draw Horizontal Dashed Lines with Labels (FIXED LINES: 0.0, 1.25)
@@ -543,12 +543,13 @@ def create_interception_front_on(df_in, delivery_type):
         1.25: "Crease"        
     }
     for y_val, label in line_specs.items():
-        ax_8.axhline(y=y_val, color='grey', linestyle='--', linewidth=1, alpha=0.7)
+        ax_8.axhline(y=y_val, color='lightgrey', linestyle='--', linewidth=0.8, alpha=0.7)
         ax_8.text(-0.95, y_val, label.split(':')[-1].strip(), ha='left', va='center', fontsize=6, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
     # Boundary lines (FIXED LINES: -0.18, 0.18)
-    ax_8.axvline(x=-0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
-    ax_8.axvline(x= 0.18, color='grey', linestyle='-', linewidth=1.5, alpha=0.7)
+    ax_8.axvline(x=-0.18, color='lightgrey', linestyle='-', linewidth=1, alpha=0.7)
+    ax_8.axvline(x= 0.18, color='lightgrey', linestyle='-', linewidth=1, alpha=0.7)
+    ax_8.axvline(x= 0, color='lightgrey', linestyle='-', linewidth=0.8, alpha=0.7)
     
     # 3. Set Axes Limits and Labels (FIXED LIMITS: Y-axis -0.2 to 3.5)
     ax_8.set_xlim(-1, 1); ax_8.set_ylim(-0.2, 3.5); ax_8.invert_yaxis()      
