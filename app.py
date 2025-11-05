@@ -340,7 +340,7 @@ def create_pitch_map(df_in, delivery_type):
 
     fig_pitch.add_trace(go.Scatter(
         x=pitch_non_wickets["BounceY"], y=pitch_non_wickets["BounceX"], mode='markers', name="No Wicket",
-        marker=dict(color='#B2BEB5', size=10, line=dict(width=1, color="white"), opacity=0.9)
+        marker=dict(color='#D3D3D3', size=10, line=dict(width=1, color="white"), opacity=0.9)
     ))
 
     fig_pitch.add_trace(go.Scatter(
@@ -350,7 +350,8 @@ def create_pitch_map(df_in, delivery_type):
 
     # 4. Layout
     fig_pitch.update_layout(
-        margin=dict(l=0, r=30, t=0, b=10),
+        height = 300
+        margin=dict(l=0, r=50, t=0, b=10),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False),
         # Ensure Y-axis range covers the custom bins
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
@@ -361,7 +362,7 @@ def create_pitch_map(df_in, delivery_type):
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
 def create_pitch_length_run_pct(df_in, delivery_type):
     if df_in.empty:
-        fig, ax = plt.subplots(figsize=(2, 5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(2, 10)); ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); ax.axis('off'); return fig
 
     PITCH_BINS_DICT = get_pitch_bins(delivery_type)
     
