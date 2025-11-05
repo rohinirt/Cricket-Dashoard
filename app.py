@@ -395,7 +395,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     df_summary["RunPercentage"] = (df_summary["Runs"] / total_runs) * 100 if total_runs > 0 else 0
 
     # 2. Chart Setup
-    fig_stack, ax_stack = plt.subplots(figsize=(2, 10)) 
+    fig_stack, ax_stack = plt.subplots(figsize=(2, 7)) 
     
     num_regions = len(ordered_keys)
     box_height = 1 / num_regions # Fixed height for each box
@@ -430,7 +430,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
 
         ax_stack.text(0.5, bottom + box_height / 2, 
                       label_text,
-                      ha='center', va='center', fontsize=7, color=text_color, weight='bold', linespacing=1.2)
+                      ha='center', va='center', fontsize=9, color=text_color, linespacing=1.2)
         
         bottom += box_height
         
