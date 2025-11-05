@@ -691,15 +691,10 @@ def create_directional_split(df_in, direction_col, title, delivery_type):
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
-
-st.title("🏏 Cricket Bowling Delivery Analysis Dashboard")
-
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
-# ... (st.set_page_config and st.title calls)
 
 # --- File Uploader ---
 uploaded_file = st.file_uploader("Upload your CSV file here", type=["csv"])
-
 if uploaded_file is not None:
     # Read the data from the uploaded file
     try:
@@ -722,7 +717,6 @@ if uploaded_file is not None:
     # =========================================================
     # 🌟 FILTERS MOVED TO TOP OF MAIN BODY 🌟
     # =========================================================
-    st.header("Global Filters")
     # Use columns to align the three filters horizontally
     filter_col1, filter_col2, filter_col3 = st.columns(3) 
 
@@ -766,7 +760,7 @@ if uploaded_file is not None:
     df_spin = apply_filters(df_spin)
     
     heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
-    st.header(f"Analysis for: **{heading_text}**")
+    st.header(f"**{heading_text}**")
     st.markdown("---")
 
     # --- 4. DISPLAY CHARTS IN TWO COLUMNS ---
