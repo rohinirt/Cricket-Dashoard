@@ -727,9 +727,14 @@ def create_left_right_split(df_in, delivery_type):
     # Use a luminosity check to ensure white text on dark blue and black text on light blue
     
     def get_text_color(rgb_color):
-        r, g, b, a = rgb_color
-        luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
-        return 'white' if luminosity < 0.5 else 'black'
+    # Only unpack R, G, B (mcolors.to_rgb returns a 3-tuple)
+    r, g, b = rgb_color 
+    
+    # Calculate luminosity (standard formula)
+    luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    
+    # Return contrast color
+    return 'white' if luminosity < 0.5 else 'black'
 
     if left_pct > 0:
         text_color_left = get_text_color(mcolors.to_rgb(left_color))
