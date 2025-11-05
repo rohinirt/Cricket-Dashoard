@@ -796,11 +796,9 @@ if uploaded_file is not None:
         final_col_swing, final_col_deviation = st.columns(2)
 
         with final_col_swing:
-            st.markdown("##### 9. Swing Direction Performance")
             st.pyplot(create_directional_split(df_seam, "Swing", "Swing Direction", "Seam"), use_container_width=True)
 
         with final_col_deviation:
-            st.markdown("##### 10. Deviation Direction Performance")
             st.pyplot(create_directional_split(df_seam, "Deviation", "Deviation Direction", "Seam"), use_container_width=True)   
         # --- NEW LAYOUT END ---
 
