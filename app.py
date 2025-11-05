@@ -692,7 +692,7 @@ def create_left_right_split(df_in, delivery_type):
     # --- Check for No Runs (Remains the same) ---
     if total_runs == 0:
         # Decreased height applied here too
-        fig, ax = plt.subplots(figsize=(4, 1.0)); ax.text(0.5, 0.5, "No Runs Scored", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(4, 2.0)); ax.text(0.5, 0.5, "No Runs Scored", ha='center', va='center'); ax.axis('off'); return fig
         
     summary["Percentage"] = (summary["Runs"] / total_runs) * 100
     
@@ -715,7 +715,7 @@ def create_left_right_split(df_in, delivery_type):
     
     # 4. Create the 100% Stacked Bar Chart
     # DECREASED HEIGHT: Changed figsize to (4, 1.0)
-    fig_split, ax_split = plt.subplots(figsize=(4, 1.0)) 
+    fig_split, ax_split = plt.subplots(figsize=(4, 2.0)) 
 
     # Plotting the left side
     ax_split.barh("Total", left_pct, color=left_color, edgecolor='black', linewidth=0.5)
@@ -746,7 +746,6 @@ def create_left_right_split(df_in, delivery_type):
 
     # 5. Styling (Remains the same)
     ax_split.set_xlim(0, 100)
-    ax_split.set_title(f"Run Split (Left/Right - {delivery_type})", fontsize=8, weight='bold')
     
     # Remove all spines/borders
     ax_split.spines['right'].set_visible(False)
