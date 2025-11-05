@@ -211,7 +211,7 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     summary["Avg Runs/Wicket"] = summary.apply(lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0, axis=1)
     
     # 3. Chart Setup
-    fig_boxes, ax_boxes = plt.subplots(figsize=(7, 1.5)) 
+    fig_boxes, ax_boxes = plt.subplots(figsize=(7, 1)) 
     
     num_regions = len(ordered_zones)
     box_width = 1 / num_regions # Fixed width for each box (total width = 1)
@@ -222,7 +222,7 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     # Normalize color range: Use 0 to 50 for a reasonable cap on average
     avg_max = avg_values.max() if avg_values.max() > 0 else 50
     norm = mcolors.Normalize(vmin=0, vmax=avg_max if avg_max > 50 else 50)
-    cmap = cm.get_cmap('Reds_r') # Use inverted Reds_r: lower avg (good) is darker/redder
+    cmap = cm.get_cmap('Blues') # Use inverted Reds_r: lower avg (good) is darker/redder
     
     # 4. Plotting Equal Boxes (Horizontal Heatmap)
     for index, row in summary.iterrows():
