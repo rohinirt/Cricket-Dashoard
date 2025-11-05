@@ -918,8 +918,22 @@ if uploaded_file is not None:
     
     # --- LEFT COLUMN: SEAM ANALYSIS ---
     with col1:
-        st.subheader("SEAM")
-        st.markdown("---")
+        st.markdown(
+    """
+        <style>
+        /* Target h3 elements globally (Streamlit's subheader default) or use a class for h4 */
+        /* Targetting h4 for smaller size */
+        h4 {
+        margin-top: -10px; /* Adjust this negative value to pull the header up */
+        margin-bottom: -10px; /* Adjust this negative value to pull the content below up */
+        font-size: 1.25em; /* Optional: Adjust font size if h4 is too big */
+        }
+        </style>
+        """,
+         unsafe_allow_html=True
+        )
+        # Use a smaller Markdown header (e.g., h4)
+        st.markdown("#### SEAM")
 
         st.pyplot(create_zonal_analysis(df_seam, batsman, "Seam"), use_container_width=True)
 
@@ -981,10 +995,8 @@ if uploaded_file is not None:
         """,
          unsafe_allow_html=True
         )
-
         # Use a smaller Markdown header (e.g., h4)
         st.markdown("#### SPIN")
-        st.markdown("---")
         
         st.pyplot(create_zonal_analysis(df_spin, batsman, "Spin"), use_container_width=True)
         
