@@ -304,6 +304,70 @@ def create_pitch_map(df_in, delivery_type):
     )
     return fig_pitch
 
+# --- CHART 3b: PITCH LENGTH RUN % (Vertical Stacked Bar) ---
+def create_pitch_length_run_pct(df_in, delivery_type):
+    df_pitch = df_in.copy()
+    if df_pitch.empty:
+        fig, ax = plt.subplots(figsize=(2, 3.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); ax.axis('off'); return fig
+
+    PITCH_BINS = {
+        "Full Toss": {"x0": -4.0, "x1": 0.9},
+        "Yorker": {"x0": 0.9, "x1": 2.8},
+        "Slot": {"x0": 2.8, "x1": 5.0},
+        "Length": {"x0": 5.0, "x1": 8.60},
+        "Short": {"x0": 8.60, "x1": 16.0},
+    }
+
+    def assign_pitch_length(x):
+        for length, params in PITCH_BINS.items():
+            if params["x0"] <= x < params["x1"]: return length
+        return None
+
+    df_pitch["PitchLength"] = df_pitch["BounceX"].apply(assign_pitch_length)
+    df_summary = df_pitch.groupby("PitchLength").agg(
+        Runs=("Runs", "sum"), 
+        Wickets=("Wicket", lambda x: (x == True).sum()), 
+        Balls=("Wicket", "count")
+    ).reset_index().set_index("PitchLength").reindex(PITCH_BINS.keys()).fillna(0)
+    
+    total_runs = df_summary["Runs"].sum()
+    df_summary["RunPercentage"] = (df_summary["Runs"] / total_runs) * 100 if total_runs > 0 else 0
+
+    fig_stack, ax_stack = plt.subplots(figsize=(2, 3.5)) 
+    
+    # Plotting the stacked bar (100% height)
+    bottom = 0
+    bar_width = 0.8
+    for index, row in df_summary.iterrows():
+        pct = row["RunPercentage"]
+        runs = int(row["Runs"])
+        wkts = int(row["Wickets"])
+        
+        # Color based on percentage (e.g., higher % = deeper color)
+        color = plt.cm.Blues(pct / 100) if pct > 0 else 'lightgrey'
+        
+        ax_stack.bar(0.5, pct, bottom=bottom, width=bar_width, color=color, edgecolor='black', linewidth=0.5)
+        
+        if pct > 0:
+            ax_stack.text(0.5, bottom + pct / 2, 
+                          f"{index}\n{pct:.0f}%\nWkts: {wkts}",
+                          ha='center', va='center', fontsize=7, color='white' if pct > 30 else 'black', weight='bold')
+        
+        bottom += pct
+        
+    ax_stack.set_xlim(0, 1); ax_stack.set_ylim(0, 100)
+    ax_stack.axis('off') # Hide all axes/ticks/labels
+    ax_stack.set_title(f"Length Run % ({delivery_type})", fontsize=8, weight='bold', rotation=90, x=1.0, y=0.5)
+
+    # Remove the border
+    ax_stack.spines['right'].set_visible(False)
+    ax_stack.spines['top'].set_visible(False)
+    ax_stack.spines['left'].set_visible(False)
+    ax_stack.spines['bottom'].set_visible(False)
+    
+    plt.tight_layout(pad=0.5)
+    return fig_stack
+
 # --- CHART 4: INTERCEPTION SIDE-ON --- (Wide View)
 def create_interception_side_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
@@ -537,6 +601,62 @@ def create_left_right_split(df_in, delivery_type):
     
     plt.tight_layout(pad=0.5)
     return fig_split
+# --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
+def create_directional_split(df_in, direction_col, title, delivery_type):
+    df_dir = df_in.copy()
+    if df_dir.empty:
+        fig, ax = plt.subplots(figsize=(4, 2)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+    
+    # Define Direction
+    df_dir["Direction"] = np.where(df_dir[direction_col] < 0, "LEFT", "RIGHT")
+    
+    # Calculate Metrics
+    summary = df_dir.groupby("Direction").agg(
+        Runs=("Runs", "sum"), 
+        Wickets=("Wicket", lambda x: (x == True).sum()), 
+        Balls=("Wicket", "count")
+    ).reset_index().set_index("Direction").reindex(["LEFT", "RIGHT"]).fillna(0)
+    
+    summary["StrikeRate"] = (summary["Runs"] / summary["Balls"]) * 100
+    
+    # Create the Bar Chart (Side-by-Side)
+    fig_dir, ax_dir = plt.subplots(figsize=(4, 2)) 
+
+    directions = summary.index.tolist()
+    strike_rates = summary["StrikeRate"].tolist()
+    wickets = summary["Wickets"].tolist()
+    
+    # Colors: LEFT=Reddish, RIGHT=Blueish
+    colors = ['indianred', 'royalblue'] 
+    
+    bars = ax_dir.bar(directions, strike_rates, color=colors, edgecolor='black', linewidth=0.5)
+    
+    # Add labels (Strike Rate and Wickets)
+    for i, bar in enumerate(bars):
+        sr = strike_rates[i]
+        wkts = wickets[i]
+        
+        label = f"SR: {sr:.1f}\nWkts: {int(wkts)}"
+        ax_dir.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), 
+                      label,
+                      ha='center', va='bottom', fontsize=7, color='black', weight='bold')
+
+    # Styling
+    ax_dir.set_ylim(0, max(strike_rates) * 1.2 if max(strike_rates) > 0 else 100)
+    ax_dir.set_title(f"{title} ({delivery_type})", fontsize=8, weight='bold')
+    
+    # Remove axis ticks and labels, keep X labels
+    ax_dir.tick_params(axis='y', which='both', labelleft=False, left=False)
+    ax_dir.tick_params(axis='x', rotation=0, labelsize=7)
+    
+    # Remove all spines/borders
+    ax_dir.spines['right'].set_visible(False)
+    ax_dir.spines['top'].set_visible(False)
+    ax_dir.spines['left'].set_visible(False)
+    ax_dir.spines['bottom'].set_visible(False)
+    
+    plt.tight_layout(pad=0.5)
+    return fig_dir
 
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
@@ -615,7 +735,16 @@ if uploaded_file is not None:
 
         st.pyplot(create_lateral_performance_stacked(df_seam, "Seam", batsman), use_container_width=True)
         
-        st.plotly_chart(create_pitch_map(df_seam, "Seam"), use_container_width=True)
+        # Charts 3: Pitch Map and Vertical Run % Bar (Side-by-Side)
+        pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
+
+        with pitch_map_col:
+            st.markdown("##### 3. Pitch Map (Bounce Location)")
+            st.plotly_chart(create_pitch_map(df_seam, "Seam"), use_container_width=True)
+            
+        with run_pct_col:
+            st.markdown("##### 8. Length Run %")
+            st.pyplot(create_pitch_length_run_pct(df_seam, "Seam"), use_container_width=True)
         
         # --- NEW LAYOUT START ---
         
@@ -633,7 +762,16 @@ if uploaded_file is not None:
             st.pyplot(create_wagon_wheel(df_seam, "Seam"), use_container_width=True)
             st.pyplot(create_left_right_split(df_seam, "Seam"), use_container_width=True)
     
-            
+         # Charts 9 & 10: Swing/Deviation Direction Analysis (Side-by-Side)
+        final_col_swing, final_col_deviation = st.columns(2)
+
+        with final_col_swing:
+            st.markdown("##### 9. Swing Direction Performance")
+            st.pyplot(create_directional_split(df_seam, "Swing", "Swing Direction", "Seam"), use_container_width=True)
+
+        with final_col_deviation:
+            st.markdown("##### 10. Deviation Direction Performance")
+            st.pyplot(create_directional_split(df_seam, "Deviation1", "Deviation Direction", "Seam"), use_container_width=True)   
         # --- NEW LAYOUT END ---
 
 
@@ -648,7 +786,16 @@ if uploaded_file is not None:
 
         st.pyplot(create_lateral_performance_stacked(df_spin, "Spin", batsman), use_container_width=True)
 
-        st.plotly_chart(create_pitch_map(df_spin, "Spin"), use_container_width=True)
+        # Charts 3: Pitch Map and Vertical Run % Bar (Side-by-Side)
+        pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
+
+        with pitch_map_col:
+            st.markdown("##### 3. Pitch Map (Bounce Location)")
+            st.plotly_chart(create_pitch_map(df_seam, "Seam"), use_container_width=True)
+            
+        with run_pct_col:
+            st.markdown("##### 8. Length Run %")
+            st.pyplot(create_pitch_length_run_pct(df_seam, "Seam"), use_container_width=True)
         
         # --- NEW LAYOUT START (Mirroring Left Column) ---
         
@@ -664,7 +811,16 @@ if uploaded_file is not None:
         with bottom_col_right:
             st.pyplot(create_wagon_wheel(df_spin, "Spin"), use_container_width=True)
             st.pyplot(create_left_right_split(df_spin, "Spin"), use_container_width=True)
-            
+        # Charts 9 & 10: Swing/Deviation Direction Analysis (Side-by-Side)
+        final_col_swing, final_col_deviation = st.columns(2)
+
+        with final_col_swing:
+            st.markdown("##### 9. Swing Direction Performance")
+            st.pyplot(create_directional_split(df_seam, "Swing", "Swing Direction", "Seam"), use_container_width=True)
+
+        with final_col_deviation:
+            st.markdown("##### 10. Deviation Direction Performance")
+            st.pyplot(create_directional_split(df_seam, "Deviation1", "Deviation Direction", "Seam"), use_container_width=True)  
         # --- NEW LAYOUT END ---
 
 else:
