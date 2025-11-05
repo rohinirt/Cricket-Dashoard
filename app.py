@@ -701,27 +701,40 @@ st.title("🏏 Cricket Bowling Delivery Analysis Dashboard")
 uploaded_file = st.file_uploader("Upload your CSV file here", type=["csv"])
 
 if uploaded_file is not None:
-    # ... (File reading and validation code)
+    # Read the data from the uploaded file
+    try:
+        data = uploaded_file.getvalue().decode("utf-8")
+        df_raw = pd.read_csv(StringIO(data))
+    except Exception as e:
+        st.error(f"Error reading file: {e}")
+        st.stop()
     
+    # Initial validation and required column check
+    if not all(col in df_raw.columns for col in REQUIRED_COLS):
+        missing_cols = [col for col in REQUIRED_COLS if col not in df_raw.columns]
+        st.error(f"The CSV file is missing required columns: {', '.join(missing_cols)}")
+        st.stop()
+
     # Data separation
     df_seam = df_raw[df_raw["DeliveryType"] == "Seam"].copy()
     df_spin = df_raw[df_raw["DeliveryType"] == "Spin"].copy()
 
     # =========================================================
-    # 🌟 NEW FILTER LOCATION: TOP OF MAIN BODY 🌟
+    # 🌟 FILTERS MOVED TO TOP OF MAIN BODY 🌟
     # =========================================================
     st.header("Global Filters")
-    filter_col1, filter_col2, filter_col3 = st.columns(3) # Arrange 3 filters horizontally
+    # Use columns to align the three filters horizontally
+    filter_col1, filter_col2, filter_col3 = st.columns(3) 
 
     # --- Filter Logic ---
     all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
     
-    # 1. Batting Team Filter
+    # 1. Batting Team Filter (in column 1)
     with filter_col1:
         # Changed from st.sidebar.selectbox to st.selectbox
-        bat_team = st.selectbox("Batting Team", all_teams, index=0, key="bat_team_filter") 
+        bat_team = st.selectbox("Batting Team", all_teams, index=0)
 
-    # 2. Batsman Name Filter (Logic depends on Batting Team)
+    # 2. Batsman Name Filter (Logic depends on Batting Team - in column 2)
     if bat_team != "All":
         batsmen_options = ["All"] + sorted(df_raw[df_raw["BattingTeam"] == bat_team]["BatsmanName"].dropna().unique().tolist())
     else:
@@ -729,23 +742,32 @@ if uploaded_file is not None:
         
     with filter_col2:
         # Changed from st.sidebar.selectbox to st.selectbox
-        batsman = st.selectbox("Batsman Name", batsmen_options, index=0, key="batsman_filter")
+        batsman = st.selectbox("Batsman Name", batsmen_options, index=0)
 
-    # 3. Over Filter
+    # 3. Over Filter (in column 3)
     all_overs = ["All"] + sorted(df_raw["Over"].dropna().unique().tolist())
     with filter_col3:
         # Changed from st.sidebar.selectbox to st.selectbox
-        selected_over = st.selectbox("Over", all_overs, index=0, key="over_filter")
-
-    # Ensure the key arguments are added to prevent potential Streamlit warnings,
-    # though it might not be strictly necessary for simple selects.
+        selected_over = st.selectbox("Over", all_overs, index=0)
+        
     # =========================================================
 
-    # --- Apply Filters to Seam and Spin dataframes ---
-    # ... (apply_filters function remains the same)
-    
-    # ... (The rest of the dashboard code follows, starting with st.header(f"Analysis for:...") )
+    # --- Apply Filters to Seam and Spin dataframes (This section remains the same) ---
+    def apply_filters(df):
+        if bat_team != "All":
+            df = df[df["BattingTeam"] == bat_team]
+        if batsman != "All":
+            df = df[df["BatsmanName"] == batsman]
+        if selected_over != "All":
+            df = df[df["Over"] == selected_over]
+        return df
 
+    df_seam = apply_filters(df_seam)
+    df_spin = apply_filters(df_spin)
+    
+    heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
+    st.header(f"Analysis for: **{heading_text}**")
+    st.markdown("---")
 
     # --- 4. DISPLAY CHARTS IN TWO COLUMNS ---
     
