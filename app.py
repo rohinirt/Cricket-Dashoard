@@ -11,6 +11,21 @@ from io import StringIO
 import base64
 
 # --- 1. GLOBAL UTILITY FUNCTIONS ---
+with col_divider:
+    st.markdown(
+        """
+        <style>
+        .vertical-line {
+            border-left: 1px solid #ccc; /* Light grey color, 1px thick */
+            height: 100vh; /* Sets height to 100% of viewport height */
+            margin-left: 20px; /* Optional: Adjusts position */
+        }
+        </style>
+        <div class="vertical-line"></div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 # Required columns check
 REQUIRED_COLS = [
