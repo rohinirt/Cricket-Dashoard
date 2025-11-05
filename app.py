@@ -485,11 +485,12 @@ def create_interception_side_on(df_in, delivery_type):
         0.0: "Stumps",
         1.250: "Crease",
         2.000: "2m",     
-        3.000: "3m"      
+        3.000: "3m" 
     }
     
     for x_val, label in line_specs.items():
-        ax_7.axvline(x=x_val, color='grey', linestyle='--', linewidth=1, alpha=0.7)    
+        ax_7.axvline(x=x_val, color='grey', linestyle='--', linewidth=1, alpha=0.7)  
+        ax_7.axhline(x=0.5, color='grey', linestyle='--', linewidth=1, alpha=0.7)   
         ax_7.text(x_val, 1.45, label.split(':')[-1].strip(), ha='center', va='center', fontsize=6, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
     # 3. Set Axes Limits and Labels (FIXED LIMITS: -0.2 to 3.4)
