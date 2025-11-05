@@ -373,7 +373,6 @@ def create_pitch_map(df_in, delivery_type):
             )
         ]
     )
-    )
     return fig_pitch
 
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
