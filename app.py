@@ -157,7 +157,7 @@ def generate_charts(df_input, panel_title, panel_col, batsman_name):
 
     # Summary Stats for the bottom bar charts
     avg_speed = df["LandingX"].mean() # Placeholder, use actual speed column if available
-    avg_bounce_height = df["BounceZ"].mean() # Placeholder
+    avg_bounce_height = df["BounceY"].mean() # Placeholder
     avg_wickets_per_over = df.groupby("Over")["Wicket"].sum().mean() # Placeholder
 
     # --- Start Chart Rendering ---
