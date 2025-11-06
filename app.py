@@ -874,7 +874,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     df_dir = df_in.copy()
     if df_dir.empty:
         # Increased figsize height slightly for better label placement
-        fig, ax = plt.subplots(figsize=(3, 3)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(3, 2)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
     
     # Define Direction
     df_dir["Direction"] = np.where(df_dir[direction_col] < 0, "LEFT", "RIGHT")
@@ -892,7 +892,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     )
     
     # Create the Bar Chart (Side-by-Side)
-    fig_dir, ax_dir = plt.subplots(figsize=(3, 3))   
+    fig_dir, ax_dir = plt.subplots(figsize=(2, 3))   
     
     directions = summary.index.tolist()
     # USE AVERAGE FOR BAR HEIGHT
