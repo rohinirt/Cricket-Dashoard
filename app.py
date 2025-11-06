@@ -238,12 +238,12 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
         # Label 1: Zone Name (Top of the box)
         ax_boxes.text(left + box_width / 2, 0.75, 
                       index,
-                      ha='center', va='center', fontsize=8, color=text_color)
+                      ha='center', va='center', fontsize=10, color=text_color)
                       
         # Label 2: Wickets and Average (Middle of the box)
         ax_boxes.text(left + box_width / 2, 0.4, 
                       label_wkts_avg,
-                      ha='center', va='center', fontsize=8, color=text_color)
+                      ha='center', va='center', fontsize= 10, fonweight = 'bold', color=text_color)
         
         left += box_width
         
@@ -635,41 +635,51 @@ def create_crease_width_split(df_in, delivery_type):
         avg = row["Average"] 
         
         # Determine box color based on SR
-        color = cmap(norm(sr))
+        color = cmap(norm(sr)) # This returns an RGBA tuple
         
         # Draw the box (barh with height=1)
         ax_stack.barh(
             y=0.5,           # Y-position (center of the chart)
             width=box_width,
-            height=0.8,        # Full height (from 0 to 1 on the Y-axis)
+            height=1,        # Full height (from 0 to 1 on the Y-axis)
             left=left,       # X-start position
             color=color,
             edgecolor='black', 
             linewidth=1
         )
         
-        # --- Add Labels (SR and Avg) ---
+        # --- Apply Dynamic Text Color Logic ---
         label_text = f"SR: {sr:.0f}\nAvg: {avg:.1f}"
+        
+        # Calculate text color for contrast
+        r, g, b, a = color # 'color' is guaranteed to be an RGBA tuple from cmap
+        # Calculate luminosity
+        luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        
+        # Set text color
+        text_color = 'white' if luminosity < 0.5 else 'black'
+        # -------------------------------------
         
         # Text position: Center of the box
         center_x = left + box_width / 2
         center_y = 0.5
         
+        # Label 1: SR and Avg (Middle of the box)
         ax_stack.text(
             center_x, center_y, 
             label_text,
             ha='center', va='center', 
             fontsize=10, 
-            color='black', weight='bold'
+            color=text_color, weight='bold' # Using dynamic text_color
         )
         
-        # Add the pitch length label below the box
+        # Label 2: Crease Width Label (Below the box)
         ax_stack.text(
             center_x, -0.05, # Position slightly below the box
             index,           # The CreaseWidth label (e.g., '3m+')
             ha='center', va='top', 
-            fontsize=8, 
-            weight='bold'
+            fontsize=10, 
+            color=text_color # Using dynamic text_color
         )
 
         left += box_width # Advance the starting position for the next box
