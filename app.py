@@ -384,53 +384,58 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     df_pitch = df_in.copy()
     df_pitch["PitchLength"] = df_pitch["BounceX"].apply(assign_pitch_length)
     
-    # Aggregate data
+    # Locate the create_pitch_length_run_pct function:
+
+def create_pitch_length_run_pct(df_in, delivery_type):
+    # ... (Pitch Bins and assignment_pitch_length function remain the same)
+
+    # Aggregate data - ADD RUNS, BALLS, WICKETS
     df_summary = df_pitch.groupby("PitchLength").agg(
         Runs=("Runs", "sum"), 
         Wickets=("Wicket", lambda x: (x == True).sum()), 
         Balls=("Wicket", "count")
     ).reset_index().set_index("PitchLength").reindex(ordered_keys).fillna(0)
     
+    # --- CALCULATE AVG and SR ---
+    df_summary["Average"] = df_summary.apply(
+        lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else (row["Runs"] if row["Balls"] > 0 else 0), axis=1
+    )
+    df_summary["StrikeRate"] = df_summary.apply(
+        lambda row: (row["Runs"] / row["Balls"]) * 100 if row["Balls"] > 0 else 0, axis=1
+    )
+    # -----------------------------
+    
     total_runs = df_summary["Runs"].sum()
     df_summary["RunPercentage"] = (df_summary["Runs"] / total_runs) * 100 if total_runs > 0 else 0
 
-    # 2. Chart Setup
-    fig_stack, ax_stack = plt.subplots(figsize=(2, 6)) 
-    
-    num_regions = len(ordered_keys)
-    box_height = 1 / num_regions # Fixed height for each box
-    bottom = 0
-    
-    # Color Normalization (based on Run Percentage)
-    run_pct_max = df_summary["RunPercentage"].max() if df_summary["RunPercentage"].max() > 0 else 100
-    norm = mcolors.Normalize(vmin=0, vmax=run_pct_max)
-    cmap = cm.get_cmap('Reds') # Using Reds for runs percentage
+    # ... (Chart Setup remains the same)
 
     # 3. Plotting Equal Boxes (Stacked Heat Map)
     for index, row in df_summary.iterrows():
         pct = row["RunPercentage"]
         wkts = int(row["Wickets"])
+        avg = row["Average"]      # <-- NEW
+        sr = row["StrikeRate"]    # <-- NEW
         
-        # Color hue based on Run %
-        color = cmap(norm(pct)) 
+        # ... (Color and Rectangle drawing logic remains the same)
         
-        # Draw the Rectangle (Fixed height, full width)
-        ax_stack.add_patch(
-            patches.Rectangle((0, bottom), 1, box_height, 
-                              edgecolor="black", facecolor=color, linewidth=1)
+        # Add labels - UPDATING LABEL TEXT
+        label_text = (
+            f"{index}\n"
+            f"{pct:.0f}%\n"
+            f"Avg: {avg:.1f}\n"
+            f"SR: {sr:.1f}"
         )
-        
-        # Add labels
-        label_text = f"{index}\n{pct:.0f}%\nWkts: {wkts}"
-        
+          
         # Calculate text color for contrast
         r, g, b, a = color
         luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
         text_color = 'white' if luminosity < 0.5 else 'black'
 
+        # ... (Text color and plotting logic remain the same)
         ax_stack.text(0.5, bottom + box_height / 2, 
                       label_text,
-                      ha='center', va='center', fontsize=10, color=text_color, linespacing=1.2)
+                      ha='center', va='center', fontsize=7, color=text_color, weight='bold', linespacing=1.2)
         
         bottom += box_height
         
@@ -867,49 +872,63 @@ if uploaded_file is not None:
     # 🌟 FILTERS MOVED TO TOP OF MAIN BODY 🌟
     # =========================================================
     # Use columns to align the three filters horizontally
-    filter_col1, filter_col2, filter_col3 = st.columns(3) 
+    # Use columns to align the four filters horizontally
+filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4) 
 
-    # --- Filter Logic ---
-    all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
+# --- Filter Logic ---
+all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
+
+# 1. Batting Team Filter (in column 1)
+with filter_col1:
+    bat_team = st.selectbox("Batting Team", all_teams, index=0)
+
+# 2. Batsman Name Filter (Logic depends on Batting Team - in column 2)
+if bat_team != "All":
+    batsmen_options = ["All"] + sorted(df_raw[df_raw["BattingTeam"] == bat_team]["BatsmanName"].dropna().unique().tolist())
+else:
+    batsmen_options = ["All"] + sorted(df_raw["BatsmanName"].dropna().unique().tolist())
     
-    # 1. Batting Team Filter (in column 1)
-    with filter_col1:
-        # Changed from st.sidebar.selectbox to st.selectbox
-        bat_team = st.selectbox("Batting Team", all_teams, index=0)
+with filter_col2:
+    batsman = st.selectbox("Batsman Name", batsmen_options, index=0)
 
-    # 2. Batsman Name Filter (Logic depends on Batting Team - in column 2)
+# 3. Innings Filter (in column 3) - NEW
+innings_options = ["All"] + sorted(df_raw["Innings"].dropna().unique().tolist())
+with filter_col3:
+    selected_innings = st.selectbox("Innings", innings_options, index=0)
+    
+# 4. Bowler Hand Filter (in column 4) - NEW
+bowler_hand_options = ["All", "Right Hand", "Left Hand"]
+with filter_col4:
+    selected_bowler_hand = st.selectbox("Bowler Hand", bowler_hand_options, index=0)
+    
+# =========================================================
+
+# --- Apply Filters to Seam and Spin dataframes ---
+def apply_filters(df):
     if bat_team != "All":
-        batsmen_options = ["All"] + sorted(df_raw[df_raw["BattingTeam"] == bat_team]["BatsmanName"].dropna().unique().tolist())
-    else:
-        batsmen_options = ["All"] + sorted(df_raw["BatsmanName"].dropna().unique().tolist())
+        df = df[df["BattingTeam"] == bat_team]
         
-    with filter_col2:
-        # Changed from st.sidebar.selectbox to st.selectbox
-        batsman = st.selectbox("Batsman Name", batsmen_options, index=0)
-
-    # 3. Over Filter (in column 3)
-    all_overs = ["All"] + sorted(df_raw["Over"].dropna().unique().tolist())
-    with filter_col3:
-        # Changed from st.sidebar.selectbox to st.selectbox
-        selected_over = st.selectbox("Over", all_overs, index=0)
+    if batsman != "All":
+        df = df[df["BatsmanName"] == batsman]
         
-    # =========================================================
+    # Apply Innings Filter
+    if selected_innings != "All":
+        df = df[df["Innings"] == selected_innings]
+        
+    # Apply Bowler Hand Filter
+    if selected_bowler_hand != "All":
+        is_right = (selected_bowler_hand == "Right Hand")
+        # Ensure column name 'IsBowlerRightHanded' is correct
+        df = df[df["IsBowlerRightHanded"] == is_right]
+        
+    return df
 
-    # --- Apply Filters to Seam and Spin dataframes (This section remains the same) ---
-    def apply_filters(df):
-        if bat_team != "All":
-            df = df[df["BattingTeam"] == bat_team]
-        if batsman != "All":
-            df = df[df["BatsmanName"] == batsman]
-        if selected_over != "All":
-            df = df[df["Over"] == selected_over]
-        return df
-
-    df_seam = apply_filters(df_seam)
-    df_spin = apply_filters(df_spin)
+# Apply filters
+df_seam = apply_filters(df_seam)
+df_spin = apply_filters(df_spin)
     
-    heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
-    st.header(f"**{heading_text}**")
+heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
+st.header(f"**{heading_text}**")
 
     # --- 4. DISPLAY CHARTS IN TWO COLUMNS ---
     
