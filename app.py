@@ -505,7 +505,7 @@ def create_interception_side_on(df_in, delivery_type):
     # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on X-axis ===
     ax_7.scatter(
         df_other["InterceptionX"] + 10, df_other["InterceptionZ"], 
-        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=20, label="Other"
+        color='#D3D3D3', edgecolors='white', linewidths=0.3, s=20, label="Other"
     )
     
     # Plot "Wicket" and "Boundary" (Solid colors)
@@ -514,7 +514,7 @@ def create_interception_side_on(df_in, delivery_type):
         # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on X-axis ===
         ax_7.scatter(
             df_slice["InterceptionX"] + 10, df_slice["InterceptionZ"], 
-            color=color_map[ctype],edgecolors='white', s=30, label=ctype
+            color=color_map[ctype],edgecolors='white',, linewidths=0.3, s=30, label=ctype
         )
 
     # 2. Draw Vertical Dashed Lines with Labels (FIXED LINES: 0.0, 1.25, 2.0, 3.0)
@@ -645,7 +645,7 @@ def create_crease_width_split(df_in, delivery_type):
             left=left,       # X-start position
             color=color,
             edgecolor='black', 
-            linewidth=1
+            linewidth=0.7
         )
         
         # --- Apply Dynamic Text Color Logic ---
