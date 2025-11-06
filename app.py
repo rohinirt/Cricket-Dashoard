@@ -914,7 +914,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     
     # Set the y-axis labels to LEFT and RIGHT
     ax_dir.set_yticks(y_positions)
-    ax_dir.set_yticklabels(directions, fontsize=12, weight='bold', color='black') # Ensure Y-axis labels are black
+    ax_dir.set_yticklabels(directions, fontsize=12, color='black') # Ensure Y-axis labels are black
 
     # Calculate max absolute value for x-axis limit
     max_abs_avg = summary["Average"].max()
@@ -953,7 +953,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
                     bar.get_y() + bar.get_height() / 2, 
                     label,
                     ha=ha_align, va='center', 
-                    fontsize=12, 
+                    fontsize=14, 
                     color=text_color, weight='bold') # Set color to BLACK
             
     # --- Final Styling and Spines ---
