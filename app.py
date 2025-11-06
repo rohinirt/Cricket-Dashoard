@@ -1127,11 +1127,11 @@ if uploaded_file is not None:
 
         with final_col_swing:
             # CORRECTED: Use df_spin and "Spin"
-            st.pyplot(create_directional_split(df_spin, "Swing", "Swing Direction", "Spin"), use_container_width=True)
+            st.pyplot(create_directional_split(df_spin, "Swing", "Drift Direction", "Spin"), use_container_width=True)
 
         with final_col_deviation:
             # CORRECTED: Use df_spin and "Spin"
-            st.pyplot(create_directional_split(df_spin, "Deviation", "Deviation Direction", "Spin"), use_container_width=True)    
+            st.pyplot(create_directional_split(df_spin, "Deviation", "Turn Direction", "Spin"), use_container_width=True)    
         # --- NEW LAYOUT END ---
 
 else:
