@@ -880,7 +880,7 @@ if uploaded_file is not None:
 
     # 1. Batting Team Filter (in column 1)
     with filter_col1:
-    bat_team = st.selectbox("Batting Team", all_teams, index=0)
+        bat_team = st.selectbox("Batting Team", all_teams, index=0)
 
     # 2. Batsman Name Filter (Logic depends on Batting Team - in column 2)
     if bat_team != "All":
