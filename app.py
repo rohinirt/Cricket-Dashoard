@@ -615,8 +615,8 @@ def create_wagon_wheel(df_in, delivery_type):
     # Rank regions, handling ties (dense rank)
     wagon_summary['Rank'] = wagon_summary['RunPercentage'].rank(method='dense', ascending=False)
     
-    COLOR_HIGH = 'darkblue'
-    COLOR_SECOND_HIGH = 'cornflowerblue'
+    COLOR_HIGH = '#d52221'
+    COLOR_SECOND_HIGH = '#fa6547'
     COLOR_DEFAULT = 'white' # Default color for non-top regions
 
     colors = []
