@@ -927,7 +927,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     ax_dir.set_ylim(0, max_avg * 1.3 if max_avg > 0 else 10) 
    
     # SET CHART TITLE
-    ax_dir.set_title(chart_title, fontsize=14, weight='bold', color='black', pad=10) # Using the chart_title argument
+    ax_dir.set_title(chart_title, fontsize=12, color='black', pad=10) # Using the chart_title argument
     
     # Update axis ticks and labels font size
     ax_dir.tick_params(axis='y', which='both', labelleft=False, left=False)
@@ -1076,10 +1076,10 @@ if uploaded_file is not None:
         final_col_swing, final_col_deviation = st.columns(2)
 
         with final_col_swing:
-            st.pyplot(create_directional_split(df_seam, "Swing", "Swing Direction", "Seam"), use_container_width=True)
+            st.pyplot(create_directional_split(df_seam, "Swing", "Swing", "Seam"), use_container_width=True)
 
         with final_col_deviation:
-            st.pyplot(create_directional_split(df_seam, "Deviation", "Deviation Direction", "Seam"), use_container_width=True)   
+            st.pyplot(create_directional_split(df_seam, "Deviation", "Deviation", "Seam"), use_container_width=True)   
         # --- NEW LAYOUT END ---
 
 
@@ -1127,11 +1127,11 @@ if uploaded_file is not None:
 
         with final_col_swing:
             # CORRECTED: Use df_spin and "Spin"
-            st.pyplot(create_directional_split(df_spin, "Swing", "Drift Direction", "Spin"), use_container_width=True)
+            st.pyplot(create_directional_split(df_spin, "Swing", "Drift", "Spin"), use_container_width=True)
 
         with final_col_deviation:
             # CORRECTED: Use df_spin and "Spin"
-            st.pyplot(create_directional_split(df_spin, "Deviation", "Turn Direction", "Spin"), use_container_width=True)    
+            st.pyplot(create_directional_split(df_spin, "Deviation", "Turn", "Spin"), use_container_width=True)    
         # --- NEW LAYOUT END ---
 
 else:
