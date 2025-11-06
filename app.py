@@ -714,7 +714,7 @@ def create_wagon_wheel(df_in, delivery_type):
     
     fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
-    # --- Plotting with Manual Labels ---
+
     wedges, texts, autotexts = ax.pie(
         angles, 
         colors=colors, 
@@ -723,7 +723,6 @@ def create_wagon_wheel(df_in, delivery_type):
         counterclock=False, 
         labels=None,
         labeldistance=1.1,
-        # REMOVED autopct=...
         pctdistance=0.5
     )
     
