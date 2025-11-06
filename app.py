@@ -652,13 +652,53 @@ def create_interception_front_on(df_in, delivery_type):
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import numpy as np # Needed for the atan_safe function
 
-# Assume calculate_scoring_wagon and calculate_scoring_angle are defined elsewhere
+# --- Dependent Functions (Must be defined in app.py) ---
+
+def calculate_scoring_wagon(row):
+    """Calculates the scoring area based on LandingX/Y coordinates and handedness."""
+    LX = row.get("LandingX"); LY = row.get("LandingY"); RH = row.get("IsBatsmanRightHanded")
+    if RH is None or LX is None or LY is None or row.get("Runs", 0) == 0: return None
+    
+    # Safe arctan calculation to avoid division by zero
+    def atan_safe(numerator, denominator): return np.arctan(numerator / denominator) if denominator != 0 else np.nan 
+    
+    # Right Handed Batsman Logic
+    if RH == True: 
+        if LX <= 0 and LY > 0: return "FINE LEG"
+        elif LX <= 0 and LY <= 0: return "THIRD MAN"
+        elif LX > 0 and LY < 0:
+            if atan_safe(LY, LX) < np.pi / -4: return "COVER"
+            # Note: The original atan_safe(LX, LY) usage here is non-standard for angle comparison, 
+            # but preserved for code consistency. Assuming it defines the LONG OFF boundary.
+            elif atan_safe(LX, LY) <= np.pi / -4: return "LONG OFF" 
+        elif LX > 0 and LY >= 0:
+            if atan_safe(LY, LX) >= np.pi / 4: return "SQUARE LEG"
+            elif atan_safe(LY, LX) <= np.pi / 4: return "LONG ON"
+    # Left Handed Batsman Logic
+    elif RH == False: 
+        if LX <= 0 and LY > 0: return "THIRD MAN"
+        elif LX <= 0 and LY <= 0: return "FINE LEG"
+        elif LX > 0 and LY < 0:
+            if atan_safe(LY, LX) < np.pi / -4: return "SQUARE LEG"
+            elif atan_safe(LX, LY) <= np.pi / -4: return "LONG ON"
+        elif LX > 0 and LY >= 0:
+            if atan_safe(LY, LX) >= np.pi / 4: return "COVER"
+            elif atan_safe(LY, LX) <= np.pi / 4: return "LONG OFF"
+    return None
+
+def calculate_scoring_angle(area):
+    """Defines the fixed angle size for each wedge."""
+    if area in ["FINE LEG", "THIRD MAN"]: return 90
+    elif area in ["COVER", "SQUARE LEG", "LONG OFF", "LONG ON"]: return 45
+    return 0
+
+# --- Main Wagon Wheel Function ---
 
 def create_wagon_wheel(df_in, delivery_type):
     wagon_summary = pd.DataFrame() 
     try:
-        # --- Data Calculation and setup (UNCHANGED) ---
         df_wagon = df_in.copy()
         df_wagon["ScoringWagon"] = df_wagon.apply(calculate_scoring_wagon, axis=1)
         df_wagon["FixedAngle"] = df_wagon["ScoringWagon"].apply(calculate_scoring_angle)
@@ -677,29 +717,28 @@ def create_wagon_wheel(df_in, delivery_type):
 
         wagon_summary = template_df.merge(summary_with_shots.drop(columns=["FixedAngle"], errors='ignore'), on="ScoringWagon", how="left").fillna(0) 
         wagon_summary["ScoringWagon"] = pd.Categorical(wagon_summary["ScoringWagon"], categories=all_areas, ordered=True)
-        wagon_summary = wagon_summary.sort_values("ScoringWagon").reset_index(drop=True)
+        wagon_summary = wagon_summary.sort_values("ScoringWagon") # Sort by categorical order
         
         total_runs = wagon_summary["TotalRuns"].sum()
         wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / total_runs) * 100 if total_runs > 0 else 0 
         
-        # === FIX: ROBUST ANGLE CONVERSION ===
+        # Robust Angle Conversion
         wagon_summary["FixedAngle"] = pd.to_numeric(wagon_summary["FixedAngle"], errors='coerce').fillna(0).astype(int)
-        # ===================================
     
     except Exception:
         fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "Calculation Error", ha='center', va='center'); ax.axis('off'); return fig
     
     
-    # --- Data Extraction and CRITICAL Validation (FIXED) ---
+    # --- Data Extraction and CRITICAL Validation ---
     angles = wagon_summary["FixedAngle"].tolist()
-    run_percentages = wagon_summary["RunPercentage"].tolist() # Define this early
+    run_percentages = wagon_summary["RunPercentage"].tolist() 
     
-    # CRITICAL: Check for insufficient data (empty, no angles, or angle/color list length mismatch is likely)
-    if wagon_summary.empty or not angles or all(a == 0 for a in angles) or len(angles) != len(wagon_summary):
+    # Check for insufficient data
+    if not angles or all(a == 0 for a in angles):
         fig, ax = plt.subplots(figsize=(4, 4)); 
         ax.text(0.5, 0.5, "Insufficient Data for Plot", ha='center', va='center'); 
         ax.axis('off'); 
-        return fig # <<< THIS IS THE MISSING RETURN
+        return fig
 
     # --- Color Logic (Top 1 Rank Only) ---
     wagon_summary['SortKey'] = wagon_summary['RunPercentage']
@@ -709,7 +748,6 @@ def create_wagon_wheel(df_in, delivery_type):
     COLOR_DEFAULT = 'white'
 
     colors = []
-    # Note: colors list length MUST match angles list length
     for index, row in wagon_summary.iterrows():
         current_rank = row['Rank']
         
@@ -725,10 +763,8 @@ def create_wagon_wheel(df_in, delivery_type):
     
     fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
-    # --- Plotting Call ---
-    # The unpack error is resolved because we confirmed the data is valid/non-empty, 
-    # and the lists are the same length.
-    wedges, texts, autotexts = ax.pie(
+    # --- Plotting Call with Robust Unpacking Fix ---
+    pie_output = ax.pie(
         angles, 
         colors=colors, 
         wedgeprops={"width": 1, "edgecolor": "black"}, 
@@ -739,10 +775,29 @@ def create_wagon_wheel(df_in, delivery_type):
         pctdistance=0.5
     )
     
+    # FIX: Handle cases where only (wedges, texts) are returned (expected 3, got 2)
+    # This happens when Matplotlib decides not to generate autotexts due to degenerate data.
+    if len(pie_output) == 3:
+        wedges, texts, autotexts = pie_output
+    elif len(pie_output) == 2:
+        wedges, texts = pie_output
+        autotexts = [] # Assign an empty list if autotexts are missing
+    else:
+        # Fallback for unexpected return value
+        fig, ax = plt.subplots(figsize=(4, 4)); 
+        ax.text(0.5, 0.5, "Plotting Error (Return Value)", ha='center', va='center'); 
+        ax.axis('off'); 
+        return fig
+    
     # === CRITICAL FIX: MANUALLY SET LABELS ===
+    
     # Styling and label assignment
     for i, autotext in enumerate(autotexts):
-        percent = run_percentages[i] # Use the list defined earlier
+        if i >= len(run_percentages): 
+            # Safety break if autotexts somehow exceeds run_percentages length
+            break 
+            
+        percent = run_percentages[i] 
         
         # 1. Set the actual percentage text
         if percent > 0:
