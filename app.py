@@ -890,7 +890,6 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     )
     
     # --- Prepare for Butterfly Effect ---
-    # Reindex to ensure order, convert Average to a list
     summary = summary.reset_index().set_index("Direction").reindex(["LEFT", "RIGHT"])
     
     # Set LEFT side to negative values for mirroring
@@ -907,9 +906,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     fig_dir, ax_dir = plt.subplots(figsize=(6, 2.5)) 
     
     # --- Plotting the Bars ---
-    y_positions = [0, 1] # Simple Y positions for the two bars
-    
-    # Custom colors: Red for consistency
+    y_positions = [0, 1] 
     colors = ['#d52221', '#d52221'] 
     
     # Plot horizontal bars
@@ -919,18 +916,16 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     
     # Set the y-axis labels to LEFT and RIGHT
     ax_dir.set_yticks(y_positions)
-    ax_dir.set_yticklabels(directions, fontsize=12, weight='bold')
+    ax_dir.set_yticklabels(directions, fontsize=12)
 
     # Calculate max absolute value for x-axis limit
     max_abs_avg = summary["Average"].max()
-    x_limit = max_abs_avg * 1.3 if max_abs_avg > 0 else 10
+    x_limit = max_abs_avg * 1.15 if max_abs_avg > 0 else 10 # Reduced padding slightly
     ax_dir.set_xlim(-x_limit, x_limit)
     
-    # Custom X-Axis Labels (Show absolute values)
-    x_ticks = np.linspace(-x_limit, x_limit, 5) 
-    ax_dir.set_xticks(x_ticks)
-    x_labels = [f'{abs(x):.0f}' for x in x_ticks]
-    ax_dir.set_xticklabels(x_labels, fontsize=10, color='black')
+    # Custom X-Axis: HIDE AXIS AND LABELS
+    ax_dir.set_xticks([]) # Hides the x-axis tick positions
+    ax_dir.set_xticklabels([]) # Hides the x-axis labels
 
     # --- Add Data Labels (Wickets and Average) ---
     for i, bar in enumerate(bars):
@@ -939,42 +934,47 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
         label = f"{int(wkts)}W\n{avg:.1f} Ave"
         
         # Determine position based on mirrored value
-        x_pos = bar.get_x() + bar.get_width() # End of the bar
+        bar_width = bar.get_width()
         
         # Positioning for LEFT side (negative bar)
         if i == 0:
-            text_x = x_pos - 0.05 * x_limit  # Place inside bar, slightly left
-            ha_align = 'right'
+            # Place label near the end of the bar (close to the Y-axis)
+            text_x = bar_width + 0.05 * x_limit  # Use 0.05 * x_limit padding from the bar's end (which is bar_width)
+            ha_align = 'right' # Anchor the text to the right side
         # Positioning for RIGHT side (positive bar)
         else:
-            text_x = x_pos + 0.05 * x_limit  # Place outside bar, slightly right
-            ha_align = 'left'
+            # Place label near the end of the bar (close to the Y-axis)
+            text_x = bar_width - 0.05 * x_limit 
+            ha_align = 'left' # Anchor the text to the left side
+
+        # Set text color to white for contrast against the red bar
+        text_color = 'white' 
 
         ax_dir.text(text_x, 
                     bar.get_y() + bar.get_height() / 2, 
                     label,
                     ha=ha_align, va='center', 
-                    fontsize=12, 
-                    color='black', weight='bold')
+                    fontsize=13, 
+                    color=text_color, weight='bold') # Set color to white
 
     # --- Final Styling and Spines ---
-    ax_dir.set_title(chart_title, fontsize=14, weight='bold', color='black', pad=10)
+    ax_dir.set_title(chart_title, fontsize=14, color='black', pad=10)
     
-    # Remove top and bottom spines
+    # Hide all spines
     ax_dir.spines['top'].set_visible(False)
-    ax_dir.spines['bottom'].set_visible(False)
+    ax_dir.spines['bottom'].set_visible(False) # Hides the bottom horizontal line
     ax_dir.spines['left'].set_visible(False)
     ax_dir.spines['right'].set_visible(False)
     
     # Add a subtle vertical line at x=0 for the axis center
     ax_dir.axvline(0, color='gray', linewidth=0.8)
     
-    # Remove y-ticks (already set by set_yticks)
+    # Remove y-ticks
     ax_dir.tick_params(axis='y', which='both', length=0)
     
     plt.tight_layout(pad=1.0)
     return fig_dir
-    
+
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
