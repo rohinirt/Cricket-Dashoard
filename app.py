@@ -146,7 +146,6 @@ def create_crease_beehive(df_in, delivery_type):
     regular_balls = non_wickets_all[
         (non_wickets_all["Runs"] != 4) & (non_wickets_all["Runs"] != 6)
     ]
-
     fig_cbh = go.Figure()
 
     # 1. TRACE: Regular Balls (Non-Wicket, Non-Boundary) - Light Grey
@@ -158,7 +157,7 @@ def create_crease_beehive(df_in, delivery_type):
     # 2. NEW TRACE: Boundary Balls (Runs 4 or 6) - Royal Blue
     fig_cbh.add_trace(go.Scatter(
         x=boundaries["CreaseY"], y=boundaries["CreaseZ"], mode='markers', name="Boundary",
-        marker=dict(color='royalblue', size=10, line=dict(width=1, color="white"), opacity=0.95)
+        marker=dict(color='royalblue', size=12, line=dict(width=1, color="white"), opacity=0.95)
     ))
 
     # 3. TRACE: Wickets - Red (Kept as the largest marker size for emphasis)
