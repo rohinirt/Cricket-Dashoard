@@ -947,7 +947,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
             ha_align = 'right' 
 
         # Set text color to white for contrast, and apply black outline for guaranteed visibility
-        text_color = 'white' 
+        text_color = 'black' 
 
         text_object = ax_dir.text(text_x, 
                     bar.get_y() + bar.get_height() / 2, 
