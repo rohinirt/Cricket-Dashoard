@@ -1221,7 +1221,7 @@ if uploaded_file is not None:
         st.pyplot(create_interception_side_on(df_seam, "Seam"), use_container_width=True)
 
         # Chart 4b: Interception Side-On Bins
-        st.pyplot(create_crease_width_cplit(df_seam, "Seam"), use_container_width=True)
+        st.pyplot(create_crease_width_split(df_seam, "Seam"), use_container_width=True)
 
         # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
         bottom_col_left, bottom_col_right = st.columns(2)
@@ -1275,7 +1275,7 @@ if uploaded_file is not None:
         st.pyplot(create_interception_side_on(df_spin, "Spin"), use_container_width=True)
 
         # Chart 4b: Interception Side-On Bins
-        st.pyplot(create_crease_width_cplit(df_spin, "Spin"), use_container_width=True)
+        st.pyplot(create_crease_width_split(df_spin, "Spin"), use_container_width=True)
 
         # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
         bottom_col_left, bottom_col_right = st.columns(2)
