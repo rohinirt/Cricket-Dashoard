@@ -20,44 +20,9 @@ REQUIRED_COLS = [
     "InterceptionZ", "InterceptionY", "Over"
 ]
 
-# Wagon Wheel Calculation (Function remains the same)
-def calculate_scoring_wagon(row):
-    LX = row.get("LandingX"); LY = row.get("LandingY"); RH = row.get("IsBatsmanRightHanded")
-    if RH is None or LX is None or LY is None or row.get("Runs", 0) == 0: return None
-    def atan_safe(numerator, denominator): return np.arctan(numerator / denominator) if denominator != 0 else np.nan 
-    
-    # Right Handed Batsman Logic
-    if RH == True: 
-        if LX <= 0 and LY > 0: return "FINE LEG"
-        elif LX <= 0 and LY <= 0: return "THIRD MAN"
-        elif LX > 0 and LY < 0:
-            if atan_safe(LY, LX) < np.pi / -4: return "COVER"
-            elif atan_safe(LX, LY) <= np.pi / -4: return "LONG OFF"
-        elif LX > 0 and LY >= 0:
-            if atan_safe(LY, LX) >= np.pi / 4: return "SQUARE LEG"
-            elif atan_safe(LY, LX) <= np.pi / 4: return "LONG ON"
-    # Left Handed Batsman Logic
-    elif RH == False: 
-        if LX <= 0 and LY > 0: return "THIRD MAN"
-        elif LX <= 0 and LY <= 0: return "FINE LEG"
-        elif LX > 0 and LY < 0:
-            if atan_safe(LY, LX) < np.pi / -4: return "SQUARE LEG"
-            elif atan_safe(LX, LY) <= np.pi / -4: return "LONG ON"
-        elif LX > 0 and LY >= 0:
-            if atan_safe(LY, LX) >= np.pi / 4: return "COVER"
-            elif atan_safe(LY, LX) <= np.pi / 4: return "LONG OFF"
-    return None
-
-def calculate_scoring_angle(area):
-    if area in ["FINE LEG", "THIRD MAN"]: return 90
-    elif area in ["COVER", "SQUARE LEG", "LONG OFF", "LONG ON"]: return 45
-    return 0
-
 # Function to encode Matplotlib figure to image for Streamlit
 def fig_to_image(fig):
     return fig
-
-# --- 2. CHART GENERATION FUNCTIONS (REMAINS THE SAME, BUT INTERCEPTION LOGIC IS NOW CORRECTED) ---
 
 # --- CHART 1: ZONAL ANALYSIS (CBH Boxes) ---
 def create_zonal_analysis(df_in, batsman_name, delivery_type):
@@ -765,6 +730,7 @@ def create_wagon_wheel(df_in, delivery_type):
         counterclock=False, 
         labels=None,
         labeldistance=1.1,
+        autopct='%.0f',  # <--- CRITICAL ADDITION
         pctdistance=0.5
     )
     
