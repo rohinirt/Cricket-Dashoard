@@ -940,7 +940,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     ax_dir.spines['left'].set_visible(False)
     ax_dir.spines['bottom'].set_visible(False)
     
-    plt.tight_layout(pad=0.5)
+    plt.tight_layout(pad=1)
     return fig_dir
 
 
