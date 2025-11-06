@@ -903,7 +903,9 @@ def create_directional_split(df_in, direction_col, title, delivery_type):
     else: # Default case
         direction_label_left = "LEFT"
         direction_label_right = "RIGHT"
-        
+    # Use these labels for the X-axis positions
+    plot_directions = [direction_label_left, direction_label_right]    
+    
     directions = summary.index.tolist()
     # USE AVERAGE FOR BAR HEIGHT
     averages = summary["Average"].tolist()
@@ -913,7 +915,7 @@ def create_directional_split(df_in, direction_col, title, delivery_type):
     colors = ['#d52221', '#d52221']
     
     # Plot bars using Average for height
-    bars = ax_dir.bar(directions, averages, color=colors, edgecolor='black', linewidth=0.25)
+    bars = ax_dir.bar(plot_directions, averages, color=colors, edgecolor='black', linewidth=0.25)
     
     # Add labels (Wickets and Average)
     for i, bar in enumerate(bars):
