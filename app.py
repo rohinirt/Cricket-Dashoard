@@ -873,10 +873,9 @@ def create_left_right_split(df_in, delivery_type):
 def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     df_dir = df_in.copy()
     if df_dir.empty:
-        # Increased figsize height slightly for better label placement
-        fig, ax = plt.subplots(figsize=(3, 2)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(4, 2.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
     
-    # Define Direction
+    # Define Direction (LEFT if value < 0, RIGHT if value >= 0)
     df_dir["Direction"] = np.where(df_dir[direction_col] < 0, "LEFT", "RIGHT")
     
     # Calculate Metrics
@@ -886,61 +885,61 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
         Balls=("Wicket", "count")
     ).reset_index().set_index("Direction").reindex(["LEFT", "RIGHT"]).fillna(0)
     
-    # CALCULATE AVERAGE: Replaces StrikeRate calculation
+    # CALCULATE AVERAGE
     summary["Average"] = summary.apply(
         lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else (row["Runs"] if row["Balls"] > 0 else 0), axis=1
     )
     
-    # Create the Bar Chart (Side-by-Side)
-    fig_dir, ax_dir = plt.subplots(figsize=(2, 3))   
+    # Create the Bar Chart
+    fig_dir, ax_dir = plt.subplots(figsize=(4, 2.5)) 
+
+    # X-axis Labels are fixed to LEFT/RIGHT for the split
+    plot_directions = ["LEFT", "RIGHT"]
     
-    directions = summary.index.tolist()
-    # USE AVERAGE FOR BAR HEIGHT
     averages = summary["Average"].tolist()
     wickets = summary["Wickets"].tolist()
     
-    # Colors: LEFT=Reddish, RIGHT=Blueish
-    colors = ['#d52221', '#d52221']
+    # --- Red Bar Color for both ---
+    colors = ['#d52221', '#d52221'] 
     
-    # Plot bars using Average for height
-    bars = ax_dir.bar(directions, averages, color=colors, edgecolor='black', linewidth=0.25,width=0.4)
+    # Plot bars with reduced width
+    bars = ax_dir.bar(plot_directions, averages, color=colors, edgecolor='black', linewidth=0.5, width=0.4) # WIDTH REDUCED
     
     # Add labels (Wickets and Average)
     for i, bar in enumerate(bars):
         avg = averages[i]
         wkts = wickets[i]
         
-        # New label format: "4W\n22.5 Ave"
         label = f"{int(wkts)}W\n{avg:.1f} Ave"
         
-        # Use a slightly higher position for better visibility
         ax_dir.text(bar.get_x() + bar.get_width() / 2, 
-                    bar.get_height() + (max(averages) * 0.02), # Place slightly above the bar
-                    label,
-                    ha='center', va='bottom', 
-                    fontsize=12, # INCREASED FONTSIZE
-                    color='black', weight='bold')
+                         bar.get_height() + (max(averages) * 0.05 if averages else 0.5), 
+                         label,
+                         ha='center', va='bottom', 
+                         fontsize=12, 
+                         color='black', weight='bold')
 
-    # Styling
-    # Set y-limit based on max average, plus padding
+    # --- Styling ---
     max_avg = max(averages) if averages else 0
-    ax_dir.set_ylim(0, max_avg * 1.3 if max_avg > 0 else 10) 
-   
+    ax_dir.set_ylim(0, max_avg * 1.4 if max_avg > 0 else 10) 
+    
     # SET CHART TITLE
-    ax_dir.set_title(chart_title, fontsize=12, color='black', pad=10) # Using the chart_title argument
+    ax_dir.set_title(chart_title, fontsize=14, weight='bold', color='black', pad=10)
     
-    # Update axis ticks and labels font size
+    # Remove axis ticks and labels (X and Y)
+    ax_dir.set_xticks(plot_directions)
+    ax_dir.set_xticklabels(plot_directions, fontsize=12, weight='bold', color='black')
     ax_dir.tick_params(axis='y', which='both', labelleft=False, left=False)
-    # INCREASED AXIS LABEL FONTSIZE
-    ax_dir.tick_params(axis='x', rotation=0, labelsize=12) 
-    
+    ax_dir.tick_params(axis='x', rotation=0, bottom=False) 
+
     # Remove all spines/borders
     ax_dir.spines['right'].set_visible(False)
     ax_dir.spines['top'].set_visible(False)
     ax_dir.spines['left'].set_visible(False)
     ax_dir.spines['bottom'].set_visible(False)
     
-    plt.tight_layout(pad=2)
+    # Add margin
+    plt.tight_layout(pad=1.0) # Margin increased to 1.0
     return fig_dir
 
 
