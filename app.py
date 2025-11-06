@@ -131,21 +131,43 @@ def create_crease_beehive(df_in, delivery_type):
     if df_in.empty:
         return go.Figure().update_layout(title="No data for Beehive", height=400)
 
+    # --- Data Filtering ---
     wickets = df_in[df_in["Wicket"] == True]
-    non_wickets = df_in[df_in["Wicket"] == False]
+    
+    # 1. Filter Non-Wickets
+    non_wickets_all = df_in[df_in["Wicket"] == False]
+
+    # 2. Filter Boundaries (Runs = 4 or 6) from Non-Wickets
+    boundaries = non_wickets_all[
+        (non_wickets_all["Runs"] == 4) | (non_wickets_all["Runs"] == 6)
+    ]
+    
+    # 3. Filter Regular Balls (Runs != 4 and Runs != 6)
+    regular_balls = non_wickets_all[
+        (non_wickets_all["Runs"] != 4) & (non_wickets_all["Runs"] != 6)
+    ]
+
     fig_cbh = go.Figure()
 
+    # 1. TRACE: Regular Balls (Non-Wicket, Non-Boundary) - Light Grey
     fig_cbh.add_trace(go.Scatter(
-        x=non_wickets["CreaseY"], y=non_wickets["CreaseZ"], mode='markers', name="No Wicket",
+        x=regular_balls["CreaseY"], y=regular_balls["CreaseZ"], mode='markers', name="Regular Ball",
         marker=dict(color='lightgrey', size=10, line=dict(width=1, color="white"), opacity=0.95)
     ))
 
+    # 2. NEW TRACE: Boundary Balls (Runs 4 or 6) - Royal Blue
+    fig_cbh.add_trace(go.Scatter(
+        x=boundaries["CreaseY"], y=boundaries["CreaseZ"], mode='markers', name="Boundary",
+        marker=dict(color='royalblue', size=10, line=dict(width=1, color="white"), opacity=0.95)
+    ))
+
+    # 3. TRACE: Wickets - Red (Kept as the largest marker size for emphasis)
     fig_cbh.add_trace(go.Scatter(
         x=wickets["CreaseY"], y=wickets["CreaseZ"], mode='markers', name="Wicket",
         marker=dict(color='red', size=12, line=dict(width=0), opacity=0.95)
     ))
 
-    # Stump lines & Crease lines
+    # Stump lines & Crease lines (No change)
     fig_cbh.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1)) 
     fig_cbh.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1))
     fig_cbh.add_vline(x=-0.92, line=dict(color="grey", width=0.8)) 
@@ -168,7 +190,6 @@ def create_crease_beehive(df_in, delivery_type):
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
     return fig_cbh
-
 # --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
 def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     from matplotlib import cm, colors, patches
