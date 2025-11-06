@@ -243,7 +243,7 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
         # Label 2: Wickets and Average (Middle of the box)
         ax_boxes.text(left + box_width / 2, 0.4, 
                       label_wkts_avg,
-                      ha='center', va='center', fontsize= 10, fonweight = 'bold', color=text_color)
+                      ha='center', va='center', fontsize= 10, fontweight = 'bold', color=text_color)
         
         left += box_width
         
