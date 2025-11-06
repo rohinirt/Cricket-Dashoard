@@ -163,7 +163,7 @@ def create_crease_beehive(df_in, delivery_type):
     # 3. TRACE: Wickets - Red (Kept as the largest marker size for emphasis)
     fig_cbh.add_trace(go.Scatter(
         x=wickets["CreaseY"], y=wickets["CreaseZ"], mode='markers', name="Wicket",
-        marker=dict(color='red', size=12, line=dict(width=0), opacity=0.95)
+        marker=dict(color='red', size=12, line=dict(width=1, color="white"), opacity=0.95)
     ))
 
     # Stump lines & Crease lines (No change)
@@ -365,7 +365,7 @@ def create_pitch_map(df_in, delivery_type):
 
     fig_pitch.add_trace(go.Scatter(
         x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"], mode='markers', name="Wicket",
-        marker=dict(color='red', size=12, line=dict(width=0), opacity=0.95)
+        marker=dict(color='red', size=12, line=dict(width=1, color="white")), opacity=0.95)
     ))
 
     # 4. Layout
@@ -549,7 +549,7 @@ def create_interception_side_on(df_in, delivery_type):
         # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on X-axis ===
         ax_7.scatter(
             df_slice["InterceptionX"] + 10, df_slice["InterceptionZ"], 
-            color=color_map[ctype], s=40, label=ctype
+            color=color_map[ctype],edgecolors='white', s=40, label=ctype
         )
 
     # 2. Draw Vertical Dashed Lines with Labels (FIXED LINES: 0.0, 1.25, 2.0, 3.0)
@@ -606,7 +606,7 @@ def create_interception_front_on(df_in, delivery_type):
         # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on Y-axis (Distance) ===
         ax_8.scatter(
             df_slice["InterceptionY"], df_slice["InterceptionX"] + 10, 
-            color=color_map[ctype], s=80, label=ctype
+            color=color_map[ctype],edgecolors='white', s=80, label=ctype
         ) 
 
     # 2. Draw Horizontal Dashed Lines with Labels (FIXED LINES: 0.0, 1.25)
