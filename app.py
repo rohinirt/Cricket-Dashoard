@@ -362,7 +362,7 @@ def create_pitch_map(df_in, delivery_type):
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
 def create_pitch_length_run_pct(df_in, delivery_type):
     # Adjust figsize height to accommodate the four boxes and title comfortably
-    FIG_HEIGHT = 4.0 
+    FIG_HEIGHT = 7
     
     if df_in.empty:
         fig, ax = plt.subplots(figsize=(2, FIG_HEIGHT)); 
@@ -461,7 +461,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
             bottom=bottom,   # Y-start position
             color=color,
             edgecolor='black', 
-            linewidth=1.5
+            linewidth=1
         )
         
         # Add labels - UPDATING LABEL TEXT
@@ -481,7 +481,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
         # Text color and plotting logic remain the same
         ax_stack.text(0.5, bottom + box_height / 2, 
                       label_text,
-                      ha='center', va='center', fontsize=7, color=text_color, weight='bold', linespacing=1.2)
+                      ha='center', va='center', fontsize=12, color=text_color, weight='bold', linespacing=1.2)
         
         bottom += box_height
         
