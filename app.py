@@ -8,6 +8,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 from io import StringIO
 import base64
+import matplotlib.patheffects as pe
 
 # --- 1. GLOBAL UTILITY FUNCTIONS ---
 
@@ -649,13 +650,6 @@ def create_interception_front_on(df_in, delivery_type):
 
 
 # --- CHART 6: SCORING WAGON WHEEL ---
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import numpy as np # Needed for the atan_safe function
-
-# --- Dependent Functions (Must be defined in app.py) ---
-
 def calculate_scoring_wagon(row):
     """Calculates the scoring area based on LandingX/Y coordinates and handedness."""
     LX = row.get("LandingX"); LY = row.get("LandingY"); RH = row.get("IsBatsmanRightHanded")
@@ -695,7 +689,6 @@ def calculate_scoring_angle(area):
     return 0
 
 # --- Main Wagon Wheel Function ---
-
 def create_wagon_wheel(df_in, delivery_type):
     wagon_summary = pd.DataFrame() 
     try:
@@ -717,7 +710,7 @@ def create_wagon_wheel(df_in, delivery_type):
 
         wagon_summary = template_df.merge(summary_with_shots.drop(columns=["FixedAngle"], errors='ignore'), on="ScoringWagon", how="left").fillna(0) 
         wagon_summary["ScoringWagon"] = pd.Categorical(wagon_summary["ScoringWagon"], categories=all_areas, ordered=True)
-        wagon_summary = wagon_summary.sort_values("ScoringWagon") # Sort by categorical order
+        wagon_summary = wagon_summary.sort_values("ScoringWagon")
         
         total_runs = wagon_summary["TotalRuns"].sum()
         wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / total_runs) * 100 if total_runs > 0 else 0 
@@ -763,7 +756,7 @@ def create_wagon_wheel(df_in, delivery_type):
     
     fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
-    # --- Plotting Call with Robust Unpacking Fix ---
+    # --- Plotting Call ---
     pie_output = ax.pie(
         angles, 
         colors=colors, 
@@ -775,33 +768,33 @@ def create_wagon_wheel(df_in, delivery_type):
         pctdistance=0.5
     )
     
-    # FIX: Handle cases where only (wedges, texts) are returned (expected 3, got 2)
-    # This happens when Matplotlib decides not to generate autotexts due to degenerate data.
+    # FIX: Handle unpack error (expected 3, got 2)
     if len(pie_output) == 3:
         wedges, texts, autotexts = pie_output
     elif len(pie_output) == 2:
         wedges, texts = pie_output
         autotexts = [] # Assign an empty list if autotexts are missing
     else:
-        # Fallback for unexpected return value
         fig, ax = plt.subplots(figsize=(4, 4)); 
         ax.text(0.5, 0.5, "Plotting Error (Return Value)", ha='center', va='center'); 
         ax.axis('off'); 
         return fig
     
-    # === CRITICAL FIX: MANUALLY SET LABELS ===
+    # === CRITICAL FIX: MANUALLY SET LABELS & ADD OUTLINE ===
     
     # Styling and label assignment
     for i, autotext in enumerate(autotexts):
         if i >= len(run_percentages): 
-            # Safety break if autotexts somehow exceeds run_percentages length
             break 
             
-        percent = run_percentages[i] 
+        percent = run_percentages[i]
         
         # 1. Set the actual percentage text
         if percent > 0:
             autotext.set_text(f'{percent:.0f}%')
+            
+            # 💥 FIX: Add a white stroke (outline) for text visibility
+            autotext.set_path_effects([pe.withStroke(linewidth=1.5, foreground='white')])
         else:
             autotext.set_text('')
             
@@ -809,6 +802,7 @@ def create_wagon_wheel(df_in, delivery_type):
         color_rgb = mcolors.to_rgb(colors[i])
         luminosity = 0.2126 * color_rgb[0] + 0.7152 * color_rgb[1] + 0.0722 * color_rgb[2]
         
+        # Use white text for the dark red wedges, black for white wedges
         autotext.set_color('white' if luminosity < 0.5 and colors[i] == COLOR_HIGH else 'black') 
         autotext.set_fontsize(12)
         autotext.set_fontweight('bold')
@@ -821,7 +815,7 @@ def create_wagon_wheel(df_in, delivery_type):
     plt.tight_layout(pad=0.5)
     
     return fig
-
+    
 # --- CHART 7: LEFT/RIGHT SCORING SPLIT (100% Bar) ---
 def create_left_right_split(df_in, delivery_type):
     import matplotlib.colors as mcolors
