@@ -873,62 +873,62 @@ if uploaded_file is not None:
     # =========================================================
     # Use columns to align the three filters horizontally
     # Use columns to align the four filters horizontally
-filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4) 
+    filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4) 
 
-# --- Filter Logic ---
-all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
+    # --- Filter Logic ---
+    all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
 
-# 1. Batting Team Filter (in column 1)
-with filter_col1:
+    # 1. Batting Team Filter (in column 1)
+    with filter_col1:
     bat_team = st.selectbox("Batting Team", all_teams, index=0)
 
-# 2. Batsman Name Filter (Logic depends on Batting Team - in column 2)
-if bat_team != "All":
-    batsmen_options = ["All"] + sorted(df_raw[df_raw["BattingTeam"] == bat_team]["BatsmanName"].dropna().unique().tolist())
-else:
-    batsmen_options = ["All"] + sorted(df_raw["BatsmanName"].dropna().unique().tolist())
+    # 2. Batsman Name Filter (Logic depends on Batting Team - in column 2)
+    if bat_team != "All":
+        batsmen_options = ["All"] + sorted(df_raw[df_raw["BattingTeam"] == bat_team]["BatsmanName"].dropna().unique().tolist())
+    else:
+        batsmen_options = ["All"] + sorted(df_raw["BatsmanName"].dropna().unique().tolist())
     
-with filter_col2:
-    batsman = st.selectbox("Batsman Name", batsmen_options, index=0)
+    with filter_col2:
+        batsman = st.selectbox("Batsman Name", batsmen_options, index=0)
 
-# 3. Innings Filter (in column 3) - NEW
-innings_options = ["All"] + sorted(df_raw["Innings"].dropna().unique().tolist())
-with filter_col3:
-    selected_innings = st.selectbox("Innings", innings_options, index=0)
+    # 3. Innings Filter (in column 3) - NEW
+    innings_options = ["All"] + sorted(df_raw["Innings"].dropna().unique().tolist())
+    with filter_col3:
+        selected_innings = st.selectbox("Innings", innings_options, index=0)
     
-# 4. Bowler Hand Filter (in column 4) - NEW
-bowler_hand_options = ["All", "Right Hand", "Left Hand"]
-with filter_col4:
-    selected_bowler_hand = st.selectbox("Bowler Hand", bowler_hand_options, index=0)
+    # 4. Bowler Hand Filter (in column 4) - NEW
+    bowler_hand_options = ["All", "Right Hand", "Left Hand"]
+    with filter_col4:
+        selected_bowler_hand = st.selectbox("Bowler Hand", bowler_hand_options, index=0)
     
 # =========================================================
 
-# --- Apply Filters to Seam and Spin dataframes ---
-def apply_filters(df):
-    if bat_team != "All":
-        df = df[df["BattingTeam"] == bat_team]
+    # --- Apply Filters to Seam and Spin dataframes ---
+    def apply_filters(df):
+        if bat_team != "All":
+            df = df[df["BattingTeam"] == bat_team]
         
-    if batsman != "All":
-        df = df[df["BatsmanName"] == batsman]
+        if batsman != "All":
+            df = df[df["BatsmanName"] == batsman]
         
-    # Apply Innings Filter
-    if selected_innings != "All":
-        df = df[df["Innings"] == selected_innings]
+        # Apply Innings Filter
+        if selected_innings != "All":
+            df = df[df["Innings"] == selected_innings]
         
-    # Apply Bowler Hand Filter
-    if selected_bowler_hand != "All":
-        is_right = (selected_bowler_hand == "Right Hand")
-        # Ensure column name 'IsBowlerRightHanded' is correct
-        df = df[df["IsBowlerRightHanded"] == is_right]
+        # Apply Bowler Hand Filter
+        if selected_bowler_hand != "All":
+            is_right = (selected_bowler_hand == "Right Hand")
+              # Ensure column name 'IsBowlerRightHanded' is correct
+            df = df[df["IsBowlerRightHanded"] == is_right]
         
-    return df
+        return df
 
-# Apply filters
-df_seam = apply_filters(df_seam)
-df_spin = apply_filters(df_spin)
+    # Apply filters
+    df_seam = apply_filters(df_seam)
+    df_spin = apply_filters(df_spin)
     
-heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
-st.header(f"**{heading_text}**")
+    heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
+    st.header(f"**{heading_text}**")
 
     # --- 4. DISPLAY CHARTS IN TWO COLUMNS ---
     
