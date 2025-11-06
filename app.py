@@ -870,79 +870,114 @@ def create_left_right_split(df_in, delivery_type):
     return fig_split
 
 # --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
+def import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np 
+
 def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     df_dir = df_in.copy()
     if df_dir.empty:
-        fig, ax = plt.subplots(figsize=(4, 2.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(6, 2.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
     
-    # Define Direction (LEFT if value < 0, RIGHT if value >= 0)
+    # 1. Prepare Data
     df_dir["Direction"] = np.where(df_dir[direction_col] < 0, "LEFT", "RIGHT")
     
-    # Calculate Metrics
     summary = df_dir.groupby("Direction").agg(
         Runs=("Runs", "sum"), 
         Wickets=("Wicket", lambda x: (x == True).sum()), 
         Balls=("Wicket", "count")
     ).reset_index().set_index("Direction").reindex(["LEFT", "RIGHT"]).fillna(0)
     
-    # CALCULATE AVERAGE
     summary["Average"] = summary.apply(
         lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else (row["Runs"] if row["Balls"] > 0 else 0), axis=1
     )
     
-    # Create the Bar Chart
-    fig_dir, ax_dir = plt.subplots(figsize=(4, 2.5)) 
-
-    # X-axis Labels are fixed to LEFT/RIGHT for the split
-    plot_directions = ["LEFT", "RIGHT"]
+    # --- Prepare for Butterfly Effect ---
+    # Reindex to ensure order, convert Average to a list
+    summary = summary.reset_index().set_index("Direction").reindex(["LEFT", "RIGHT"])
     
-    averages = summary["Average"].tolist()
+    # Set LEFT side to negative values for mirroring
+    summary.loc["LEFT", "Average_Mirrored"] = summary.loc["LEFT", "Average"] * -1
+    summary.loc["RIGHT", "Average_Mirrored"] = summary.loc["RIGHT", "Average"]
+    
+    # Extract lists
+    directions = summary.index.tolist()
+    averages_mirrored = summary["Average_Mirrored"].tolist()
+    averages_abs = summary["Average"].tolist()
     wickets = summary["Wickets"].tolist()
     
-    # --- Red Bar Color for both ---
+    # 2. Create Plot
+    fig_dir, ax_dir = plt.subplots(figsize=(6, 2.5)) 
+    
+    # --- Plotting the Bars ---
+    y_positions = [0, 1] # Simple Y positions for the two bars
+    
+    # Custom colors: Red for consistency
     colors = ['#d52221', '#d52221'] 
     
-    # Plot bars with reduced width
-    bars = ax_dir.bar(plot_directions, averages, color=colors, edgecolor='black', linewidth=0.5, width=0.4) # WIDTH REDUCED
+    # Plot horizontal bars
+    bars = ax_dir.barh(y_positions, averages_mirrored, color=colors, edgecolor='black', linewidth=0.5, height=0.6)
+
+    # 3. Add Labels and Styling
     
-    # Add labels (Wickets and Average)
+    # Set the y-axis labels to LEFT and RIGHT
+    ax_dir.set_yticks(y_positions)
+    ax_dir.set_yticklabels(directions, fontsize=12, weight='bold')
+
+    # Calculate max absolute value for x-axis limit
+    max_abs_avg = summary["Average"].max()
+    x_limit = max_abs_avg * 1.3 if max_abs_avg > 0 else 10
+    ax_dir.set_xlim(-x_limit, x_limit)
+    
+    # Custom X-Axis Labels (Show absolute values)
+    x_ticks = np.linspace(-x_limit, x_limit, 5) 
+    ax_dir.set_xticks(x_ticks)
+    x_labels = [f'{abs(x):.0f}' for x in x_ticks]
+    ax_dir.set_xticklabels(x_labels, fontsize=10, color='black')
+
+    # --- Add Data Labels (Wickets and Average) ---
     for i, bar in enumerate(bars):
-        avg = averages[i]
+        avg = averages_abs[i]
         wkts = wickets[i]
-        
         label = f"{int(wkts)}W\n{avg:.1f} Ave"
         
-        ax_dir.text(bar.get_x() + bar.get_width() / 2, 
-                         bar.get_height() + (max(averages) * 0.05 if averages else 0.5), 
-                         label,
-                         ha='center', va='bottom', 
-                         fontsize=12, 
-                         color='black', weight='bold')
+        # Determine position based on mirrored value
+        x_pos = bar.get_x() + bar.get_width() # End of the bar
+        
+        # Positioning for LEFT side (negative bar)
+        if i == 0:
+            text_x = x_pos - 0.05 * x_limit  # Place inside bar, slightly left
+            ha_align = 'right'
+        # Positioning for RIGHT side (positive bar)
+        else:
+            text_x = x_pos + 0.05 * x_limit  # Place outside bar, slightly right
+            ha_align = 'left'
 
-    # --- Styling ---
-    max_avg = max(averages) if averages else 0
-    ax_dir.set_ylim(0, max_avg * 1.4 if max_avg > 0 else 10) 
-    
-    # SET CHART TITLE
+        ax_dir.text(text_x, 
+                    bar.get_y() + bar.get_height() / 2, 
+                    label,
+                    ha=ha_align, va='center', 
+                    fontsize=12, 
+                    color='black', weight='bold')
+
+    # --- Final Styling and Spines ---
     ax_dir.set_title(chart_title, fontsize=14, weight='bold', color='black', pad=10)
     
-    # Remove axis ticks and labels (X and Y)
-    ax_dir.set_xticks(plot_directions)
-    ax_dir.set_xticklabels(plot_directions, fontsize=12, weight='bold', color='black')
-    ax_dir.tick_params(axis='y', which='both', labelleft=False, left=False)
-    ax_dir.tick_params(axis='x', rotation=0, bottom=False) 
-
-    # Remove all spines/borders
-    ax_dir.spines['right'].set_visible(False)
+    # Remove top and bottom spines
     ax_dir.spines['top'].set_visible(False)
-    ax_dir.spines['left'].set_visible(False)
     ax_dir.spines['bottom'].set_visible(False)
+    ax_dir.spines['left'].set_visible(False)
+    ax_dir.spines['right'].set_visible(False)
     
-    # Add margin
-    plt.tight_layout(pad=1.0) # Margin increased to 1.0
+    # Add a subtle vertical line at x=0 for the axis center
+    ax_dir.axvline(0, color='gray', linewidth=0.8)
+    
+    # Remove y-ticks (already set by set_yticks)
+    ax_dir.tick_params(axis='y', which='both', length=0)
+    
+    plt.tight_layout(pad=1.0)
     return fig_dir
-
-
+    
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
