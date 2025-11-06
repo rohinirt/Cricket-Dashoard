@@ -560,13 +560,28 @@ def create_interception_side_on(df_in, delivery_type):
     }
     
     for x_val, label in line_specs.items():
-        ax_7.axvline(x=x_val, color='lightgrey', linestyle='--', linewidth=0.8, alpha=0.7)  
-        ax_7.axhline(y=0.5, color='lightgrey', linestyle='--', linewidth=0.8, alpha=0.7)   
-        ax_7.text(x_val, 1.45, label.split(':')[-1].strip(), ha='center', va='center', fontsize=6, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
+        ax_7.axvline(x=x_val, color='lightgrey', linestyle='--', linewidth=0.6, alpha=0.7)  
+        ax_7.axhline(y=0.5, color='lightgrey', linestyle='--', linewidth=0.6, alpha=0.7)   
+        ax_7.text(x_val, 1.45, label.split(':')[-1].strip(), ha='center', va='center', fontsize=5, color='grey', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
 
-    # 3. Set Axes Limits and Labels (FIXED LIMITS: -0.2 to 3.4)
-    ax_7.set_xlim(-0.2, 3.4) 
-    ax_7.set_ylim(0, 1.5) 
+    # Set Y limit as fixed
+    y_limit = 1.5
+    
+    # Set X limit based on delivery type
+    if delivery_type == "Seam":
+        x_limit_max = 3.4
+    elif delivery_type == "Spin":
+        x_limit_max = 4.4
+    else:
+        # Fallback to the original seam limit if type is unknown
+        x_limit_max = 3.4 
+        
+    x_limit_min = -0.2
+    
+    ax_7.set_xlim(x_limit_min, x_limit_max) 
+    ax_7.set_ylim(0, y_limit) 
+    
+    # ... (Rest of the styling remains the same)
     ax_7.tick_params(axis='y', which='both', labelleft=False, left=False); ax_7.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
     ax_7.spines['right'].set_visible(False)
     ax_7.spines['top'].set_visible(False)
