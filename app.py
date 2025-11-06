@@ -383,11 +383,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
 
     df_pitch = df_in.copy()
     df_pitch["PitchLength"] = df_pitch["BounceX"].apply(assign_pitch_length)
-    
-    # Locate the create_pitch_length_run_pct function:
 
-def create_pitch_length_run_pct(df_in, delivery_type):
-    # ... (Pitch Bins and assignment_pitch_length function remain the same)
 
     # Aggregate data - ADD RUNS, BALLS, WICKETS
     df_summary = df_pitch.groupby("PitchLength").agg(
