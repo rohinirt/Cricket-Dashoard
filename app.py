@@ -559,8 +559,8 @@ def create_interception_side_on(df_in, delivery_type):
 # Chart 4b: Interception Side on Bins ---
 def create_crease_width_split(df_in, delivery_type):
     # Adjust figsize width for horizontal display, height for four boxes
-    FIG_WIDTH = 5.7
-    FIG_HEIGHT = 2
+    FIG_WIDTH = 5
+    FIG_HEIGHT = 1
     
     if df_in.empty:
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT)); 
@@ -580,7 +580,7 @@ def create_crease_width_split(df_in, delivery_type):
     }
     
     # Order: Wide to Close (e.g., 3m+ to 0m-1m)
-    ordered_keys = ["3m+", "2m-3m", "1m-2m", "0m-1m"] 
+    ordered_keys = ["0,-1.", "1m-2m", "2m-3m", "3m+"] 
     COLORMAP = 'Reds' # Color hue based on SR
 
     # 2. Data Preparation
@@ -641,7 +641,7 @@ def create_crease_width_split(df_in, delivery_type):
         ax_stack.barh(
             y=0.5,           # Y-position (center of the chart)
             width=box_width,
-            height=1,        # Full height (from 0 to 1 on the Y-axis)
+            height=0.8,        # Full height (from 0 to 1 on the Y-axis)
             left=left,       # X-start position
             color=color,
             edgecolor='black', 
@@ -668,14 +668,13 @@ def create_crease_width_split(df_in, delivery_type):
             center_x, -0.05, # Position slightly below the box
             index,           # The CreaseWidth label (e.g., '3m+')
             ha='center', va='top', 
-            fontsize=10, 
-            color='black', weight='bold'
+            fontsize=8, 
+            weight='bold'
         )
 
         left += box_width # Advance the starting position for the next box
 
     # 5. Styling
-    ax_stack.set_title("Crease Width Performance Split", fontsize=12, weight='bold', pad=10)
 
     # Hide all axis lines, ticks, and labels
     ax_stack.set_xlim(0, 1)
