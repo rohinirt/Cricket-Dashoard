@@ -366,7 +366,7 @@ def create_pitch_map(df_in, delivery_type):
     fig_pitch.add_trace(go.Scatter(
         x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"], mode='markers', name="Wicket",
         marker=dict(color='red', size=12, line=dict(width=1, color="white")), opacity=0.95)
-    ))
+    )
 
     # 4. Layout
     fig_pitch.update_layout(
