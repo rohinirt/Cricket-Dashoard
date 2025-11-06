@@ -484,7 +484,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     plt.tight_layout(pad=0.9)
     return fig_stack
     
-# --- CHART 4: INTERCEPTION SIDE-ON --- (Wide View)
+# --- CHART 4a: INTERCEPTION SIDE-ON --- (Wide View)
 def create_interception_side_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
     if df_interception.empty:
@@ -556,6 +556,135 @@ def create_interception_side_on(df_in, delivery_type):
     plt.tight_layout(pad=0.5)
     return fig_7
 
+# Chart 4b: Interception Side on Bins ---
+def create_crease_width_split(df_in, delivery_type):
+    # Adjust figsize width for horizontal display, height for four boxes
+    FIG_WIDTH = 5.7
+    FIG_HEIGHT = 2
+    
+    if df_in.empty:
+        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT)); 
+        ax.text(0.5, 0.5, "No Data", ha='center', va='center'); 
+        ax.axis('off'); 
+        return fig
+    
+    # 1. Define Interception Bins and Order
+    # NOTE: Assuming InterceptionX is centered around 0. We use X+10 for binning.
+    
+    # Lateral Bins (0m-1m, 1m-2m, 2m-3m, 3m+) based on InterceptionX + 10
+    INTERCEPTION_BINS = {
+        "0m-1m": [0, 1],
+        "1m-2m": [1, 2],
+        "2m-3m": [2, 3],
+        "3m+": [3, 100] # Assuming max possible value is < 100
+    }
+    
+    # Order: Wide to Close (e.g., 3m+ to 0m-1m)
+    ordered_keys = ["3m+", "2m-3m", "1m-2m", "0m-1m"] 
+    COLORMAP = 'Reds' # Color hue based on SR
+
+    # 2. Data Preparation
+    def assign_crease_width(x):
+        # x is assumed to be InterceptionX + 10
+        for width, bounds in INTERCEPTION_BINS.items():
+            if bounds[0] <= x < bounds[1]: return width
+        return None
+
+    df_crease = df_in.copy()
+    # Apply the required transformation: InterceptionX + 10
+    df_crease["CreaseWidth"] = (df_crease["InterceptionX"] + 10).apply(assign_crease_width)
+    
+    if df_crease["CreaseWidth"].isnull().all() or df_crease.empty:
+        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT)); 
+        ax.text(0.5, 0.5, "No Crease Width Assigned", ha='center', va='center'); 
+        ax.axis('off'); 
+        return fig
+
+    # Aggregate data 
+    df_summary = df_crease.groupby("CreaseWidth").agg(
+        Runs=("Runs", "sum"), 
+        Wickets=("Wicket", lambda x: (x == True).sum()), 
+        Balls=("Wicket", "count")
+    ).reset_index().set_index("CreaseWidth").reindex(ordered_keys).fillna(0)
+    
+    # --- CALCULATE AVG and SR (Metric for color hue) ---
+    df_summary["Average"] = df_summary.apply(
+        lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else (row["Runs"] if row["Balls"] > 0 else 0), axis=1
+    )
+    df_summary["StrikeRate"] = df_summary.apply(
+        lambda row: (row["Runs"] / row["Balls"]) * 100 if row["Balls"] > 0 else 0, axis=1
+    )
+    # -----------------------------
+    
+    # 3. Chart Setup
+    fig_stack, ax_stack = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT)) 
+
+    # Plotting setup variables (Now horizontal)
+    num_boxes = len(ordered_keys)
+    box_width = 1.0 / num_boxes # X-dimension split
+    left = 0.0 # X-start position
+    
+    # Colormap and Normalization based on Strike Rate (SR)
+    max_sr = df_summary["StrikeRate"].max() if df_summary["StrikeRate"].max() > 0 else 100
+    norm = mcolors.Normalize(vmin=0, vmax=max_sr)
+    cmap = cm.get_cmap(COLORMAP)
+    
+    # 4. Plotting Equal Boxes (Stacked Heat Map - Horizontal)
+    for index, row in df_summary.iterrows():
+        sr = row["StrikeRate"]
+        avg = row["Average"] 
+        
+        # Determine box color based on SR
+        color = cmap(norm(sr))
+        
+        # Draw the box (barh with height=1)
+        ax_stack.barh(
+            y=0.5,           # Y-position (center of the chart)
+            width=box_width,
+            height=1,        # Full height (from 0 to 1 on the Y-axis)
+            left=left,       # X-start position
+            color=color,
+            edgecolor='black', 
+            linewidth=1
+        )
+        
+        # --- Add Labels (SR and Avg) ---
+        label_text = f"SR: {sr:.0f}\nAvg: {avg:.1f}"
+        
+        # Text position: Center of the box
+        center_x = left + box_width / 2
+        center_y = 0.5
+        
+        ax_stack.text(
+            center_x, center_y, 
+            label_text,
+            ha='center', va='center', 
+            fontsize=10, 
+            color='black', weight='bold'
+        )
+        
+        # Add the pitch length label below the box
+        ax_stack.text(
+            center_x, -0.05, # Position slightly below the box
+            index,           # The CreaseWidth label (e.g., '3m+')
+            ha='center', va='top', 
+            fontsize=10, 
+            color='black', weight='bold'
+        )
+
+        left += box_width # Advance the starting position for the next box
+
+    # 5. Styling
+    ax_stack.set_title("Crease Width Performance Split", fontsize=12, weight='bold', pad=10)
+
+    # Hide all axis lines, ticks, and labels
+    ax_stack.set_xlim(0, 1)
+    ax_stack.set_ylim(0, 1)
+    ax_stack.axis('off')
+
+    plt.tight_layout(pad=0.5)
+    
+    return fig_stack
 
 # --- CHART 5: INTERCEPTION FRONT-ON --- (Distance vs Width)
 def create_interception_front_on(df_in, delivery_type):
@@ -977,8 +1106,8 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
-# --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
+# --- 3. MAIN STREAMLIT APP STRUCTURE ---
 # --- File Uploader ---
 uploaded_file = st.file_uploader("Upload your CSV file here", type=["csv"])
 if uploaded_file is not None:
@@ -1088,8 +1217,12 @@ if uploaded_file is not None:
         
         # --- NEW LAYOUT START ---
         
-        # Chart 4: Interception Side-On (Wide View) - Takes full width
+        # Chart 4a
+        : Interception Side-On (Wide View) - Takes full width
         st.pyplot(create_interception_side_on(df_seam, "Seam"), use_container_width=True)
+
+        # Chart 4b: Interception Side-On Bins
+        st.pyplot(create_crease_width_cplit(df_seam, "Seam"), use_container_width=True)
 
         # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
         bottom_col_left, bottom_col_right = st.columns(2)
@@ -1139,8 +1272,11 @@ if uploaded_file is not None:
         
         # --- NEW LAYOUT START (Mirroring Left Column) ---
         
-        # Chart 4: Interception Side-On (Wide View) - Takes full width
+        # Chart 4a: Interception Side-On (Wide View) - Takes full width
         st.pyplot(create_interception_side_on(df_spin, "Spin"), use_container_width=True)
+
+        # Chart 4b: Interception Side-On Bins
+        st.pyplot(create_crease_width_cplit(df_spin, "Spin"), use_container_width=True)
 
         # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
         bottom_col_left, bottom_col_right = st.columns(2)
