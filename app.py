@@ -649,10 +649,6 @@ def create_interception_front_on(df_in, delivery_type):
 
 
 # --- CHART 6: SCORING WAGON WHEEL ---
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-
 def create_wagon_wheel(df_in, delivery_type):
     wagon_summary = pd.DataFrame() 
     try:
@@ -689,11 +685,11 @@ def create_wagon_wheel(df_in, delivery_type):
     
     # --- Empty data check (includes check for zero angles) ---
     angles = wagon_summary["FixedAngle"].tolist()
-    if wagon_summary.empty or not angles or all(a == 0 for a in angles):
+    if wagon_summary.empty or len(wagon_summary) < 3 or all(a == 0 for a in angles):
         fig, ax = plt.subplots(figsize=(4, 4)); 
-        ax.text(0.5, 0.5, "No Valid Shots", ha='center', va='center'); 
+     # Use a generic message for insufficient data
+        ax.text(0.5, 0.5, "Insufficient Data for Plot", ha='center', va='center'); 
         ax.axis('off'); 
-        return fig
 
     # --- Color Logic (Top 1 Rank Only) ---
     wagon_summary['SortKey'] = wagon_summary['RunPercentage']
