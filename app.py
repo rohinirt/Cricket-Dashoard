@@ -652,20 +652,17 @@ def create_interception_front_on(df_in, delivery_type):
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-# Ensure matplotlib.cm and numpy are imported at the top of your app.py if needed elsewhere.
 
 def create_wagon_wheel(df_in, delivery_type):
     wagon_summary = pd.DataFrame() 
     try:
+        # ... (Data Calculation and setup remains the same, removed for brevity) ...
         df_wagon = df_in.copy()
-        
-        # --- Data Calculation (UNCHANGED) ---
         df_wagon["ScoringWagon"] = df_wagon.apply(calculate_scoring_wagon, axis=1)
         df_wagon["FixedAngle"] = df_wagon["ScoringWagon"].apply(calculate_scoring_angle)
         
         summary_with_shots = df_wagon.groupby("ScoringWagon").agg(TotalRuns=("Runs", "sum"), FixedAngle=("FixedAngle", 'first')).reset_index().dropna(subset=["ScoringWagon"])
         
-        # --- Handedness Logic (UNCHANGED) ---
         handedness_mode = df_in["IsBatsmanRightHanded"].dropna().mode()
         is_right_handed = handedness_mode.iloc[0] if not handedness_mode.empty else True
         
@@ -676,40 +673,27 @@ def create_wagon_wheel(df_in, delivery_type):
             
         template_df = pd.DataFrame({"ScoringWagon": all_areas, "FixedAngle": [calculate_scoring_angle(area) for area in all_areas]})
 
-        # --- Final Merge and Calculations ---
         wagon_summary = template_df.merge(summary_with_shots.drop(columns=["FixedAngle"], errors='ignore'), on="ScoringWagon", how="left").fillna(0) 
-        
-        # 1. Set the categorical order for the areas (essential for correct visual alignment)
         wagon_summary["ScoringWagon"] = pd.Categorical(wagon_summary["ScoringWagon"], categories=all_areas, ordered=True)
-        
-        # 2. **REMOVED THE EXPLICIT SORT HERE** to maintain the Categorical/Visual Order
         wagon_summary = wagon_summary.sort_values("ScoringWagon").reset_index(drop=True)
-        # ^ We are using the categorical sort to maintain the correct wedge order for plotting
-
+        
         total_runs = wagon_summary["TotalRuns"].sum()
         wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / total_runs) * 100 if total_runs > 0 else 0 
         wagon_summary["FixedAngle"] = wagon_summary["FixedAngle"].astype(int) 
     
     except Exception:
-        # Fallback for calculation errors
         fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "Calculation Error", ha='center', va='center'); ax.axis('off'); return fig
-
     
-    # === CRITICAL FIX: Check for empty data before plotting (UNCHANGED) ===
     if wagon_summary.empty or wagon_summary["FixedAngle"].sum() == 0:
         fig, ax = plt.subplots(figsize=(4, 4)); 
         ax.text(0.5, 0.5, "No Valid Shots", ha='center', va='center'); 
         ax.axis('off'); 
         return fig
-    # ==========================================================
 
     # --- Color Logic (Top 1 Rank Only) ---
-    # NOTE: The ranking is calculated on the DataFrame that is sorted by the visual order.
     wagon_summary['SortKey'] = wagon_summary['RunPercentage']
-    # Rank regions, handling ties (dense rank)
     wagon_summary['Rank'] = wagon_summary['RunPercentage'].rank(method='dense', ascending=False)
     
-    # --- SPECIFIED COLORS ---
     COLOR_HIGH = '#d52221'
     COLOR_DEFAULT = 'white'
 
@@ -721,7 +705,6 @@ def create_wagon_wheel(df_in, delivery_type):
             colors.append(COLOR_DEFAULT)
             continue
             
-        # ONLY COLOR RANK 1 (and all tied regions at rank 1)
         if current_rank == 1:
             colors.append(COLOR_HIGH)
         else:
@@ -731,7 +714,7 @@ def create_wagon_wheel(df_in, delivery_type):
     
     fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
-    # --- Plotting with Internal Labels (UNCHANGED) ---
+    # --- Plotting with Manual Labels ---
     wedges, texts, autotexts = ax.pie(
         angles, 
         colors=colors, 
@@ -740,12 +723,24 @@ def create_wagon_wheel(df_in, delivery_type):
         counterclock=False, 
         labels=None,
         labeldistance=1.1,
-        autopct=lambda p: f'{p:.0f}%' if p > 0 else '', 
+        # REMOVED autopct=...
         pctdistance=0.5
     )
     
-    # Styling for percentage labels (autotexts)
+    # === CRITICAL FIX: MANUALLY SET LABELS ===
+    run_percentages = wagon_summary["RunPercentage"].tolist()
+    
+    # Styling and label assignment
     for i, autotext in enumerate(autotexts):
+        percent = run_percentages[i]
+        
+        # 1. Set the actual percentage text
+        if percent > 0:
+            autotext.set_text(f'{percent:.0f}%')
+        else:
+            autotext.set_text('')
+            
+        # 2. Set text color based on background color for contrast
         color_rgb = mcolors.to_rgb(colors[i])
         luminosity = 0.2126 * color_rgb[0] + 0.7152 * color_rgb[1] + 0.0722 * color_rgb[2]
         
@@ -753,6 +748,7 @@ def create_wagon_wheel(df_in, delivery_type):
         autotext.set_fontsize(12)
         autotext.set_fontweight('bold')
 
+    # Ensure external texts are handled (UNCHANGED)
     for text in texts:
         text.set_color('black'); text.set_fontsize(8); text.set_fontweight('bold')
 
