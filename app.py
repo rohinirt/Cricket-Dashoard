@@ -973,7 +973,6 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     
     plt.tight_layout(pad=1.0)
     return fig_dir
-```http://googleusercontent.com/image_generation_content/1
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
