@@ -1217,8 +1217,7 @@ if uploaded_file is not None:
         
         # --- NEW LAYOUT START ---
         
-        # Chart 4a
-        : Interception Side-On (Wide View) - Takes full width
+        # Chart 4a: Interception Side-On (Wide View) - Takes full width
         st.pyplot(create_interception_side_on(df_seam, "Seam"), use_container_width=True)
 
         # Chart 4b: Interception Side-On Bins
