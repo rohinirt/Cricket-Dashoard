@@ -711,10 +711,12 @@ def create_wagon_wheel(df_in, delivery_type):
             colors.append(COLOR_DEFAULT)
 
     angles = wagon_summary["FixedAngle"].tolist()
-    
+    if not angles or all(a == 0 for a in angles):
+        fig, ax = plt.subplots(figsize=(4, 4)); 
+        ax.text(0.5, 0.5, "No Angles for Plotting", ha='center', va='center'); 
+        ax.axis('off'); 
+        return fig
     fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'xticks': [], 'yticks': []}) 
-    
-
     wedges, texts, autotexts = ax.pie(
         angles, 
         colors=colors, 
