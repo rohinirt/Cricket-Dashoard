@@ -888,14 +888,15 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
         lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else (row["Runs"] if row["Balls"] > 0 else 0), axis=1
     )
     
-    # --- Prepare for Butterfly Effect ---
-    summary = summary.reset_index().set_index("Direction").reindex(["LEFT", "RIGHT"])
+    # --- Prepare for Butterfly Effect & Order (LEFT on top, RIGHT on bottom) ---
+    # Reindex to plot RIGHT (index 0) then LEFT (index 1) for the desired vertical visual order
+    summary = summary.reset_index().set_index("Direction").reindex(["RIGHT", "LEFT"]) 
     
     # Set LEFT side to negative values for mirroring
     summary.loc["LEFT", "Average_Mirrored"] = summary.loc["LEFT", "Average"] * -1
     summary.loc["RIGHT", "Average_Mirrored"] = summary.loc["RIGHT", "Average"]
     
-    # Extract lists
+    # Extract lists (Order: RIGHT, LEFT)
     directions = summary.index.tolist()
     averages_mirrored = summary["Average_Mirrored"].tolist()
     averages_abs = summary["Average"].tolist()
@@ -908,13 +909,14 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     y_positions = [0, 1] 
     colors = ['#d52221', '#d52221'] 
     
+    # Plot horizontal bars
     bars = ax_dir.barh(y_positions, averages_mirrored, color=colors, edgecolor='black', linewidth=0.5, height=0.6)
 
     # 3. Add Labels and Styling
     
-    # Set the y-axis labels to LEFT and RIGHT
+    # Set the y-axis labels. The list ['RIGHT', 'LEFT'] matches y_positions [0, 1]
     ax_dir.set_yticks(y_positions)
-    ax_dir.set_yticklabels(directions, fontsize=12, color='black') # Ensure Y-axis labels are black
+    ax_dir.set_yticklabels(directions, fontsize=12, color='black') 
 
     # Calculate max absolute value for x-axis limit
     max_abs_avg = summary["Average"].max()
@@ -931,31 +933,32 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
         wkts = wickets[i]
         label = f"{int(wkts)}W\n{avg:.1f} Ave"
         
-        # Determine position based on mirrored value
-        # Now place labels INSIDE the bars, adjusted from the "start" of the bar (x=0 for right, bar.get_x() for left)
-        bar_start_x = bar.get_x() # This will be 0 for RIGHT, or negative for LEFT
-        bar_end_x = bar.get_x() + bar.get_width() # This is the "tip" of the bar
+        # Determine bar properties
+        bar_end_x = bar.get_x() + bar.get_width() # The tip of the bar
+        padding = 0.05 * x_limit 
 
-        # Define padding for the label from the inner edge (x=0) or outer edge of the bar
-        padding = 0.05 * x_limit # A small percentage of the total x_limit
+        if directions[i] == 'LEFT': # LEFT bar (index 1, negative values)
+            # Positioned inside the bar: move right (positive direction) from the tip (negative)
+            text_x = bar_end_x + padding 
+            ha_align = 'left' 
+        else: # RIGHT bar (index 0, positive values)
+            # Positioned inside the bar: move left (negative direction) from the tip (positive)
+            text_x = bar_end_x - padding 
+            ha_align = 'right' 
 
-        if i == 0: # LEFT bar (negative values)
-            text_x = bar_start_x + padding # Start from the bar's tip (which is negative) and move right
-            ha_align = 'left' # Anchor text to its left for left-aligned positioning inside the bar
-        else: # RIGHT bar (positive values)
-            text_x = bar_end_x - padding # Start from the bar's tip (positive) and move left
-            ha_align = 'right' # Anchor text to its right for right-aligned positioning inside the bar
+        # Set text color to white for contrast, and apply black outline for guaranteed visibility
+        text_color = 'white' 
 
-        # Set text color to BLACK for visibility on red bars
-        text_color = 'black' 
-
-        ax_dir.text(text_x, 
+        text_object = ax_dir.text(text_x, 
                     bar.get_y() + bar.get_height() / 2, 
                     label,
                     ha=ha_align, va='center', 
                     fontsize=14, 
-                    color=text_color, weight='bold') # Set color to BLACK
-            
+                    color=text_color, weight='bold') 
+
+        # Apply the black outline
+        text_object.set_path_effects([pe.withStroke(linewidth=2, foreground='black')])
+
     # --- Final Styling and Spines ---
     ax_dir.set_title(chart_title, fontsize=14, weight='bold', color='black', pad=10)
     
@@ -973,6 +976,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     
     plt.tight_layout(pad=1.0)
     return fig_dir
+
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
