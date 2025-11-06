@@ -870,7 +870,6 @@ def create_left_right_split(df_in, delivery_type):
     return fig_split
 
 # --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
-
 def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     df_dir = df_in.copy()
     if df_dir.empty:
@@ -909,23 +908,22 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     y_positions = [0, 1] 
     colors = ['#d52221', '#d52221'] 
     
-    # Plot horizontal bars
     bars = ax_dir.barh(y_positions, averages_mirrored, color=colors, edgecolor='black', linewidth=0.5, height=0.6)
 
     # 3. Add Labels and Styling
     
     # Set the y-axis labels to LEFT and RIGHT
     ax_dir.set_yticks(y_positions)
-    ax_dir.set_yticklabels(directions, fontsize=12)
+    ax_dir.set_yticklabels(directions, fontsize=12, weight='bold', color='black') # Ensure Y-axis labels are black
 
     # Calculate max absolute value for x-axis limit
     max_abs_avg = summary["Average"].max()
-    x_limit = max_abs_avg * 1.15 if max_abs_avg > 0 else 10 # Reduced padding slightly
+    x_limit = max_abs_avg * 1.15 if max_abs_avg > 0 else 10 
     ax_dir.set_xlim(-x_limit, x_limit)
     
     # Custom X-Axis: HIDE AXIS AND LABELS
-    ax_dir.set_xticks([]) # Hides the x-axis tick positions
-    ax_dir.set_xticklabels([]) # Hides the x-axis labels
+    ax_dir.set_xticks([]) 
+    ax_dir.set_xticklabels([]) 
 
     # --- Add Data Labels (Wickets and Average) ---
     for i, bar in enumerate(bars):
@@ -934,35 +932,36 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
         label = f"{int(wkts)}W\n{avg:.1f} Ave"
         
         # Determine position based on mirrored value
-        bar_width = bar.get_width()
-        
-        # Positioning for LEFT side (negative bar)
-        if i == 0:
-            # Place label near the end of the bar (close to the Y-axis)
-            text_x = bar_width + 0.05 * x_limit  # Use 0.05 * x_limit padding from the bar's end (which is bar_width)
-            ha_align = 'right' # Anchor the text to the right side
-        # Positioning for RIGHT side (positive bar)
-        else:
-            # Place label near the end of the bar (close to the Y-axis)
-            text_x = bar_width - 0.05 * x_limit 
-            ha_align = 'left' # Anchor the text to the left side
+        # Now place labels INSIDE the bars, adjusted from the "start" of the bar (x=0 for right, bar.get_x() for left)
+        bar_start_x = bar.get_x() # This will be 0 for RIGHT, or negative for LEFT
+        bar_end_x = bar.get_x() + bar.get_width() # This is the "tip" of the bar
 
-        # Set text color to white for contrast against the red bar
-        text_color = 'white' 
+        # Define padding for the label from the inner edge (x=0) or outer edge of the bar
+        padding = 0.05 * x_limit # A small percentage of the total x_limit
+
+        if i == 0: # LEFT bar (negative values)
+            text_x = bar_start_x + padding # Start from the bar's tip (which is negative) and move right
+            ha_align = 'left' # Anchor text to its left for left-aligned positioning inside the bar
+        else: # RIGHT bar (positive values)
+            text_x = bar_end_x - padding # Start from the bar's tip (positive) and move left
+            ha_align = 'right' # Anchor text to its right for right-aligned positioning inside the bar
+
+        # Set text color to BLACK for visibility on red bars
+        text_color = 'black' 
 
         ax_dir.text(text_x, 
                     bar.get_y() + bar.get_height() / 2, 
                     label,
                     ha=ha_align, va='center', 
-                    fontsize=13, 
-                    color=text_color, weight='bold') # Set color to white
-
+                    fontsize=12, 
+                    color=text_color, weight='bold') # Set color to BLACK
+            
     # --- Final Styling and Spines ---
-    ax_dir.set_title(chart_title, fontsize=14, color='black', pad=10)
+    ax_dir.set_title(chart_title, fontsize=14, weight='bold', color='black', pad=10)
     
     # Hide all spines
     ax_dir.spines['top'].set_visible(False)
-    ax_dir.spines['bottom'].set_visible(False) # Hides the bottom horizontal line
+    ax_dir.spines['bottom'].set_visible(False) 
     ax_dir.spines['left'].set_visible(False)
     ax_dir.spines['right'].set_visible(False)
     
@@ -974,7 +973,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     
     plt.tight_layout(pad=1.0)
     return fig_dir
-
+```http://googleusercontent.com/image_generation_content/1
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
