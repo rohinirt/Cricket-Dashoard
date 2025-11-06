@@ -93,7 +93,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
     avg_max = avg_values.max() if avg_values.max() > 0 else 1
     avg_min = avg_values[avg_values > 0].min() if avg_values[avg_values > 0].min() < avg_max else 0
     norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
-    cmap = cm.get_cmap('Blues')
+    cmap = cm.get_cmap('Reds')
 
     fig_boxes, ax = plt.subplots(figsize=(3,2), subplot_kw={'xticks': [], 'yticks': []}) 
     
@@ -220,7 +220,7 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     # Normalize color range: Use 0 to 50 for a reasonable cap on average
     avg_max = avg_values.max() if avg_values.max() > 0 else 50
     norm = mcolors.Normalize(vmin=0, vmax=avg_max if avg_max > 50 else 50)
-    cmap = cm.get_cmap('Blues') # Use inverted Reds_r: lower avg (good) is darker/redder
+    cmap = cm.get_cmap('Reds') # Use inverted Reds_r: lower avg (good) is darker/redder
     
     # 4. Plotting Equal Boxes (Horizontal Heatmap)
     for index, row in summary.iterrows():
@@ -404,7 +404,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     # Color Normalization (based on Run Percentage)
     run_pct_max = df_summary["RunPercentage"].max() if df_summary["RunPercentage"].max() > 0 else 100
     norm = mcolors.Normalize(vmin=0, vmax=run_pct_max)
-    cmap = cm.get_cmap('Blues') # Using Reds for runs percentage
+    cmap = cm.get_cmap('Reds') # Using Reds for runs percentage
 
     # 3. Plotting Equal Boxes (Stacked Heat Map)
     for index, row in df_summary.iterrows():
@@ -706,7 +706,7 @@ def create_left_right_split(df_in, delivery_type):
     # Normalize percentage values (0 to 100)
     norm = mcolors.Normalize(vmin=0, vmax=100)
     # Use a sequential blue colormap. Use Blues_r if you want a lower percentage to be darker blue.
-    cmap = cm.get_cmap('Blues') 
+    cmap = cm.get_cmap('Reds') 
     
     # Map the percentages to the colormap
     left_color = cmap(norm(left_pct))
