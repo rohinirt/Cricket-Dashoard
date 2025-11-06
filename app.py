@@ -388,7 +388,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
         COLORMAP = 'Reds' 
     elif delivery_type == "Spin":
         ordered_keys = ["Short", "Good", "Full", "Over Pitched"]
-        COLORMAP = 'Purples'
+        COLORMAP = 'Reds'
     else:
         # Fallback if delivery type is not recognized
         fig, ax = plt.subplots(figsize=(2, FIG_HEIGHT)); 
@@ -451,7 +451,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
         sr = row["StrikeRate"] 
         
         # Determine box color
-        color = cmap(norm(pct)) 
+        color = cmap(norm(pct))
         
         # Draw the box (barh with width=1)
         ax_stack.bar( # <-- CORRECTED FUNCTION CALL
@@ -482,7 +482,6 @@ def create_pitch_length_run_pct(df_in, delivery_type):
         ax_stack.text(0.5, bottom + box_height / 2, 
                       label_text,
                       ha='center', va='center', fontsize=12, color=text_color, weight='bold', linespacing=1.2)
-        
         bottom += box_height
         
     # 4. Styling
