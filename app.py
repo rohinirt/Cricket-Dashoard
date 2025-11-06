@@ -649,10 +649,16 @@ def create_interception_front_on(df_in, delivery_type):
 
 
 # --- CHART 6: SCORING WAGON WHEEL ---
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+# Assume calculate_scoring_wagon and calculate_scoring_angle are defined elsewhere
+
 def create_wagon_wheel(df_in, delivery_type):
     wagon_summary = pd.DataFrame() 
     try:
-        # ... (Data Calculation and setup remains the same, removed for brevity) ...
+        # --- Data Calculation and setup (UNCHANGED) ---
         df_wagon = df_in.copy()
         df_wagon["ScoringWagon"] = df_wagon.apply(calculate_scoring_wagon, axis=1)
         df_wagon["FixedAngle"] = df_wagon["ScoringWagon"].apply(calculate_scoring_angle)
@@ -683,13 +689,17 @@ def create_wagon_wheel(df_in, delivery_type):
     except Exception:
         fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "Calculation Error", ha='center', va='center'); ax.axis('off'); return fig
     
-    # --- Empty data check (includes check for zero angles) ---
+    
+    # --- Data Extraction and CRITICAL Validation (FIXED) ---
     angles = wagon_summary["FixedAngle"].tolist()
-    if wagon_summary.empty or len(wagon_summary) < 3 or all(a == 0 for a in angles):
+    run_percentages = wagon_summary["RunPercentage"].tolist() # Define this early
+    
+    # CRITICAL: Check for insufficient data (empty, no angles, or angle/color list length mismatch is likely)
+    if wagon_summary.empty or not angles or all(a == 0 for a in angles) or len(angles) != len(wagon_summary):
         fig, ax = plt.subplots(figsize=(4, 4)); 
-     # Use a generic message for insufficient data
         ax.text(0.5, 0.5, "Insufficient Data for Plot", ha='center', va='center'); 
         ax.axis('off'); 
+        return fig # <<< THIS IS THE MISSING RETURN
 
     # --- Color Logic (Top 1 Rank Only) ---
     wagon_summary['SortKey'] = wagon_summary['RunPercentage']
@@ -699,6 +709,7 @@ def create_wagon_wheel(df_in, delivery_type):
     COLOR_DEFAULT = 'white'
 
     colors = []
+    # Note: colors list length MUST match angles list length
     for index, row in wagon_summary.iterrows():
         current_rank = row['Rank']
         
@@ -715,6 +726,8 @@ def create_wagon_wheel(df_in, delivery_type):
     fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'xticks': [], 'yticks': []}) 
     
     # --- Plotting Call ---
+    # The unpack error is resolved because we confirmed the data is valid/non-empty, 
+    # and the lists are the same length.
     wedges, texts, autotexts = ax.pie(
         angles, 
         colors=colors, 
@@ -727,11 +740,9 @@ def create_wagon_wheel(df_in, delivery_type):
     )
     
     # === CRITICAL FIX: MANUALLY SET LABELS ===
-    run_percentages = wagon_summary["RunPercentage"].tolist()
-    
     # Styling and label assignment
     for i, autotext in enumerate(autotexts):
-        percent = run_percentages[i]
+        percent = run_percentages[i] # Use the list defined earlier
         
         # 1. Set the actual percentage text
         if percent > 0:
