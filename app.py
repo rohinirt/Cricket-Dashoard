@@ -454,12 +454,11 @@ def create_pitch_length_run_pct(df_in, delivery_type):
         color = cmap(norm(pct)) 
         
         # Draw the box (barh with width=1)
-        ax_stack.barh(
-            0, # Y-position doesn't matter, we use the rectangle
-            1, # Width is 1 (full width)
+        ax_stack.bar( # <-- CORRECTED FUNCTION CALL
+            x=0.5,           # X-position (center of the chart)
             height=box_height,
-            left=0,
-            bottom=bottom,
+            width=1,         # Full width (from 0 to 1 on the X-axis)
+            bottom=bottom,   # Y-start position
             color=color,
             edgecolor='black', 
             linewidth=1.5
