@@ -956,9 +956,6 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
                     fontsize=14, 
                     color=text_color, weight='bold') 
 
-        # Apply the black outline
-        text_object.set_path_effects([pe.withStroke(linewidth=2, foreground='black')])
-
     # --- Final Styling and Spines ---
     ax_dir.set_title(chart_title, fontsize=14, weight='bold', color='black', pad=10)
     
