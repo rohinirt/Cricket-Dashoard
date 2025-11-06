@@ -137,12 +137,12 @@ def create_crease_beehive(df_in, delivery_type):
 
     fig_cbh.add_trace(go.Scatter(
         x=non_wickets["CreaseY"], y=non_wickets["CreaseZ"], mode='markers', name="No Wicket",
-        marker=dict(color='lightgrey', size=15, line=dict(width=1, color="white"), opacity=0.95)
+        marker=dict(color='lightgrey', size=10, line=dict(width=1, color="white"), opacity=0.95)
     ))
 
     fig_cbh.add_trace(go.Scatter(
         x=wickets["CreaseY"], y=wickets["CreaseZ"], mode='markers', name="Wicket",
-        marker=dict(color='red', size=20, line=dict(width=0), opacity=0.95)
+        marker=dict(color='red', size=12, line=dict(width=0), opacity=0.95)
     ))
 
     # Stump lines & Crease lines
@@ -340,12 +340,12 @@ def create_pitch_map(df_in, delivery_type):
 
     fig_pitch.add_trace(go.Scatter(
         x=pitch_non_wickets["BounceY"], y=pitch_non_wickets["BounceX"], mode='markers', name="No Wicket",
-        marker=dict(color='#D3D3D3', size=15, line=dict(width=1, color="white"), opacity=0.9)
+        marker=dict(color='#D3D3D3', size=10, line=dict(width=1, color="white"), opacity=0.9)
     ))
 
     fig_pitch.add_trace(go.Scatter(
         x=pitch_wickets["BounceY"], y=pitch_wickets["BounceX"], mode='markers', name="Wicket",
-        marker=dict(color='red', size=20, line=dict(width=0), opacity=0.95)
+        marker=dict(color='red', size=12, line=dict(width=0), opacity=0.95)
     ))
 
     # 4. Layout
@@ -520,7 +520,7 @@ def create_interception_side_on(df_in, delivery_type):
     # === USING PROVIDED LOGIC: PLOT (InterceptionX + 10) on X-axis ===
     ax_7.scatter(
         df_other["InterceptionX"] + 10, df_other["InterceptionZ"], 
-        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=40, label="Other"
+        color='#D3D3D3', edgecolors='white', linewidths=0.5, s=30, label="Other"
     )
     
     # Plot "Wicket" and "Boundary" (Solid colors)
