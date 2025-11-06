@@ -870,10 +870,6 @@ def create_left_right_split(df_in, delivery_type):
     return fig_split
 
 # --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd # Ensure pandas is imported if not globally
-
 def create_directional_split(df_in, direction_col, title, delivery_type):
     df_dir = df_in.copy()
     if df_dir.empty:
@@ -897,17 +893,27 @@ def create_directional_split(df_in, direction_col, title, delivery_type):
     
     # Create the Bar Chart (Side-by-Side)
     fig_dir, ax_dir = plt.subplots(figsize=(4, 2.5)) 
-
+    # --- Dynamic Titles / X-axis Labels ---
+    if delivery_type in ["Seam", "Pace"]:
+        direction_label_left = "Swing"
+        direction_label_right = "Deviation"
+    elif delivery_type == "Spin":
+        direction_label_left = "Drift"
+        direction_label_right = "Turn"
+    else: # Default case
+        direction_label_left = "LEFT"
+        direction_label_right = "RIGHT"
+        
     directions = summary.index.tolist()
     # USE AVERAGE FOR BAR HEIGHT
     averages = summary["Average"].tolist()
     wickets = summary["Wickets"].tolist()
     
     # Colors: LEFT=Reddish, RIGHT=Blueish
-    colors = ['indianred', 'royalblue'] 
+    colors = ['#d52221', '#d52221']
     
     # Plot bars using Average for height
-    bars = ax_dir.bar(directions, averages, color=colors, edgecolor='black', linewidth=0.5)
+    bars = ax_dir.bar(directions, averages, color=colors, edgecolor='black', linewidth=0.25)
     
     # Add labels (Wickets and Average)
     for i, bar in enumerate(bars):
@@ -930,7 +936,6 @@ def create_directional_split(df_in, direction_col, title, delivery_type):
     max_avg = max(averages) if averages else 0
     ax_dir.set_ylim(0, max_avg * 1.3 if max_avg > 0 else 10) 
     
-    # REMOVED TITLE: ax_dir.set_title(...)
     
     # Update axis ticks and labels font size
     ax_dir.tick_params(axis='y', which='both', labelleft=False, left=False)
