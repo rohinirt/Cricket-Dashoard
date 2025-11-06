@@ -696,29 +696,29 @@ def create_wagon_wheel(df_in, delivery_type):
         return fig
     # ==========================================================
 
-    # --- Color Logic (Top 2 Blue Hue) ---
+    # --- Color Logic (Top 1 Rank Only) ---
     wagon_summary['SortKey'] = wagon_summary['RunPercentage']
     # Rank regions, handling ties (dense rank)
     wagon_summary['Rank'] = wagon_summary['RunPercentage'].rank(method='dense', ascending=False)
-    
-    COLOR_HIGH = '#d52221'
-    COLOR_SECOND_HIGH = '#fa6547'
-    COLOR_DEFAULT = 'white' # Default color for non-top regions
+
+    # --- SPECIFIED COLORS ---
+    COLOR_HIGH = '#d52221'  # Only the Top Rank Color is needed
+    COLOR_DEFAULT = 'white' # Default color for everything else
 
     colors = []
     for index, row in wagon_summary.iterrows():
         current_rank = row['Rank']
-        
+    
         # Use white for zero percentage regions
         if row['RunPercentage'] == 0:
             colors.append(COLOR_DEFAULT)
             continue
-            
+        
+        # ONLY COLOR RANK 1 (and all tied regions at rank 1)
         if current_rank == 1:
             colors.append(COLOR_HIGH)
-        elif current_rank == 2:
-            colors.append(COLOR_SECOND_HIGH)
         else:
+            # All other regions (Rank 2, 3, etc., including zero runs) are white
             colors.append(COLOR_DEFAULT)
 
     angles = wagon_summary["FixedAngle"].tolist()
