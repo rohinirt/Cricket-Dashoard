@@ -679,12 +679,17 @@ def create_wagon_wheel(df_in, delivery_type):
         
         total_runs = wagon_summary["TotalRuns"].sum()
         wagon_summary["RunPercentage"] = (wagon_summary["TotalRuns"] / total_runs) * 100 if total_runs > 0 else 0 
-        wagon_summary["FixedAngle"] = wagon_summary["FixedAngle"].astype(int) 
+        
+        # === FIX: ROBUST ANGLE CONVERSION ===
+        wagon_summary["FixedAngle"] = pd.to_numeric(wagon_summary["FixedAngle"], errors='coerce').fillna(0).astype(int)
+        # ===================================
     
     except Exception:
         fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "Calculation Error", ha='center', va='center'); ax.axis('off'); return fig
     
-    if wagon_summary.empty or wagon_summary["FixedAngle"].sum() == 0:
+    # --- Empty data check (includes check for zero angles) ---
+    angles = wagon_summary["FixedAngle"].tolist()
+    if wagon_summary.empty or not angles or all(a == 0 for a in angles):
         fig, ax = plt.subplots(figsize=(4, 4)); 
         ax.text(0.5, 0.5, "No Valid Shots", ha='center', va='center'); 
         ax.axis('off'); 
@@ -710,13 +715,10 @@ def create_wagon_wheel(df_in, delivery_type):
         else:
             colors.append(COLOR_DEFAULT)
 
-    angles = wagon_summary["FixedAngle"].tolist()
-    if not angles or all(a == 0 for a in angles):
-        fig, ax = plt.subplots(figsize=(4, 4)); 
-        ax.text(0.5, 0.5, "No Angles for Plotting", ha='center', va='center'); 
-        ax.axis('off'); 
-        return fig
+    
     fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'xticks': [], 'yticks': []}) 
+    
+    # --- Plotting Call ---
     wedges, texts, autotexts = ax.pie(
         angles, 
         colors=colors, 
