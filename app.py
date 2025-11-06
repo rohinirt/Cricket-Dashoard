@@ -384,7 +384,6 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     df_pitch = df_in.copy()
     df_pitch["PitchLength"] = df_pitch["BounceX"].apply(assign_pitch_length)
 
-
     # Aggregate data - ADD RUNS, BALLS, WICKETS
     df_summary = df_pitch.groupby("PitchLength").agg(
         Runs=("Runs", "sum"), 
@@ -424,7 +423,7 @@ def create_pitch_length_run_pct(df_in, delivery_type):
         )
           
         # Calculate text color for contrast
-        r, g, b, a = color
+        r, g, b = color[:3]
         luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
         text_color = 'white' if luminosity < 0.5 else 'black'
 
