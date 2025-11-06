@@ -580,7 +580,7 @@ def create_crease_width_split(df_in, delivery_type):
     }
     
     # Order: Wide to Close (e.g., 3m+ to 0m-1m)
-    ordered_keys = ["0,-1.", "1m-2m", "2m-3m", "3m+"] 
+    ordered_keys = ["0m-1m", "1m-2m", "2m-3m", "3m+"] 
     COLORMAP = 'Reds' # Color hue based on SR
 
     # 2. Data Preparation
@@ -679,7 +679,7 @@ def create_crease_width_split(df_in, delivery_type):
             index,           # The CreaseWidth label (e.g., '3m+')
             ha='center', va='top', 
             fontsize=10, 
-            color=text_color # Using dynamic text_color
+            color='black' # Using dynamic text_color
         )
 
         left += box_width # Advance the starting position for the next box
