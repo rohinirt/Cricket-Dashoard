@@ -361,19 +361,40 @@ def create_pitch_map(df_in, delivery_type):
 
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
 def create_pitch_length_run_pct(df_in, delivery_type):
+    # Adjust figsize height to accommodate the four boxes and title comfortably
+    FIG_HEIGHT = 4.0 
+    
     if df_in.empty:
-        fig, ax = plt.subplots(figsize=(2, 20)); ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(2, FIG_HEIGHT)); 
+        ax.text(0.5, 0.5, "No Data", ha='center', va='center', rotation=90); 
+        ax.axis('off'); 
+        return fig
 
-    PITCH_BINS_DICT = get_pitch_bins(delivery_type)
+    # Get the pitch bins from the helper function (must be available)
+    try:
+        PITCH_BINS_DICT = get_pitch_bins(delivery_type)
+    except NameError:
+        # Fallback if get_pitch_bins is not defined
+        fig, ax = plt.subplots(figsize=(2, FIG_HEIGHT)); 
+        ax.text(0.5, 0.5, "Setup Error", ha='center', va='center', rotation=90); 
+        ax.axis('off'); 
+        return fig
+    
     
     # Define ordered keys for reindexing/plotting order (far to near)
     if delivery_type == "Seam":
-        ordered_keys = ["Bouncer", "Short", "Length", "Full"] 
+        ordered_keys = ["Bouncer", "Short", "Length", "Full"]
+        # Use a contrasting colormap (e.g., Reds for high run percentage)
+        COLORMAP = 'Reds' 
     elif delivery_type == "Spin":
         ordered_keys = ["Short", "Good", "Full", "Over Pitched"]
+        COLORMAP = 'Purples'
     else:
         # Fallback if delivery type is not recognized
-        fig, ax = plt.subplots(figsize=(2, 3.5)); ax.text(0.5, 0.5, "Invalid Type", ha='center', va='center', rotation=90); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(2, FIG_HEIGHT)); 
+        ax.text(0.5, 0.5, "Invalid Type", ha='center', va='center', rotation=90); 
+        ax.axis('off'); 
+        return fig
 
     # 1. Data Preparation
     def assign_pitch_length(x):
@@ -383,6 +404,13 @@ def create_pitch_length_run_pct(df_in, delivery_type):
 
     df_pitch = df_in.copy()
     df_pitch["PitchLength"] = df_pitch["BounceX"].apply(assign_pitch_length)
+    
+    # === CRITICAL DATA CHECK ===
+    if df_pitch["PitchLength"].isnull().all() or df_pitch.empty:
+        fig, ax = plt.subplots(figsize=(2, FIG_HEIGHT)); 
+        ax.text(0.5, 0.5, "No Pitches Assigned", ha='center', va='center', rotation=90); 
+        ax.axis('off'); 
+        return fig
 
     # Aggregate data - ADD RUNS, BALLS, WICKETS
     df_summary = df_pitch.groupby("PitchLength").agg(
@@ -403,16 +431,39 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     total_runs = df_summary["Runs"].sum()
     df_summary["RunPercentage"] = (df_summary["Runs"] / total_runs) * 100 if total_runs > 0 else 0
 
-    # ... (Chart Setup remains the same)
+    # 2. Chart Setup
+    fig_stack, ax_stack = plt.subplots(figsize=(2, FIG_HEIGHT)) 
 
+    # Plotting setup variables
+    num_boxes = len(ordered_keys)
+    box_height = 1.0 / num_boxes
+    bottom = 0.0
+    
+    # Colormap and Normalization
+    max_pct = df_summary["RunPercentage"].max() if df_summary["RunPercentage"].max() > 0 else 100
+    norm = mcolors.Normalize(vmin=0, vmax=max_pct)
+    cmap = cm.get_cmap(COLORMAP)
+    
     # 3. Plotting Equal Boxes (Stacked Heat Map)
     for index, row in df_summary.iterrows():
         pct = row["RunPercentage"]
-        wkts = int(row["Wickets"])
-        avg = row["Average"]      # <-- NEW
-        sr = row["StrikeRate"]    # <-- NEW
+        avg = row["Average"] 
+        sr = row["StrikeRate"] 
         
-        # ... (Color and Rectangle drawing logic remains the same)
+        # Determine box color
+        color = cmap(norm(pct)) 
+        
+        # Draw the box (barh with width=1)
+        ax_stack.barh(
+            0, # Y-position doesn't matter, we use the rectangle
+            1, # Width is 1 (full width)
+            height=box_height,
+            left=0,
+            bottom=bottom,
+            color=color,
+            edgecolor='black', 
+            linewidth=1.5
+        )
         
         # Add labels - UPDATING LABEL TEXT
         label_text = (
@@ -421,13 +472,14 @@ def create_pitch_length_run_pct(df_in, delivery_type):
             f"Avg: {avg:.1f}\n"
             f"SR: {sr:.1f}"
         )
-          
+        
         # Calculate text color for contrast
+        # Fixed: Only unpack R, G, B
         r, g, b = color[:3]
         luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
         text_color = 'white' if luminosity < 0.5 else 'black'
 
-        # ... (Text color and plotting logic remain the same)
+        # Text color and plotting logic remain the same
         ax_stack.text(0.5, bottom + box_height / 2, 
                       label_text,
                       ha='center', va='center', fontsize=7, color=text_color, weight='bold', linespacing=1.2)
@@ -443,6 +495,8 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     ax_stack.spines['top'].set_visible(False)
     ax_stack.spines['left'].set_visible(False)
     ax_stack.spines['bottom'].set_visible(False)
+    
+    # Title remains hidden for space
     
     plt.tight_layout(pad=0.9)
     return fig_stack
