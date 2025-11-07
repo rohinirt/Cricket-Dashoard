@@ -6,11 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
+from io import StringIO
+import base64
 import matplotlib.patheffects as pe
-# --- NEW IMPORTS FOR PDF GENERATION ---
-from fpdf import FPDF 
-from io import StringIO, BytesIO
-import plotly.io as pio 
 
 # --- 1. GLOBAL UTILITY FUNCTIONS ---
 
@@ -19,27 +17,12 @@ REQUIRED_COLS = [
     "BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ", 
     "BattingTeam", "CreaseY", "CreaseZ", "Runs", "IsBatsmanRightHanded", 
     "LandingX", "LandingY", "BounceX", "BounceY", "InterceptionX", 
-    "InterceptionZ", "InterceptionY", "Over", 
-    # **UPDATED COLUMNS REQUIRED FOR FILTERS AND DIRECTIONAL CHARTS**
-    "Innings", "IsBowlerRightHanded", "Swing", "Deviation" 
+    "InterceptionZ", "InterceptionY", "Over"
 ]
 
-# Function to encode Matplotlib figure to image for Streamlit (kept empty, no longer strictly needed)
+# Function to encode Matplotlib figure to image for Streamlit
 def fig_to_image(fig):
     return fig
-
-# --- PDF HELPERS ---
-
-def fig_to_png_bytes(fig, is_plotly=False):
-    """Converts a figure (Matplotlib or Plotly) to PNG bytes."""
-    buf = BytesIO()
-    if is_plotly:
-        # Requires 'kaleido' library (pip install kaleido)
-        pio.write_image(fig, buf, format='png', width=600, height=450) 
-    else:
-        fig.savefig(buf, format='png', bbox_inches='tight', dpi=150)
-    buf.seek(0)
-    return buf
 
 # --- CHART 1: ZONAL ANALYSIS (CBH Boxes) ---
 def create_zonal_analysis(df_in, batsman_name, delivery_type):
@@ -176,11 +159,10 @@ def create_crease_beehive(df_in, delivery_type):
     )
     
     return fig_cbh
-
+    
 
 # --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
 def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
-    # This function definition is included here to ensure completeness
     from matplotlib import cm, colors, patches
     
     df_lateral = df_in.copy()
@@ -210,7 +192,8 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
             Balls=("Wicket", "count")
         )
     )
-    # ... (Rest of the function logic remains the same, calculates AVG, plots boxes)
+    
+    # Order the zones from Way Outside Off to Leg (Left to Right)
     ordered_zones = ["WAY OUTSIDE OFF", "OUTSIDE OFF", "STUMPS", "LEG"]
     summary = summary.reindex(ordered_zones).fillna(0)
 
@@ -221,48 +204,62 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     fig_boxes, ax_boxes = plt.subplots(figsize=(7, 1)) 
     
     num_regions = len(ordered_zones)
-    box_width = 1 / num_regions 
+    box_width = 1 / num_regions # Fixed width for each box (total width = 1)
     left = 0
     
     # Color Normalization (based on Average)
     avg_values = summary["Avg Runs/Wicket"]
+    # Normalize color range: Use 0 to 50 for a reasonable cap on average
     avg_max = avg_values.max() if avg_values.max() > 0 else 50
     norm = mcolors.Normalize(vmin=0, vmax=avg_max if avg_max > 50 else 50)
-    cmap = cm.get_cmap('Reds') 
+    cmap = cm.get_cmap('Reds') # Use inverted Reds_r: lower avg (good) is darker/redder
     
     # 4. Plotting Equal Boxes (Horizontal Heatmap)
     for index, row in summary.iterrows():
         avg = row["Avg Runs/Wicket"]
         wkts = int(row["Wickets"])
         
+        # Color hue based on Average
+        # Use white/light color if no data (zero balls)
         color = cmap(norm(avg)) if row["Balls"] > 0 else 'whitesmoke' 
         
+        # Draw the Rectangle (Fixed width, full height)
         ax_boxes.add_patch(
             patches.Rectangle((left, 0), box_width, 1, 
                               edgecolor="black", facecolor=color, linewidth=1)
         )
         
+        # Add labels (Zone Name, Wickets, Average)
         label_wkts_avg = f"{wkts}W - Ave {avg:.1f}"
         
+        # Calculate text color for contrast
         if row["Balls"] > 0:
-            r, g, b, a = color 
+            r, g, b, a = color # This is safe now, as 'color' is an RGBA tuple
+            # Calculate luminosity for RGBA tuples (from cmap)
             luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
             text_color = 'white' if luminosity < 0.5 else 'black'
         else:
+            # If the color is 'whitesmoke' (from the initial check), use black text
             text_color = 'black' 
 
+        # Label 1: Zone Name (Top of the box)
         ax_boxes.text(left + box_width / 2, 0.75, 
                       index,
                       ha='center', va='center', fontsize=10, color=text_color)
                       
+        # Label 2: Wickets and Average (Middle of the box)
         ax_boxes.text(left + box_width / 2, 0.4, 
                       label_wkts_avg,
                       ha='center', va='center', fontsize= 10, fontweight = 'bold', color=text_color)
         
         left += box_width
         
+    # 5. Styling
     ax_boxes.set_xlim(0, 1); ax_boxes.set_ylim(0, 1)
-    ax_boxes.axis('off') 
+    ax_boxes.axis('off') # Hide all axes/ticks/labels
+
+
+    # Remove the border (spines)
     ax_boxes.spines['right'].set_visible(False)
     ax_boxes.spines['top'].set_visible(False)
     ax_boxes.spines['left'].set_visible(False)
@@ -270,7 +267,7 @@ def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     
     plt.tight_layout(pad=0.5)
     return fig_boxes
-    
+
 # --- CHART 3: PITCH MAP ---
 
 # --- Helper function for Pitch Bins (Centralized) ---
@@ -1121,120 +1118,11 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     plt.tight_layout(pad=1.0)
     return fig_dir
 
-
-# =========================================================
-# **PDF COMPILER FUNCTION (THE MISSING LOGIC)**
-# =========================================================
-
-def create_pdf_report(figures, batsman_name):
-    pdf = FPDF('P', 'mm', 'A4')
-    pdf.set_auto_page_break(auto=True, margin=10)
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    
-    # Title Page/Header
-    pdf.cell(0, 10, f"Performance Report: {batsman_name.upper()}", 0, 1, 'C')
-    pdf.ln(5)
-
-    # --- SEAM ANALYSIS ---
-    pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(213, 34, 33) # Deep Red
-    pdf.cell(0, 10, "SEAM ANALYSIS", 0, 1, 'L')
-    pdf.set_text_color(0, 0, 0) # Reset color
-    pdf.ln(2)
-
-    # Row 1: Zonal (100mm wide) + Pitch Run % (50mm wide)
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(100, 5, "1. CREASE BEEHIVE ZONES (SR)", 0, 0, 'L')
-    pdf.cell(50, 5, "2. PITCH LENGTH RUN %", 0, 1, 'L')
-    y_start = pdf.get_y()
-    pdf.image(fig_to_png_bytes(figures['seam_zonal']), x=10, y=y_start, w=100, type='PNG')
-    pdf.image(fig_to_png_bytes(figures['seam_pitch_pct']), x=115, y=y_start, w=50, type='PNG')
-    pdf.set_y(y_start + 75)
-    
-    # Row 2: Beehive (100mm wide) + Lateral Boxes (85mm wide)
-    pdf.cell(0, 5, "3. CREASE BEEHIVE", 0, 0, 'L')
-    pdf.set_x(105)
-    pdf.cell(0, 5, "4. LATERAL PERFORMANCE BOXES", 0, 1, 'L')
-    y_start = pdf.get_y()
-    pdf.image(fig_to_png_bytes(figures['seam_beehive'], is_plotly=True), x=10, y=y_start, w=100, type='PNG')
-    pdf.image(fig_to_png_bytes(figures['seam_lateral']), x=105, y=y_start + 5, w=85, type='PNG') # Vertical adjustment for better fit
-    pdf.set_y(y_start + 70)
-    
-    # Row 3: Interception Side-On (100mm wide) + Crease Width Split (85mm wide)
-    pdf.cell(0, 5, "5. INTERCEPTION SIDE-ON", 0, 0, 'L')
-    pdf.set_x(105)
-    pdf.cell(0, 5, "6. CREASE WIDTH SPLIT (SR)", 0, 1, 'L')
-    y_start = pdf.get_y()
-    pdf.image(fig_to_png_bytes(figures['seam_side_on']), x=10, y=y_start, w=100, type='PNG')
-    pdf.image(fig_to_png_bytes(figures['seam_crease_split']), x=105, y=y_start + 10, w=85, type='PNG')
-    pdf.set_y(y_start + 40) # Space for the side-on plot
-    
-    # Page 2: Scoring and Directional
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(213, 34, 33) 
-    pdf.cell(0, 10, "SEAM SCORING & DIRECTIONAL ANALYSIS", 0, 1, 'L')
-    pdf.set_text_color(0, 0, 0)
-    pdf.ln(2)
-
-    # Row 4: Top-On (90mm wide) + Wagon Wheel (90mm wide)
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(95, 5, "7. INTERCEPTION TOP-ON", 0, 0, 'L')
-    pdf.cell(95, 5, "8. SCORING AREAS (WAGON WHEEL)", 0, 1, 'L')
-    y_start = pdf.get_y()
-    pdf.image(fig_to_png_bytes(figures['seam_top_on']), x=10, y=y_start, w=95, type='PNG')
-    pdf.image(fig_to_png_bytes(figures['seam_wagon_wheel']), x=105, y=y_start, w=95, type='PNG')
-    pdf.set_y(y_start + 85) 
-    
-    # Row 5: L/R Split (90mm wide) + Swing (90mm wide)
-    pdf.cell(95, 5, "9. LEFT/RIGHT RUN SPLIT", 0, 0, 'L')
-    pdf.cell(95, 5, "10. SWING DIRECTIONAL SPLIT (AVG)", 0, 1, 'L')
-    y_start = pdf.get_y()
-    pdf.image(fig_to_png_bytes(figures['seam_lr_split']), x=10, y=y_start, w=95, type='PNG')
-    pdf.image(fig_to_png_bytes(figures['seam_swing']), x=105, y=y_start, w=95, type='PNG')
-    pdf.set_y(y_start + 45) 
-    
-    # Row 6: Deviation
-    pdf.cell(0, 5, "11. DEVIATION DIRECTIONAL SPLIT (AVG)", 0, 1, 'L')
-    pdf.image(fig_to_png_bytes(figures['seam_deviation']), x=10, y=pdf.get_y(), w=95, type='PNG')
-
-    # --- SPIN ANALYSIS (New Page) ---
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(33, 67, 213) # Deep Blue
-    pdf.cell(0, 10, "SPIN ANALYSIS", 0, 1, 'L')
-    pdf.set_text_color(0, 0, 0) # Reset color
-    pdf.ln(2)
-
-    # Note: Spin layout mirrors Seam layout using 'spin_' keys
-    # Row 1: Zonal (100mm wide) + Pitch Run % (50mm wide)
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(100, 5, "1. CREASE BEEHIVE ZONES (SR)", 0, 0, 'L')
-    pdf.cell(50, 5, "2. PITCH LENGTH RUN %", 0, 1, 'L')
-    y_start = pdf.get_y()
-    pdf.image(fig_to_png_bytes(figures['spin_zonal']), x=10, y=y_start, w=100, type='PNG')
-    pdf.image(fig_to_png_bytes(figures['spin_pitch_pct']), x=115, y=y_start, w=50, type='PNG')
-    pdf.set_y(y_start + 75)
-    
-    # Row 2: Beehive (100mm wide) + Lateral Boxes (85mm wide)
-    pdf.cell(0, 5, "3. CREASE BEEHIVE", 0, 0, 'L')
-    pdf.set_x(105)
-    pdf.cell(0, 5, "4. LATERAL PERFORMANCE BOXES", 0, 1, 'L')
-    y_start = pdf.get_y()
-    pdf.image(fig_to_png_bytes(figures['spin_beehive'], is_plotly=True), x=10, y=y_start, w=100, type='PNG')
-    pdf.image(fig_to_png_bytes(figures['spin_lateral']), x=105, y=y_start + 5, w=85, type='PNG') 
-    pdf.set_y(y_start + 70)
-    
-    # Final step: Return the PDF as binary data
-    return pdf.output(dest='S').encode('latin-1')
-
-# =========================================================
-
-# --- 3. MAIN STREAMLIT APP STRUCTURE (Modified to generate and use figures dict) ---
+# --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
 
+# --- 3. MAIN STREAMLIT APP STRUCTURE ---
 # --- File Uploader ---
 uploaded_file = st.file_uploader("Upload your CSV file here", type=["csv"])
 if uploaded_file is not None:
@@ -1247,22 +1135,30 @@ if uploaded_file is not None:
         st.stop()
     
     # Initial validation and required column check
-    missing_cols = [col for col in REQUIRED_COLS if col not in df_raw.columns]
-    if missing_cols:
-        st.error(f"The CSV file is missing required columns: {', '.join(missing_cols)}. Please ensure the correct data columns are present.")
+    if not all(col in df_raw.columns for col in REQUIRED_COLS):
+        missing_cols = [col for col in REQUIRED_COLS if col not in df_raw.columns]
+        st.error(f"The CSV file is missing required columns: {', '.join(missing_cols)}")
         st.stop()
-    
-    # Data separation
-    df_seam_raw = df_raw[df_raw["DeliveryType"] == "Seam"].copy()
-    df_spin_raw = df_raw[df_raw["DeliveryType"] == "Spin"].copy()
 
-    # --- Filters ---
+    # Data separation
+    df_seam = df_raw[df_raw["DeliveryType"] == "Seam"].copy()
+    df_spin = df_raw[df_raw["DeliveryType"] == "Spin"].copy()
+
+    # =========================================================
+    # 🌟 FILTERS MOVED TO TOP OF MAIN BODY 🌟
+    # =========================================================
+    # Use columns to align the three filters horizontally
+    # Use columns to align the four filters horizontally
     filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4) 
 
+    # --- Filter Logic ---
     all_teams = ["All"] + sorted(df_raw["BattingTeam"].dropna().unique().tolist())
+
+    # 1. Batting Team Filter (in column 1)
     with filter_col1:
         bat_team = st.selectbox("Batting Team", all_teams, index=0)
 
+    # 2. Batsman Name Filter (Logic depends on Batting Team - in column 2)
     if bat_team != "All":
         batsmen_options = ["All"] + sorted(df_raw[df_raw["BattingTeam"] == bat_team]["BatsmanName"].dropna().unique().tolist())
     else:
@@ -1271,173 +1167,164 @@ if uploaded_file is not None:
     with filter_col2:
         batsman = st.selectbox("Batsman Name", batsmen_options, index=0)
 
+    # 3. Innings Filter (in column 3) - NEW
     innings_options = ["All"] + sorted(df_raw["Innings"].dropna().unique().tolist())
     with filter_col3:
         selected_innings = st.selectbox("Innings", innings_options, index=0)
     
+    # 4. Bowler Hand Filter (in column 4) - NEW
     bowler_hand_options = ["All", "Right Hand", "Left Hand"]
     with filter_col4:
         selected_bowler_hand = st.selectbox("Bowler Hand", bowler_hand_options, index=0)
     
-    # --- Apply Filters ---
+# =========================================================
+
+    # --- Apply Filters to Seam and Spin dataframes ---
     def apply_filters(df):
         if bat_team != "All":
             df = df[df["BattingTeam"] == bat_team]
+        
         if batsman != "All":
             df = df[df["BatsmanName"] == batsman]
+        
+        # Apply Innings Filter
         if selected_innings != "All":
             df = df[df["Innings"] == selected_innings]
+        
+        # Apply Bowler Hand Filter
         if selected_bowler_hand != "All":
             is_right = (selected_bowler_hand == "Right Hand")
+              # Ensure column name 'IsBowlerRightHanded' is correct
             df = df[df["IsBowlerRightHanded"] == is_right]
+        
         return df
 
-    df_seam = apply_filters(df_seam_raw)
-    df_spin = apply_filters(df_spin_raw)
-    
-    # =========================================================
-    # **CHART GENERATION DICTIONARY (CRUCIAL FOR PDF/DISPLAY)**
-    # =========================================================
-    figures = {
-        'seam_zonal': create_zonal_analysis(df_seam, batsman, "Seam"),
-        'seam_beehive': create_crease_beehive(df_seam, "Seam"),
-        'seam_lateral': create_lateral_performance_boxes(df_seam, "Seam", batsman),
-        'seam_pitchmap': create_pitch_map(df_seam, "Seam"),
-        'seam_pitch_pct': create_pitch_length_run_pct(df_seam, "Seam"),
-        'seam_side_on': create_interception_side_on(df_seam, "Seam"),
-        'seam_crease_split': create_crease_width_split(df_seam, "Seam"),
-        'seam_top_on': create_interception_front_on(df_seam, "Seam"),
-        'seam_wagon_wheel': create_wagon_wheel(df_seam, "Seam"),
-        'seam_lr_split': create_left_right_split(df_seam, "Seam"),
-        'seam_swing': create_directional_split(df_seam, "Swing", "Swing", "Seam"),
-        'seam_deviation': create_directional_split(df_seam, "Deviation", "Deviation", "Seam"),
-        
-        'spin_zonal': create_zonal_analysis(df_spin, batsman, "Spin"),
-        'spin_beehive': create_crease_beehive(df_spin, "Spin"),
-        'spin_lateral': create_lateral_performance_boxes(df_spin, "Spin", batsman),
-        'spin_pitchmap': create_pitch_map(df_spin, "Spin"),
-        'spin_pitch_pct': create_pitch_length_run_pct(df_spin, "Spin"),
-        'spin_side_on': create_interception_side_on(df_spin, "Spin"),
-        'spin_crease_split': create_crease_width_split(df_spin, "Spin"),
-        'spin_top_on': create_interception_front_on(df_spin, "Spin"),
-        'spin_wagon_wheel': create_wagon_wheel(df_spin, "Spin"),
-        'spin_lr_split': create_left_right_split(df_spin, "Spin"),
-        'spin_swing': create_directional_split(df_spin, "Swing", "Drift", "Spin"),
-        'spin_deviation': create_directional_split(df_spin, "Deviation", "Turn", "Spin")
-    }
-
-    # --- ADD DOWNLOAD BUTTON ---
-    heading_col, download_col = st.columns([4, 1])
+    # Apply filters
+    df_seam = apply_filters(df_seam)
+    df_spin = apply_filters(df_spin)
     
     heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
-    with heading_col:
-        st.header(f"**{heading_text}**")
-    
-    with download_col:
-        pdf_bytes = create_pdf_report(figures, heading_text)
-        
-        st.download_button(
-            label="Download PDF Report ⬇️",
-            data=pdf_bytes,
-            file_name=f"Report_{heading_text.replace(' ', '_')}.pdf",
-            mime="application/pdf"
-        )
-    # =========================================================
+    st.header(f"**{heading_text}**")
 
-    # --- 4. DISPLAY CHARTS IN TWO COLUMNS (using the generated figures dictionary) ---
+    # --- 4. DISPLAY CHARTS IN TWO COLUMNS ---
     
     col1, col2 = st.columns(2)
     
     # --- LEFT COLUMN: SEAM ANALYSIS ---
     with col1:
+        # Use a smaller Markdown header (e.g., h4)
         st.markdown("#### SEAM")
 
         st.markdown("###### CREASE BEEHIVE ZONES")
-        st.pyplot(figures['seam_zonal'], use_container_width=True)
+        st.pyplot(create_zonal_analysis(df_seam, batsman, "Seam"), use_container_width=True)
         
         st.markdown("###### CREASE BEEHIVE")
-        st.plotly_chart(figures['seam_beehive'], use_container_width=True)
+        st.plotly_chart(create_crease_beehive(df_seam, "Seam"), use_container_width=True)
 
-        st.pyplot(figures['seam_lateral'], use_container_width=True)
+        st.pyplot(create_lateral_performance_boxes(df_seam, "Seam", batsman), use_container_width=True)
         
-        pitch_map_col, run_pct_col = st.columns([3, 1])
+        # Charts 3: Pitch Map and Vertical Run % Bar (Side-by-Side)
+        pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
 
         with pitch_map_col:
             st.markdown("###### PITCHMAP")
-            st.plotly_chart(figures['seam_pitchmap'], use_container_width=True)
+            st.plotly_chart(create_pitch_map(df_seam, "Seam"), use_container_width=True)
             
         with run_pct_col:
             st.markdown("###### ")
-            st.pyplot(figures['seam_pitch_pct'], use_container_width=True)
+            st.pyplot(create_pitch_length_run_pct(df_seam, "Seam"), use_container_width=True)
         
+        # --- NEW LAYOUT START ---
+        
+        # Chart 4a: Interception Side-On (Wide View) - Takes full width4
         st.markdown("###### INTERCEPTION SIDE-ON")
-        st.pyplot(figures['seam_side_on'], use_container_width=True)
+        st.pyplot(create_interception_side_on(df_seam, "Seam"), use_container_width=True)
 
-        st.pyplot(figures['seam_crease_split'], use_container_width=True)
+        # Chart 4b: Interception Side-On Bins
+        st.pyplot(create_crease_width_split(df_seam, "Seam"), use_container_width=True)
 
+        # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
         bottom_col_left, bottom_col_right = st.columns(2)
 
         with bottom_col_left:
             st.markdown("###### INTERCEPTION TOP-ON")
-            st.pyplot(figures['seam_top_on'], use_container_width=True)
+            st.pyplot(create_interception_front_on(df_seam, "Seam"), use_container_width=True)
         
         with bottom_col_right:
             st.markdown("###### SCORING AREAS")    
-            st.pyplot(figures['seam_wagon_wheel'], use_container_width=True)
-            st.pyplot(figures['seam_lr_split'], use_container_width=True)
+            st.pyplot(create_wagon_wheel(df_seam, "Seam"), use_container_width=True)
+            st.pyplot(create_left_right_split(df_seam, "Seam"), use_container_width=True)
     
+         # Charts 9 & 10: Swing/Deviation Direction Analysis (Side-by-Side)
         final_col_swing, final_col_deviation = st.columns(2)
 
         with final_col_swing:
-            st.pyplot(figures['seam_swing'], use_container_width=True)
+            st.pyplot(create_directional_split(df_seam, "Swing", "Swing", "Seam"), use_container_width=True)
 
         with final_col_deviation:
-            st.pyplot(figures['seam_deviation'], use_container_width=True)   
+            st.pyplot(create_directional_split(df_seam, "Deviation", "Deviation", "Seam"), use_container_width=True)   
+        # --- NEW LAYOUT END ---
+
+
+
 
     # --- RIGHT COLUMN: SPIN ANALYSIS ---
     with col2:
+        # Use a smaller Markdown header (e.g., h4)
         st.markdown("#### SPIN")
         
         st.markdown("###### CREASE BEEHIVE ZONES")
-        st.pyplot(figures['spin_zonal'], use_container_width=True)
+        st.pyplot(create_zonal_analysis(df_spin, batsman, "Spin"), use_container_width=True)
         st.markdown("###### CREASE BEEHIVE")
-        st.plotly_chart(figures['spin_beehive'], use_container_width=True)
+        st.plotly_chart(create_crease_beehive(df_spin, "Spin"), use_container_width=True)
 
-        st.pyplot(figures['spin_lateral'], use_container_width=True)
+        st.pyplot(create_lateral_performance_boxes(df_spin, "Spin", batsman), use_container_width=True)
 
-        pitch_map_col, run_pct_col = st.columns([3, 1])
+        # Charts 3 & 8: Pitch Map and Vertical Run % Bar (Side-by-Side)
+        pitch_map_col, run_pct_col = st.columns([3, 1]) # 3:1 ratio for Pitch Map and Bar
 
         with pitch_map_col:
+            # CORRECTED: Use df_spin and "Spin"
             st.markdown("###### PITCHMAP")
-            st.plotly_chart(figures['spin_pitchmap'], use_container_width=True) 
+            st.plotly_chart(create_pitch_map(df_spin, "Spin"), use_container_width=True) 
             
         with run_pct_col:
+            # CORRECTED: Use df_spin and "Spin"
             st.markdown("###### ")
-            st.pyplot(figures['spin_pitch_pct'], use_container_width=True)
+            st.pyplot(create_pitch_length_run_pct(df_spin, "Spin"), use_container_width=True)
         
+        # --- NEW LAYOUT START (Mirroring Left Column) ---
+        
+        # Chart 4a: Interception Side-On (Wide View) - Takes full width
         st.markdown("###### INTERCEPTION SIDE-ON")
-        st.pyplot(figures['spin_side_on'], use_container_width=True)
+        st.pyplot(create_interception_side_on(df_spin, "Spin"), use_container_width=True)
 
-        st.pyplot(figures['spin_crease_split'], use_container_width=True)
+        # Chart 4b: Interception Side-On Bins
+        st.pyplot(create_crease_width_split(df_spin, "Spin"), use_container_width=True)
 
+        # Charts 5 & 6: Interception Front-On and Scoring Areas (Side-by-Side)
         bottom_col_left, bottom_col_right = st.columns(2)
 
         with bottom_col_left:
             st.markdown("###### INTERCEPTION TOP-ON")
-            st.pyplot(figures['spin_top_on'], use_container_width=True)
+            st.pyplot(create_interception_front_on(df_spin, "Spin"), use_container_width=True)
         
         with bottom_col_right:
             st.markdown("###### SCORING AREAS")
-            st.pyplot(figures['spin_wagon_wheel'], use_container_width=True)
-            st.pyplot(figures['spin_lr_split'], use_container_width=True)
+            st.pyplot(create_wagon_wheel(df_spin, "Spin"), use_container_width=True)
+            st.pyplot(create_left_right_split(df_spin, "Spin"), use_container_width=True)
             
+        # Charts 9 & 10: Swing/Deviation Direction Analysis (Side-by-Side)
         final_col_swing, final_col_deviation = st.columns(2)
 
         with final_col_swing:
-            st.pyplot(figures['spin_swing'], use_container_width=True)
+            # CORRECTED: Use df_spin and "Spin"
+            st.pyplot(create_directional_split(df_spin, "Swing", "Drift", "Spin"), use_container_width=True)
 
         with final_col_deviation:
-            st.pyplot(figures['spin_deviation'], use_container_width=True)    
+            # CORRECTED: Use df_spin and "Spin"
+            st.pyplot(create_directional_split(df_spin, "Deviation", "Turn", "Spin"), use_container_width=True)    
+        # --- NEW LAYOUT END ---
 
 else:
     st.info("⬆️ Please upload a CSV file to begin the analysis.")
