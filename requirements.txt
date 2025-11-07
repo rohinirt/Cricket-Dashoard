@@ -6,3 +6,4 @@ matplotlib
 scipy
 fpdf2       # PDF generation library
 kaleido
+utils
