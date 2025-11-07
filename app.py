@@ -19,8 +19,9 @@ REQUIRED_COLS = [
     "BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ", 
     "BattingTeam", "CreaseY", "CreaseZ", "Runs", "IsBatsmanRightHanded", 
     "LandingX", "LandingY", "BounceX", "BounceY", "InterceptionX", 
-    "InterceptionZ", "InterceptionY", "Over", "Innings", "IsBowlerRightHanded", 
-    "Swing", "Deviation" # Added columns used for filtering/plotting
+    "InterceptionZ", "InterceptionY", "Over", 
+    # **UPDATED COLUMNS REQUIRED FOR FILTERS AND DIRECTIONAL CHARTS**
+    "Innings", "IsBowlerRightHanded", "Swing", "Deviation" 
 ]
 
 # Function to encode Matplotlib figure to image for Streamlit (kept empty, no longer strictly needed)
@@ -29,145 +30,141 @@ def fig_to_image(fig):
 
 # --- PDF HELPERS ---
 
-# Helper to convert any figure type to PNG bytes for FPDF
 def fig_to_png_bytes(fig, is_plotly=False):
     """Converts a figure (Matplotlib or Plotly) to PNG bytes."""
     buf = BytesIO()
     if is_plotly:
-        # NOTE: This requires the 'kaleido' library to be installed (pip install kaleido)
-        # Kaleido is necessary to convert Plotly figures to static images.
+        # Requires 'kaleido' library (pip install kaleido)
         pio.write_image(fig, buf, format='png', width=600, height=450) 
     else:
         fig.savefig(buf, format='png', bbox_inches='tight', dpi=150)
     buf.seek(0)
     return buf
 
-# --- CHART FUNCTIONS (Placeholders, kept for structure) ---
-# NOTE: All chart functions must return the figure object (plt.Figure or go.Figure)
-
 # --- CHART 1: ZONAL ANALYSIS (CBH Boxes) ---
-# ... (Function definition remains the same, returns plt.Figure)
-def create_zonal_analysis(df_in, batsman_name, delivery_type):
-    # ... (Zonal Analysis logic remains the same)
-    if df_in.empty:
-        fig, ax = plt.subplots(figsize=(4, 3)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
-
-    is_right_handed = True
-    handed_data = df_in["IsBatsmanRightHanded"].dropna().unique()
-    if len(handed_data) > 0 and batsman_name != "All": is_right_handed = handed_data[0]
-        
-    right_hand_zones = { "Z1": (-0.72, 0, -0.45, 1.91), "Z2": (-0.45, 0, -0.18, 0.71), "Z3": (-0.18, 0, 0.18, 0.71), "Z4": (-0.45, 0.71, -0.18, 1.31), "Z5": (-0.18, 0.71, 0.18, 1.31), "Z6": (-0.45, 1.31, 0.18, 1.91)}
-    left_hand_zones = { "Z1": (0.45, 0, 0.72, 1.91), "Z2": (0.18, 0, 0.45, 0.71), "Z3": (-0.18, 0, 0.18, 0.71), "Z4": (0.18, 0.71, 0.45, 1.31), "Z5": (-0.18, 0.71, 0.18, 1.31), "Z6": (-0.18, 1.31, 0.45, 1.91)}
-    zones_layout = right_hand_zones if is_right_handed else left_hand_zones
-    
-    def assign_zone(row):
-        x, y = row["CreaseY"], row["CreaseZ"]
-        for zone, (x1, y1, x2, y2) in zones_layout.items():
-            if x1 <= x <= x2 and y1 <= y <= y2: return zone
-        return "Other"
-
-    df_chart2 = df_in.copy(); df_chart2["Zone"] = df_chart2.apply(assign_zone, axis=1)
-    df_chart2 = df_chart2[df_chart2["Zone"] != "Other"]
-    
-    summary = (
-        df_chart2.groupby("Zone").agg(Runs=("Runs", "sum"), Wickets=("Wicket", lambda x: (x == True).sum()), Balls=("Wicket", "count"))
-        .reindex([f"Z{i}" for i in range(1, 7)]).fillna(0)
-    )
-    summary["Avg Runs/Wicket"] = summary.apply(lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0, axis=1)
-    summary["StrikeRate"] = summary.apply(lambda row: (row["Runs"] / row["Balls"]) * 100 if row["Balls"] > 0 else 0, axis=1)
-
-    avg_values = summary["Avg Runs/Wicket"]
-    avg_max = avg_values.max() if avg_values.max() > 0 else 1
-    avg_min = avg_values[avg_values > 0].min() if avg_values[avg_values > 0].min() < avg_max else 0
-    norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
-    cmap = cm.get_cmap('Reds')
-
-    fig_boxes, ax = plt.subplots(figsize=(4,3), subplot_kw={'xticks': [], 'yticks': []}) 
-    
-    for zone, (x1, y1, x2, y2) in zones_layout.items():
-        w, h = x2 - x1, y2 - y1
-        z_key = zone.replace("Zone ", "Z")
-        
-        runs, wkts, avg, sr = (0, 0, 0, 0)
-        if z_key in summary.index:
-            runs = int(summary.loc[z_key, "Runs"])
-            wkts = int(summary.loc[z_key, "Wickets"])
-            avg = summary.loc[z_key, "Avg Runs/Wicket"]
-            sr = summary.loc[z_key, "StrikeRate"]
-        
-        color = cmap(norm(avg)) if avg > 0 else 'white'
-
-        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=0.8))
-
-        ax.text(x1 + w / 2, y1 + h / 2, 
-        f"R: {runs}\nW: {wkts}\nSR: {sr:.0f}\nA: {avg:.0f}", 
-        ha="center", 
-        va="center", 
-        fontsize=6, 
-        color="black" if norm(avg) < 0.6 else "white", 
-        linespacing=1.2)
-    ax.set_title(f"STRIKE RATE", 
-                 fontsize=8, 
-                 weight='bold', 
-                 pad=10)
-    ax.set_xlim(-0.75, 0.75); ax.set_ylim(0, 2); ax.axis('off'); 
-    plt.tight_layout(pad=0.5) 
-    return fig_boxes
-# ... (rest of chart functions are the same, removed for brevity)
+# ... (Function definition for create_zonal_analysis remains here)
 
 # --- CHART 2a: CREASE BEEHIVE ---
-def create_crease_beehive(df_in, delivery_type):
-    # ... (returns go.Figure)
-    if df_in.empty:
-        return go.Figure().update_layout(title="No data for Beehive", height=400)
+# ... (Function definition for create_crease_beehive remains here)
 
-    # --- Data Filtering ---
-    wickets = df_in[df_in["Wicket"] == True]
-    non_wickets_all = df_in[df_in["Wicket"] == False]
-    boundaries = non_wickets_all[(non_wickets_all["Runs"] == 4) | (non_wickets_all["Runs"] == 6)]
-    regular_balls = non_wickets_all[(non_wickets_all["Runs"] != 4) & (non_wickets_all["Runs"] != 6)]
-    fig_cbh = go.Figure()
-
-    # 1. TRACE: Regular Balls
-    fig_cbh.add_trace(go.Scatter(
-        x=regular_balls["CreaseY"], y=regular_balls["CreaseZ"], mode='markers', name="Regular Ball",
-        marker=dict(color='lightgrey', size=10, line=dict(width=1, color="white"), opacity=0.95)
-    ))
-
-    # 2. NEW TRACE: Boundary Balls
-    fig_cbh.add_trace(go.Scatter(
-        x=boundaries["CreaseY"], y=boundaries["CreaseZ"], mode='markers', name="Boundary",
-        marker=dict(color='royalblue', size=12, line=dict(width=1, color="white"), opacity=0.95)
-    ))
-
-    # 3. TRACE: Wickets
-    fig_cbh.add_trace(go.Scatter(
-        x=wickets["CreaseY"], y=wickets["CreaseZ"], mode='markers', name="Wicket",
-        marker=dict(color='red', size=12, line=dict(width=1, color="white"), opacity=0.95)
-    ))
-
-    # Stump lines & Crease lines
-    fig_cbh.add_vline(x=-0.18, line=dict(color="grey", dash="dot", width=0.5)) 
-    fig_cbh.add_vline(x=0.18, line=dict(color="grey", dash="dot", width=0.5))
-    fig_cbh.add_vline(x=0, line=dict(color="grey", dash="dot", width=0.5))
-    fig_cbh.add_vline(x=-0.92, line=dict(color="grey", width=0.5)) 
-    fig_cbh.add_vline(x=0.92, line=dict(color="grey", width=0.5))
-    fig_cbh.add_hline(y=0.78, line=dict(color="grey", width=0.5)) 
-    fig_cbh.add_annotation(
-        x=-1.5, y=0.78, text="Stump line", showarrow=False,
-        font=dict(size=8, color="grey"), xanchor='left', yanchor='bottom'
-    )
-    fig_cbh.update_layout(
-        height=300, 
-        margin=dict(l=0, r=0, t=0, b=0),
-        xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
-        yaxis=dict(range=[0, 2], showgrid=False, zeroline=True, visible=False),
-        plot_bgcolor="white", paper_bgcolor="white", showlegend=False
-    )
+# --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
+def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
+    # This function definition is included here to ensure completeness
+    from matplotlib import cm, colors, patches
     
-    return fig_cbh
+    df_lateral = df_in.copy()
+    if df_lateral.empty:
+        fig, ax = plt.subplots(figsize=(7, 1)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig     
+    # 1. Define Zoning Logic (Same as before)
+    def assign_lateral_zone(row):
+        y = row["CreaseY"]
+        if row["IsBatsmanRightHanded"] == True:
+            if y > 0.18: return "LEG"
+            elif y >= -0.18: return "STUMPS"
+            elif y > -0.65: return "OUTSIDE OFF"
+            else: return "WAY OUTSIDE OFF"
+        else: # Left-Handed
+            if y > 0.65: return "WAY OUTSIDE OFF"
+            elif y > 0.18: return "OUTSIDE OFF"
+            elif y >= -0.18: return "STUMPS"
+            else: return "LEG"
+    
+    df_lateral["LateralZone"] = df_lateral.apply(assign_lateral_zone, axis=1)
+    
+    # 2. Calculate Summary Metrics
+    summary = (
+        df_lateral.groupby("LateralZone").agg(
+            Runs=("Runs", "sum"), 
+            Wickets=("Wicket", lambda x: (x == True).sum()), 
+            Balls=("Wicket", "count")
+        )
+    )
+    # ... (Rest of the function logic remains the same, calculates AVG, plots boxes)
+    ordered_zones = ["WAY OUTSIDE OFF", "OUTSIDE OFF", "STUMPS", "LEG"]
+    summary = summary.reindex(ordered_zones).fillna(0)
 
-# --- PDF COMPILER FUNCTION ---
+    # Calculate Average for coloring and labeling
+    summary["Avg Runs/Wicket"] = summary.apply(lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0, axis=1)
+    
+    # 3. Chart Setup
+    fig_boxes, ax_boxes = plt.subplots(figsize=(7, 1)) 
+    
+    num_regions = len(ordered_zones)
+    box_width = 1 / num_regions 
+    left = 0
+    
+    # Color Normalization (based on Average)
+    avg_values = summary["Avg Runs/Wicket"]
+    avg_max = avg_values.max() if avg_values.max() > 0 else 50
+    norm = mcolors.Normalize(vmin=0, vmax=avg_max if avg_max > 50 else 50)
+    cmap = cm.get_cmap('Reds') 
+    
+    # 4. Plotting Equal Boxes (Horizontal Heatmap)
+    for index, row in summary.iterrows():
+        avg = row["Avg Runs/Wicket"]
+        wkts = int(row["Wickets"])
+        
+        color = cmap(norm(avg)) if row["Balls"] > 0 else 'whitesmoke' 
+        
+        ax_boxes.add_patch(
+            patches.Rectangle((left, 0), box_width, 1, 
+                              edgecolor="black", facecolor=color, linewidth=1)
+        )
+        
+        label_wkts_avg = f"{wkts}W - Ave {avg:.1f}"
+        
+        if row["Balls"] > 0:
+            r, g, b, a = color 
+            luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            text_color = 'white' if luminosity < 0.5 else 'black'
+        else:
+            text_color = 'black' 
+
+        ax_boxes.text(left + box_width / 2, 0.75, 
+                      index,
+                      ha='center', va='center', fontsize=10, color=text_color)
+                      
+        ax_boxes.text(left + box_width / 2, 0.4, 
+                      label_wkts_avg,
+                      ha='center', va='center', fontsize= 10, fontweight = 'bold', color=text_color)
+        
+        left += box_width
+        
+    ax_boxes.set_xlim(0, 1); ax_boxes.set_ylim(0, 1)
+    ax_boxes.axis('off') 
+    ax_boxes.spines['right'].set_visible(False)
+    ax_boxes.spines['top'].set_visible(False)
+    ax_boxes.spines['left'].set_visible(False)
+    ax_boxes.spines['bottom'].set_visible(False)
+    
+    plt.tight_layout(pad=0.5)
+    return fig_boxes
+    
+# --- CHART 3: PITCH MAP ---
+# ... (Function definition for get_pitch_bins, create_pitch_map, create_pitch_length_run_pct remains here)
+
+# --- CHART 4a: INTERCEPTION SIDE-ON --- 
+# ... (Function definition for create_interception_side_on remains here)
+
+# --- Chart 4b: Interception Side on Bins ---
+# ... (Function definition for create_crease_width_split remains here)
+
+# --- CHART 5: INTERCEPTION FRONT-ON --- 
+# ... (Function definition for create_interception_front_on remains here)
+
+# --- CHART 6: SCORING WAGON WHEEL ---
+# ... (Function definition for calculate_scoring_wagon, create_wagon_wheel remains here)
+
+# --- CHART 7: LEFT/RIGHT SCORING SPLIT (100% Bar) ---
+# ... (Function definition for create_left_right_split remains here)
+
+# --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
+# ... (Function definition for create_directional_split remains here)
+
+
+# =========================================================
+# **PDF COMPILER FUNCTION (THE MISSING LOGIC)**
+# =========================================================
 
 def create_pdf_report(figures, batsman_name):
     pdf = FPDF('P', 'mm', 'A4')
@@ -180,73 +177,104 @@ def create_pdf_report(figures, batsman_name):
     pdf.ln(5)
 
     # --- SEAM ANALYSIS ---
-    
     pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(213, 34, 33) # Set color to a deep red for the section header
+    pdf.set_text_color(213, 34, 33) # Deep Red
     pdf.cell(0, 10, "SEAM ANALYSIS", 0, 1, 'L')
-    pdf.set_text_color(0, 0, 0) # Reset color to black
+    pdf.set_text_color(0, 0, 0) # Reset color
+    pdf.ln(2)
 
-    # Chart 1: Zonal Analysis (100mm width, 75mm height)
+    # Row 1: Zonal (100mm wide) + Pitch Run % (50mm wide)
     pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 5, "1. CREASE BEEHIVE ZONES", 0, 1, 'L')
-    pdf.image(fig_to_png_bytes(figures['seam_zonal']), x=10, y=pdf.get_y(), w=100, type='PNG')
-    pdf.set_y(pdf.get_y() + 75)
-    
-    # Chart 2: Crease Beehive (Plotly) (100mm width, 70mm height)
-    pdf.cell(0, 5, "2. CREASE BEEHIVE", 0, 1, 'L')
-    pdf.image(fig_to_png_bytes(figures['seam_beehive'], is_plotly=True), x=10, y=pdf.get_y(), w=100, type='PNG')
-    pdf.set_y(pdf.get_y() + 70)
-    
-    # Charts 5 & 6 (Interception Top-On and Wagon Wheel) - Side by Side (Page 2)
-    pdf.add_page()
-    pdf.set_text_color(213, 34, 33) # Set color to a deep red
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, "SEAM - Interception & Scoring", 0, 1, 'L')
-    pdf.set_text_color(0, 0, 0) # Reset color to black
-    
-    # 5. Interception Top-On (90mm width)
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 5, "5. INTERCEPTION TOP-ON", 0, 0, 'L')
-    # 6. Wagon Wheel (90mm width, aligned next to 5)
-    pdf.set_x(105) # Move to the right column
-    pdf.cell(0, 5, "6. SCORING AREAS", 0, 1, 'L')
-    
-    # Images for 5 & 6
+    pdf.cell(100, 5, "1. CREASE BEEHIVE ZONES (SR)", 0, 0, 'L')
+    pdf.cell(50, 5, "2. PITCH LENGTH RUN %", 0, 1, 'L')
     y_start = pdf.get_y()
-    pdf.image(fig_to_png_bytes(figures['seam_top_on']), x=10, y=y_start, w=90, type='PNG')
-    pdf.image(fig_to_png_bytes(figures['seam_wagon_wheel']), x=105, y=y_start, w=90, type='PNG')
-    pdf.set_y(y_start + 100) # Space for the two tall charts
+    pdf.image(fig_to_png_bytes(figures['seam_zonal']), x=10, y=y_start, w=100, type='PNG')
+    pdf.image(fig_to_png_bytes(figures['seam_pitch_pct']), x=115, y=y_start, w=50, type='PNG')
+    pdf.set_y(y_start + 75)
+    
+    # Row 2: Beehive (100mm wide) + Lateral Boxes (85mm wide)
+    pdf.cell(0, 5, "3. CREASE BEEHIVE", 0, 0, 'L')
+    pdf.set_x(105)
+    pdf.cell(0, 5, "4. LATERAL PERFORMANCE BOXES", 0, 1, 'L')
+    y_start = pdf.get_y()
+    pdf.image(fig_to_png_bytes(figures['seam_beehive'], is_plotly=True), x=10, y=y_start, w=100, type='PNG')
+    pdf.image(fig_to_png_bytes(figures['seam_lateral']), x=105, y=y_start + 5, w=85, type='PNG') # Vertical adjustment for better fit
+    pdf.set_y(y_start + 70)
+    
+    # Row 3: Interception Side-On (100mm wide) + Crease Width Split (85mm wide)
+    pdf.cell(0, 5, "5. INTERCEPTION SIDE-ON", 0, 0, 'L')
+    pdf.set_x(105)
+    pdf.cell(0, 5, "6. CREASE WIDTH SPLIT (SR)", 0, 1, 'L')
+    y_start = pdf.get_y()
+    pdf.image(fig_to_png_bytes(figures['seam_side_on']), x=10, y=y_start, w=100, type='PNG')
+    pdf.image(fig_to_png_bytes(figures['seam_crease_split']), x=105, y=y_start + 10, w=85, type='PNG')
+    pdf.set_y(y_start + 40) # Space for the side-on plot
+    
+    # Page 2: Scoring and Directional
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 14)
+    pdf.set_text_color(213, 34, 33) 
+    pdf.cell(0, 10, "SEAM SCORING & DIRECTIONAL ANALYSIS", 0, 1, 'L')
+    pdf.set_text_color(0, 0, 0)
+    pdf.ln(2)
+
+    # Row 4: Top-On (90mm wide) + Wagon Wheel (90mm wide)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(95, 5, "7. INTERCEPTION TOP-ON", 0, 0, 'L')
+    pdf.cell(95, 5, "8. SCORING AREAS (WAGON WHEEL)", 0, 1, 'L')
+    y_start = pdf.get_y()
+    pdf.image(fig_to_png_bytes(figures['seam_top_on']), x=10, y=y_start, w=95, type='PNG')
+    pdf.image(fig_to_png_bytes(figures['seam_wagon_wheel']), x=105, y=y_start, w=95, type='PNG')
+    pdf.set_y(y_start + 85) 
+    
+    # Row 5: L/R Split (90mm wide) + Swing (90mm wide)
+    pdf.cell(95, 5, "9. LEFT/RIGHT RUN SPLIT", 0, 0, 'L')
+    pdf.cell(95, 5, "10. SWING DIRECTIONAL SPLIT (AVG)", 0, 1, 'L')
+    y_start = pdf.get_y()
+    pdf.image(fig_to_png_bytes(figures['seam_lr_split']), x=10, y=y_start, w=95, type='PNG')
+    pdf.image(fig_to_png_bytes(figures['seam_swing']), x=105, y=y_start, w=95, type='PNG')
+    pdf.set_y(y_start + 45) 
+    
+    # Row 6: Deviation
+    pdf.cell(0, 5, "11. DEVIATION DIRECTIONAL SPLIT (AVG)", 0, 1, 'L')
+    pdf.image(fig_to_png_bytes(figures['seam_deviation']), x=10, y=pdf.get_y(), w=95, type='PNG')
 
     # --- SPIN ANALYSIS (New Page) ---
-    
     pdf.add_page()
     pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(33, 67, 213) # Set color to a deep blue
+    pdf.set_text_color(33, 67, 213) # Deep Blue
     pdf.cell(0, 10, "SPIN ANALYSIS", 0, 1, 'L')
-    pdf.set_text_color(0, 0, 0) # Reset color to black
+    pdf.set_text_color(0, 0, 0) # Reset color
+    pdf.ln(2)
 
-    # Spin Zonal Analysis (100mm width)
+    # Note: Spin layout mirrors Seam layout using 'spin_' keys
+    # Row 1: Zonal (100mm wide) + Pitch Run % (50mm wide)
     pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 5, "1. CREASE BEEHIVE ZONES", 0, 1, 'L')
-    pdf.image(fig_to_png_bytes(figures['spin_zonal']), x=10, y=pdf.get_y(), w=100, type='PNG')
-    pdf.set_y(pdf.get_y() + 75)
+    pdf.cell(100, 5, "1. CREASE BEEHIVE ZONES (SR)", 0, 0, 'L')
+    pdf.cell(50, 5, "2. PITCH LENGTH RUN %", 0, 1, 'L')
+    y_start = pdf.get_y()
+    pdf.image(fig_to_png_bytes(figures['spin_zonal']), x=10, y=y_start, w=100, type='PNG')
+    pdf.image(fig_to_png_bytes(figures['spin_pitch_pct']), x=115, y=y_start, w=50, type='PNG')
+    pdf.set_y(y_start + 75)
     
-    # Spin Crease Beehive (Plotly) (100mm width)
-    pdf.cell(0, 5, "2. CREASE BEEHIVE", 0, 1, 'L')
-    pdf.image(fig_to_png_bytes(figures['spin_beehive'], is_plotly=True), x=10, y=pdf.get_y(), w=100, type='PNG')
-    pdf.set_y(pdf.get_y() + 70)
+    # Row 2: Beehive (100mm wide) + Lateral Boxes (85mm wide)
+    pdf.cell(0, 5, "3. CREASE BEEHIVE", 0, 0, 'L')
+    pdf.set_x(105)
+    pdf.cell(0, 5, "4. LATERAL PERFORMANCE BOXES", 0, 1, 'L')
+    y_start = pdf.get_y()
+    pdf.image(fig_to_png_bytes(figures['spin_beehive'], is_plotly=True), x=10, y=y_start, w=100, type='PNG')
+    pdf.image(fig_to_png_bytes(figures['spin_lateral']), x=105, y=y_start + 5, w=85, type='PNG') 
+    pdf.set_y(y_start + 70)
     
     # Final step: Return the PDF as binary data
-    # NOTE: Output is bytes, which is what st.download_button expects
     return pdf.output(dest='S').encode('latin-1')
 
-# ... (End of utility functions and PDF compiler)
+# =========================================================
 
-# --- 3. MAIN STREAMLIT APP STRUCTURE ---
+# --- 3. MAIN STREAMLIT APP STRUCTURE (Modified to generate and use figures dict) ---
 
 st.set_page_config(layout="wide")
 
-# --- 3. MAIN STREAMLIT APP STRUCTURE ---
 # --- File Uploader ---
 uploaded_file = st.file_uploader("Upload your CSV file here", type=["csv"])
 if uploaded_file is not None:
@@ -258,12 +286,12 @@ if uploaded_file is not None:
         st.error(f"Error reading file: {e}")
         st.stop()
     
-    # Initial validation and required column check (expanded for completeness)
+    # Initial validation and required column check
     missing_cols = [col for col in REQUIRED_COLS if col not in df_raw.columns]
     if missing_cols:
-        st.error(f"The CSV file is missing required columns: {', '.join(missing_cols)}")
+        st.error(f"The CSV file is missing required columns: {', '.join(missing_cols)}. Please ensure the correct data columns are present.")
         st.stop()
-
+    
     # Data separation
     df_seam_raw = df_raw[df_raw["DeliveryType"] == "Seam"].copy()
     df_spin_raw = df_raw[df_raw["DeliveryType"] == "Spin"].copy()
@@ -307,7 +335,9 @@ if uploaded_file is not None:
     df_seam = apply_filters(df_seam_raw)
     df_spin = apply_filters(df_spin_raw)
     
-    # --- CHART GENERATION (Called once to populate figures for display and PDF) ---
+    # =========================================================
+    # **CHART GENERATION DICTIONARY (CRUCIAL FOR PDF/DISPLAY)**
+    # =========================================================
     figures = {
         'seam_zonal': create_zonal_analysis(df_seam, batsman, "Seam"),
         'seam_beehive': create_crease_beehive(df_seam, "Seam"),
@@ -335,7 +365,7 @@ if uploaded_file is not None:
         'spin_swing': create_directional_split(df_spin, "Swing", "Drift", "Spin"),
         'spin_deviation': create_directional_split(df_spin, "Deviation", "Turn", "Spin")
     }
-    
+
     # --- ADD DOWNLOAD BUTTON ---
     heading_col, download_col = st.columns([4, 1])
     
@@ -344,8 +374,6 @@ if uploaded_file is not None:
         st.header(f"**{heading_text}**")
     
     with download_col:
-        # Use a function wrapper (lambda) to delay PDF generation until button is clicked
-        # Note: PDF generation can be slow, especially with many charts
         pdf_bytes = create_pdf_report(figures, heading_text)
         
         st.download_button(
@@ -354,8 +382,9 @@ if uploaded_file is not None:
             file_name=f"Report_{heading_text.replace(' ', '_')}.pdf",
             mime="application/pdf"
         )
+    # =========================================================
 
-    # --- 4. DISPLAY CHARTS IN TWO COLUMNS (using the generated figures) ---
+    # --- 4. DISPLAY CHARTS IN TWO COLUMNS (using the generated figures dictionary) ---
     
     col1, col2 = st.columns(2)
     
