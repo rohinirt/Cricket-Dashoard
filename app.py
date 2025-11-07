@@ -43,7 +43,7 @@ def generate_report_pdf(batsman_name, df_data):
         pdf = FPDF(unit="mm", format="A4")
         pdf.add_page(); pdf.set_font("Arial", "B", 16)
         pdf.cell(0, 10, f"No Data for {batsman_name}", 0, 1, "C")
-        return pdf.output(dest="S").encode('latin-1')
+        return pdf.output(dest="S")
         
     # Separate Seam and Spin data for chart generation
     df_seam = df_batsman[df_batsman["DeliveryType"] == "Seam"]
@@ -173,7 +173,7 @@ def generate_report_pdf(batsman_name, df_data):
     pdf.ln(5)
 
     # Return PDF byte stream encoded in 'latin-1' (standard for FPDF)
-    return pdf.output(dest="S").encode('latin-1') 
+    return pdf.output(dest="S")
 
 # --- Function 2: Creates the ZIP file containing all reports ---
 def create_all_reports_zip(df_main):
