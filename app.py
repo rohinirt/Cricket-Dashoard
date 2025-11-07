@@ -10,12 +10,6 @@ from io import StringIO
 import base64
 import matplotlib.patheffects as pe
 
-# --- NEW IMPORTS FOR PDF GENERATION ---
-import zipfile
-import io
-from fpdf import FPDF # fpdf2 is imported as FPDF
-# --------------------------------------
-
 # --- 1. GLOBAL UTILITY FUNCTIONS ---
 
 # Required columns check
@@ -23,206 +17,18 @@ REQUIRED_COLS = [
     "BatsmanName", "DeliveryType", "Wicket", "StumpsY", "StumpsZ", 
     "BattingTeam", "CreaseY", "CreaseZ", "Runs", "IsBatsmanRightHanded", 
     "LandingX", "LandingY", "BounceX", "BounceY", "InterceptionX", 
-    "InterceptionZ", "InterceptionY", "Over", "Innings", "IsBowlerRightHanded", # Added Innings and Bowler Hand
-    "Swing", "Deviation" # Added for Directional Split charts
+    "InterceptionZ", "InterceptionY", "Over"
 ]
 
 # Function to encode Matplotlib figure to image for Streamlit
 def fig_to_image(fig):
     return fig
 
-# --- PDF GENERATION FUNCTIONS (NEW) ---
-
-def generate_report_pdf(batsman_name, df_data):
-    """Filters data, renders charts (Matplotlib and Plotly), and compiles them into a single PDF byte stream."""
-    
-    # 1. Prepare Data: Filter the full dataset for the specific batsman
-    df_batsman = df_data[df_data['BatsmanName'] == batsman_name]
-    
-    if df_batsman.empty:
-        pdf = FPDF(unit="mm", format="A4")
-        pdf.add_page(); pdf.set_font("Arial", "B", 16)
-        pdf.cell(0, 10, f"No Data for {batsman_name}", 0, 1, "C")
-        return pdf.output(dest="S")
-        
-    # Separate Seam and Spin data for chart generation
-    df_seam = df_batsman[df_batsman["DeliveryType"] == "Seam"]
-    df_spin = df_batsman[df_batsman["DeliveryType"] == "Spin"]
-    
-    # 2. Initialize PDF
-    pdf = FPDF(unit="mm", format="A4")
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 18)
-    pdf.cell(0, 15, f"Performance Report: {batsman_name.upper()}", 0, 1, "C")
-    
-    
-    # --- Helper to add charts, handling both Matplotlib and Plotly ---
-    def add_chart_to_pdf(chart_title, fig, width=90):
-        if fig is None: return
-        
-        try:
-            buf = io.BytesIO()
-            if isinstance(fig, go.Figure):
-                # Plotly Figure: Requires kaleido package
-                buf.write(fig.to_image(format="png", width=600, height=400, scale=1.5))
-            elif isinstance(fig, plt.Figure):
-                # Matplotlib Figure
-                fig.savefig(buf, format='png', bbox_inches="tight")
-                plt.close(fig) # CRITICAL: Close the figure to free up memory!
-            else:
-                return # Skip if figure type is unrecognized
-                
-            buf.seek(0)
-            
-            # Add section title
-            pdf.set_font("Arial", "B", 10)
-            pdf.cell(0, 5, chart_title, 0, 1, "L")
-            # Add image to PDF (set X to current position for columns)
-            pdf.image(buf, w=width)
-            pdf.ln(2) # Add spacing
-        except Exception as e:
-            # Optionally, add text saying the chart failed to generate
-            pdf.set_font("Arial", "", 8)
-            pdf.cell(0, 5, f"[Error rendering {chart_title}: {e}]", 0, 1, "L")
-
-
-    # --- 3. Embed Charts into PDF (Arranged in columns for A4) ---
-    
-    # Section: SEAM ANALYSIS
-    pdf.set_font("Arial", "BU", 14)
-    pdf.cell(0, 10, "SEAM ANALYSIS", 0, 1, "L")
-    
-    # Row 1: Zonal Analysis (Beehive Boxes)
-    pdf.set_x(10) # Start from left margin
-    add_chart_to_pdf("1. CREASE BEEHIVE ZONES (Seam)", create_zonal_analysis(df_seam, batsman_name, "Seam"), width=90)
-    pdf.set_x(105) # Move to right column
-    add_chart_to_pdf("2. CREASE BEEHIVE (Seam)", create_crease_beehive(df_seam, "Seam"), width=90)
-    pdf.ln(5)
-
-    # Row 2: Lateral Performance & Pitch Length Run % (using full width charts)
-    pdf.set_x(10)
-    add_chart_to_pdf("3. LATERAL PERFORMANCE BOXES (Seam)", create_lateral_performance_boxes(df_seam, "Seam", batsman_name), width=180)
-    pdf.set_x(10)
-    add_chart_to_pdf("4. PITCH LENGTH RUN % (Seam)", create_pitch_length_run_pct(df_seam, "Seam"), width=50)
-    pdf.ln(5)
-
-    # Row 3: Interception Side-On & Interception Bins
-    pdf.set_x(10)
-    add_chart_to_pdf("5. INTERCEPTION SIDE-ON (Seam)", create_interception_side_on(df_seam, "Seam"), width=90)
-    pdf.set_x(105)
-    add_chart_to_pdf("6. INTERCEPTION WIDTH SPLIT (Seam)", create_crease_width_split(df_seam, "Seam"), width=90)
-    pdf.ln(5)
-    
-    # Row 4: Front-On, Wagon Wheel, Left/Right Split (Side-by-Side)
-    pdf.set_x(10)
-    add_chart_to_pdf("7. INTERCEPTION TOP-ON (Seam)", create_interception_front_on(df_seam, "Seam"), width=60)
-    pdf.set_x(75)
-    add_chart_to_pdf("8. SCORING WAGON WHEEL (Seam)", create_wagon_wheel(df_seam, "Seam"), width=60)
-    pdf.set_x(140)
-    add_chart_to_pdf("9. LEFT/RIGHT SCORING SPLIT (Seam)", create_left_right_split(df_seam, "Seam"), width=60)
-    pdf.ln(5)
-
-    # Row 5: Directional Splits (Swing & Deviation)
-    pdf.set_x(10)
-    add_chart_to_pdf("10. SWING SPLIT (Seam)", create_directional_split(df_seam, "Swing", "Swing", "Seam"), width=90)
-    pdf.set_x(105)
-    add_chart_to_pdf("11. DEVIATION SPLIT (Seam)", create_directional_split(df_seam, "Deviation", "Deviation", "Seam"), width=90)
-    pdf.ln(5)
-
-    # Section: SPIN ANALYSIS (Start on new page for clean separation)
-    pdf.add_page()
-    pdf.set_font("Arial", "BU", 14)
-    pdf.cell(0, 10, "SPIN ANALYSIS", 0, 1, "L")
-
-    # Row 1: Zonal Analysis (Beehive Boxes)
-    pdf.set_x(10)
-    add_chart_to_pdf("1. CREASE BEEHIVE ZONES (Spin)", create_zonal_analysis(df_spin, batsman_name, "Spin"), width=90)
-    pdf.set_x(105)
-    add_chart_to_pdf("2. CREASE BEEHIVE (Spin)", create_crease_beehive(df_spin, "Spin"), width=90)
-    pdf.ln(5)
-
-    # Row 2: Lateral Performance & Pitch Length Run % (using full width charts)
-    pdf.set_x(10)
-    add_chart_to_pdf("3. LATERAL PERFORMANCE BOXES (Spin)", create_lateral_performance_boxes(df_spin, "Spin", batsman_name), width=180)
-    pdf.set_x(10)
-    add_chart_to_pdf("4. PITCH LENGTH RUN % (Spin)", create_pitch_length_run_pct(df_spin, "Spin"), width=50)
-    pdf.ln(5)
-
-    # Row 3: Interception Side-On & Interception Bins
-    pdf.set_x(10)
-    add_chart_to_pdf("5. INTERCEPTION SIDE-ON (Spin)", create_interception_side_on(df_spin, "Spin"), width=90)
-    pdf.set_x(105)
-    add_chart_to_pdf("6. INTERCEPTION WIDTH SPLIT (Spin)", create_crease_width_split(df_spin, "Spin"), width=90)
-    pdf.ln(5)
-    
-    # Row 4: Front-On, Wagon Wheel, Left/Right Split (Side-by-Side)
-    pdf.set_x(10)
-    add_chart_to_pdf("7. INTERCEPTION TOP-ON (Spin)", create_interception_front_on(df_spin, "Spin"), width=60)
-    pdf.set_x(75)
-    add_chart_to_pdf("8. SCORING WAGON WHEEL (Spin)", create_wagon_wheel(df_spin, "Spin"), width=60)
-    pdf.set_x(140)
-    add_chart_to_pdf("9. LEFT/RIGHT SCORING SPLIT (Spin)", create_left_right_split(df_spin, "Spin"), width=60)
-    pdf.ln(5)
-
-    # Row 5: Directional Splits (Drift & Turn)
-    pdf.set_x(10)
-    add_chart_to_pdf("10. DRIFT SPLIT (Spin)", create_directional_split(df_spin, "Swing", "Drift", "Spin"), width=90)
-    pdf.set_x(105)
-    add_chart_to_pdf("11. TURN SPLIT (Spin)", create_directional_split(df_spin, "Deviation", "Turn", "Spin"), width=90)
-    pdf.ln(5)
-
-    # Return PDF byte stream encoded in 'latin-1' (standard for FPDF)
-    return pdf.output(dest="S")
-
-# --- Function 2: Creates the ZIP file containing all reports ---
-def create_all_reports_zip(df_main):
-    """
-    Creates a ZIP archive in-memory containing a PDF for every unique BatsmanName.
-    Includes robust error handling to prevent an empty ZIP file.
-    """
-    
-    BATS_LIST = df_main['BatsmanName'].dropna().unique().tolist()
-    if not BATS_LIST:
-        return None
-
-    zip_buffer = io.BytesIO()
-    
-    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-        for batsman in BATS_LIST:
-            pdf_bytes = None
-            filename = f"Report_{batsman.replace(' ', '_').replace('.', '')}.pdf"
-            
-            try:
-                # Attempt to generate the detailed PDF
-                pdf_bytes = generate_report_pdf(batsman, df_main)
-            
-            except Exception as e:
-                # CRITICAL: If generation fails, create a simple error PDF instead
-                print(f"CRITICAL ERROR generating report for {batsman}: {e}")
-                
-                error_pdf = FPDF(unit="mm", format="A4")
-                error_pdf.add_page()
-                error_pdf.set_font("Arial", "B", 18)
-                error_pdf.cell(0, 20, f"Error Report: {batsman}", 0, 1, "C")
-                error_pdf.set_font("Arial", "", 12)
-                error_pdf.multi_cell(0, 10, f"Failed to generate report due to an internal error.\n\nError details (Check console for full trace):\n{str(e)[:100]}")
-                
-                pdf_bytes = error_pdf.output(dest="S").encode('latin-1')
-            
-            finally:
-                if pdf_bytes:
-                    # Add the generated (or error) PDF bytes to the ZIP file
-                    zip_file.writestr(filename, pdf_bytes)
-                
-    zip_buffer.seek(0)
-    return zip_buffer.getvalue()
-
 # --- CHART 1: ZONAL ANALYSIS (CBH Boxes) ---
 def create_zonal_analysis(df_in, batsman_name, delivery_type):
     # ... (Zonal Analysis logic remains the same)
     if df_in.empty:
-        fig, ax = plt.subplots(figsize=(3, 2)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+        fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
 
     is_right_handed = True
     handed_data = df_in["IsBatsmanRightHanded"].dropna().unique()
@@ -254,7 +60,8 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
     norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
     cmap = cm.get_cmap('Reds')
 
-    fig_boxes, ax = plt.subplots(figsize=(3,2), subplot_kw={'xticks': [], 'yticks': []}) 
+    # FIX 1: INCREASED FIGURE SIZE FOR BETTER LEGIBILITY
+    fig_boxes, ax = plt.subplots(figsize=(4,3), subplot_kw={'xticks': [], 'yticks': []}) 
     
     for zone, (x1, y1, x2, y2) in zones_layout.items():
         w, h = x2 - x1, y2 - y1
@@ -273,9 +80,10 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
 
         ax.text(x1 + w / 2, y1 + h / 2, 
         f"R: {runs}\nW: {wkts}\nSR: {sr:.0f}\nA: {avg:.0f}", 
+        # ===============================================
         ha="center", 
         va="center", 
-        fontsize=5,
+        fontsize=6, # Increased font size slightly
         color="black" if norm(avg) < 0.6 else "white", 
         linespacing=1.2)
     ax.set_title(f"STRIKE RATE", 
@@ -288,15 +96,22 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
 
 # --- CHART 2a: CREASE BEEHIVE ---
 def create_crease_beehive(df_in, delivery_type):
+    # ... (Crease Beehive logic remains the same)
     if df_in.empty:
         return go.Figure().update_layout(title="No data for Beehive", height=400)
 
     # --- Data Filtering ---
     wickets = df_in[df_in["Wicket"] == True]
+    
+    # 1. Filter Non-Wickets
     non_wickets_all = df_in[df_in["Wicket"] == False]
+
+    # 2. Filter Boundaries (Runs = 4 or 6) from Non-Wickets
     boundaries = non_wickets_all[
         (non_wickets_all["Runs"] == 4) | (non_wickets_all["Runs"] == 6)
     ]
+    
+    # 3. Filter Regular Balls (Runs != 4 and Runs != 6)
     regular_balls = non_wickets_all[
         (non_wickets_all["Runs"] != 4) & (non_wickets_all["Runs"] != 6)
     ]
@@ -492,6 +307,8 @@ def create_pitch_map(df_in, delivery_type):
     fig_pitch = go.Figure()
     
     # 1. Add Zone Lines & Labels (using y0, which is the start of the zone)
+    # The dictionary keys must be sorted to ensure labels appear correctly if not iterating directly
+    
     # Determine boundary keys for lines (excluding the start of the lowest bin)
     boundary_y_values = sorted([v[0] for v in PITCH_BINS.values() if v[0] > -4.0])
 
@@ -688,7 +505,8 @@ def create_interception_side_on(df_in, delivery_type):
     # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_7, ax_7 = plt.subplots(figsize=(3, 1.7), subplot_kw={'xticks': [], 'yticks': []}) 
+    # FIX 2: INCREASED FIGURE SIZE FOR BETTER READABILITY AND ALIGNMENT
+    fig_7, ax_7 = plt.subplots(figsize=(4, 2.5), subplot_kw={'xticks': [], 'yticks': []}) 
     
     # 1. Plot Data (Layered for correct border visibility)
     
@@ -898,7 +716,8 @@ def create_interception_front_on(df_in, delivery_type):
     # Define color_map inline as it's needed for the loop
     color_map = {"Wicket": "red", "Boundary": "royalblue", "Other": "white"}
     
-    fig_8, ax_8 = plt.subplots(figsize=(3, 5), subplot_kw={'xticks': [], 'yticks': []}) 
+    # FIX 3: INCREASED FIGURE WIDTH FOR BETTER ALIGNMENT WITH WAGON WHEEL
+    fig_8, ax_8 = plt.subplots(figsize=(4, 5), subplot_kw={'xticks': [], 'yticks': []}) 
 
     # 1. Plot Data
     # Plot "Other" (White with Grey Border)
@@ -1200,14 +1019,6 @@ def create_left_right_split(df_in, delivery_type):
 # --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
 def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     df_dir = df_in.copy()
-    
-    # CRITICAL: Defensive check for missing columns
-    if direction_col not in df_dir.columns:
-        fig, ax = plt.subplots(figsize=(6, 2.5)); 
-        ax.text(0.5, 0.5, f"Missing Column: {direction_col}", ha='center', va='center'); 
-        ax.axis('off'); 
-        return fig
-        
     if df_dir.empty:
         fig, ax = plt.subplots(figsize=(6, 2.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
     
@@ -1309,9 +1120,8 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     
     plt.tight_layout(pad=1.0)
     return fig_dir
-    
-# --------------------------------------------------------------------------------------------------
 
+# --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(layout="wide")
 
@@ -1332,46 +1142,6 @@ if uploaded_file is not None:
         missing_cols = [col for col in REQUIRED_COLS if col not in df_raw.columns]
         st.error(f"The CSV file is missing required columns: {', '.join(missing_cols)}")
         st.stop()
-        
-    # --- PDF DOWNLOAD BUTTON SECTION (NEW) ---
-    st.markdown("---")
-    st.header("📥 Download All Batsmen Reports")
-    
-    download_col, info_col = st.columns([1, 2])
-    
-    with download_col:
-        # Check if there is data to process
-        if not df_raw.empty and 'BatsmanName' in df_raw.columns:
-            
-            # Button logic: Generate ZIP only when button is clicked
-            if st.button("Generate & ZIP All Batsmen Reports (PDFs)"):
-                
-                # Show spinner while processing
-                with st.spinner("Generating and compressing reports... This may take a moment."):
-                    # Pass the raw, unfiltered DataFrame to the zip creator
-                    zip_data = create_all_reports_zip(df_raw) 
-
-                if zip_data:
-                    st.success("Reports successfully generated and compressed!")
-                    
-                    st.download_button(
-                        label="Download All Reports (ZIP File)",
-                        data=zip_data,
-                        file_name="All_Batsmen_Performance_Reports.zip",
-                        mime="application/zip",
-                        key='download_all_reports_final'
-                    )
-                else:
-                    st.warning("No unique batsmen found in the data to generate reports.")
-        else:
-            st.info("Upload data to enable PDF download.")
-    
-    with info_col:
-        st.info("The PDFs will contain all charts for both Seam and Spin bowlers for each unique batsman found in the uploaded file, regardless of the filters selected above.")
-    
-    st.markdown("---")
-    # -----------------------------------------
-
 
     # Data separation
     df_seam = df_raw[df_raw["DeliveryType"] == "Seam"].copy()
@@ -1380,6 +1150,7 @@ if uploaded_file is not None:
     # =========================================================
     # 🌟 FILTERS MOVED TO TOP OF MAIN BODY 🌟
     # =========================================================
+    # Use columns to align the three filters horizontally
     # Use columns to align the four filters horizontally
     filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4) 
 
@@ -1399,12 +1170,12 @@ if uploaded_file is not None:
     with filter_col2:
         batsman = st.selectbox("Batsman Name", batsmen_options, index=0)
 
-    # 3. Innings Filter (in column 3)
-    innings_options = ["All"] + sorted(df_raw["Innings"].dropna().unique().astype(str).tolist()) # Convert to string for display consistency
+    # 3. Innings Filter (in column 3) - NEW
+    innings_options = ["All"] + sorted(df_raw["Innings"].dropna().unique().tolist())
     with filter_col3:
         selected_innings = st.selectbox("Innings", innings_options, index=0)
     
-    # 4. Bowler Hand Filter (in column 4)
+    # 4. Bowler Hand Filter (in column 4) - NEW
     bowler_hand_options = ["All", "Right Hand", "Left Hand"]
     with filter_col4:
         selected_bowler_hand = st.selectbox("Bowler Hand", bowler_hand_options, index=0)
@@ -1413,25 +1184,20 @@ if uploaded_file is not None:
 
     # --- Apply Filters to Seam and Spin dataframes ---
     def apply_filters(df):
-        if df.empty: return df
         if bat_team != "All":
             df = df[df["BattingTeam"] == bat_team]
         
         if batsman != "All":
             df = df[df["BatsmanName"] == batsman]
         
-        # Apply Innings Filter (convert selection back to numeric if possible)
+        # Apply Innings Filter
         if selected_innings != "All":
-            try:
-                inn_val = int(selected_innings)
-                df = df[df["Innings"] == inn_val]
-            except ValueError:
-                pass # Skip if selected_innings is not convertible
+            df = df[df["Innings"] == selected_innings]
         
         # Apply Bowler Hand Filter
         if selected_bowler_hand != "All":
-            # Ensure 'IsBowlerRightHanded' is True/False. Assuming 1=Right, 0=Left or True/False
-            is_right = True if selected_bowler_hand == "Right Hand" else False
+            is_right = (selected_bowler_hand == "Right Hand")
+              # Ensure column name 'IsBowlerRightHanded' is correct
             df = df[df["IsBowlerRightHanded"] == is_right]
         
         return df
