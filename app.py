@@ -1230,6 +1230,7 @@ if uploaded_file is not None:
             st.plotly_chart(create_pitch_map(df_seam, "Seam"), use_container_width=True)
             
         with run_pct_col:
+            st.markdown("###### ")
             st.pyplot(create_pitch_length_run_pct(df_seam, "Seam"), use_container_width=True)
         
         # --- NEW LAYOUT START ---
@@ -1288,6 +1289,7 @@ if uploaded_file is not None:
             
         with run_pct_col:
             # CORRECTED: Use df_spin and "Spin"
+            st.markdown("###### ")
             st.pyplot(create_pitch_length_run_pct(df_spin, "Spin"), use_container_width=True)
         
         # --- NEW LAYOUT START (Mirroring Left Column) ---
