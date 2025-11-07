@@ -1271,8 +1271,9 @@ if uploaded_file is not None:
         # Use a smaller Markdown header (e.g., h4)
         st.markdown("#### SPIN")
         
+        st.markdown("###### CREEASE BEEHIVE ZONES")
         st.pyplot(create_zonal_analysis(df_spin, batsman, "Spin"), use_container_width=True)
-        
+        st.markdown("###### CREEASE BEEHIVE")
         st.plotly_chart(create_crease_beehive(df_spin, "Spin"), use_container_width=True)
 
         st.pyplot(create_lateral_performance_boxes(df_spin, "Spin", batsman), use_container_width=True)
@@ -1282,6 +1283,7 @@ if uploaded_file is not None:
 
         with pitch_map_col:
             # CORRECTED: Use df_spin and "Spin"
+            st.markdown("###### PITCHMAP")
             st.plotly_chart(create_pitch_map(df_spin, "Spin"), use_container_width=True) 
             
         with run_pct_col:
@@ -1291,6 +1293,7 @@ if uploaded_file is not None:
         # --- NEW LAYOUT START (Mirroring Left Column) ---
         
         # Chart 4a: Interception Side-On (Wide View) - Takes full width
+        st.markdown("###### INTERCEPTION SIDE-ON")
         st.pyplot(create_interception_side_on(df_spin, "Spin"), use_container_width=True)
 
         # Chart 4b: Interception Side-On Bins
@@ -1300,9 +1303,11 @@ if uploaded_file is not None:
         bottom_col_left, bottom_col_right = st.columns(2)
 
         with bottom_col_left:
+            st.markdown("###### INTERCEPTION TOP-ON")
             st.pyplot(create_interception_front_on(df_spin, "Spin"), use_container_width=True)
         
         with bottom_col_right:
+            st.markdown("###### SCORING AREAS")
             st.pyplot(create_wagon_wheel(df_spin, "Spin"), use_container_width=True)
             st.pyplot(create_left_right_split(df_spin, "Spin"), use_container_width=True)
             
