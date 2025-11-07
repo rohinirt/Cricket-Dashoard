@@ -85,7 +85,10 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
         fontsize=5,
         color="black" if norm(avg) < 0.6 else "white", 
         linespacing=1.2)
-
+    ax.set_title(f"STRIKE RATE", 
+                 fontsize=12, 
+                 weight='bold', 
+                 pad=10)
     ax.set_xlim(-0.75, 0.75); ax.set_ylim(0, 2); ax.axis('off'); 
     plt.tight_layout(pad=0.5) 
     return fig_boxes
@@ -153,7 +156,10 @@ def create_crease_beehive(df_in, delivery_type):
         yaxis=dict(range=[0, 2], showgrid=False, zeroline=True, visible=False),
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
+    
     return fig_cbh
+    
+
 # --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
 def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     from matplotlib import cm, colors, patches
@@ -342,6 +348,10 @@ def create_pitch_map(df_in, delivery_type):
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
+    fig_pitch.set_title(f"PITCHMAP", 
+                 fontsize=12, 
+                 weight='bold', 
+                 pad=10)
     return fig_pitch
 
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
@@ -546,7 +556,10 @@ def create_interception_side_on(df_in, delivery_type):
     
     ax_7.set_xlim(x_limit_min, x_limit_max) 
     ax_7.set_ylim(0, y_limit) 
-    
+    ax_7.set_title(f"INTERCEPTION SIDE-ON", 
+                 fontsize=12, 
+                 weight='bold', 
+                 pad=10)
     # ... (Rest of the styling remains the same)
     ax_7.tick_params(axis='y', which='both', labelleft=False, left=False); ax_7.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
     ax_7.spines['right'].set_visible(False)
@@ -742,6 +755,10 @@ def create_interception_front_on(df_in, delivery_type):
     ax_8.axvline(x= 0, color='lightgrey', linestyle='--', linewidth=0.8, alpha=0.7)
     
     # 3. Set Axes Limits and Labels (FIXED LIMITS: Y-axis -0.2 to 3.5)
+    ax_8.set_title(f"INTERCEPTION SIDE-ON", 
+                 fontsize=12, 
+                 weight='bold', 
+                 pad=10)
     ax_8.set_xlim(-1, 1); ax_8.set_ylim(-0.2, 3.5); ax_8.invert_yaxis()      
     ax_8.tick_params(axis='y', which='both', labelleft=False, left=False); ax_8.tick_params(axis='x', which='both', labelbottom=False, bottom=False)
     ax_8.spines['right'].set_visible(False)
@@ -914,7 +931,7 @@ def create_wagon_wheel(df_in, delivery_type):
     # Ensure external texts are handled (UNCHANGED)
     for text in texts:
         text.set_color('black'); text.set_fontsize(8); text.set_fontweight('bold')
-
+    ax.set_title(f"Scoring v ({delivery_type} )", fontsize=12, weight='bold', pad=10)
     ax.axis('equal'); 
     plt.tight_layout(pad=0.5)
     
