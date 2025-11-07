@@ -1214,10 +1214,10 @@ if uploaded_file is not None:
         # Use a smaller Markdown header (e.g., h4)
         st.markdown("#### SEAM")
 
-        st.markdown("###### CREEASE BEEHIVE ZONES")
+        st.markdown("###### CREASE BEEHIVE ZONES")
         st.pyplot(create_zonal_analysis(df_seam, batsman, "Seam"), use_container_width=True)
         
-        st.markdown("###### CREEASE BEEHIVE")
+        st.markdown("###### CREASE BEEHIVE")
         st.plotly_chart(create_crease_beehive(df_seam, "Seam"), use_container_width=True)
 
         st.pyplot(create_lateral_performance_boxes(df_seam, "Seam", batsman), use_container_width=True)
@@ -1271,9 +1271,9 @@ if uploaded_file is not None:
         # Use a smaller Markdown header (e.g., h4)
         st.markdown("#### SPIN")
         
-        st.markdown("###### CREEASE BEEHIVE ZONES")
+        st.markdown("###### CREASE BEEHIVE ZONES")
         st.pyplot(create_zonal_analysis(df_spin, batsman, "Spin"), use_container_width=True)
-        st.markdown("###### CREEASE BEEHIVE")
+        st.markdown("###### CREASE BEEHIVE")
         st.plotly_chart(create_crease_beehive(df_spin, "Spin"), use_container_width=True)
 
         st.pyplot(create_lateral_performance_boxes(df_spin, "Spin", batsman), use_container_width=True)
