@@ -341,6 +341,14 @@ def create_pitch_map(df_in, delivery_type):
 
     # 4. Layout
     fig_pitch.update_layout(
+        title={
+        'text': f"PITCHMAP", # Dynamic Title Text
+        'y': 0.98,                             # Title vertical position (near the top)
+        'x': 0,                              # Title horizontal position (center)
+        'xanchor': 'center',
+        'yanchor': 'top',
+        'font': {'size': 12, 'color': 'black'} # You can customize font size/color here
+    },
         height = 400,
         margin=dict(l=0, r=100, t=0, b=10),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False),
@@ -348,10 +356,7 @@ def create_pitch_map(df_in, delivery_type):
         yaxis=dict(range=[16.0, -4.0], showgrid=False, zeroline=False, visible=False), 
         plot_bgcolor="white", paper_bgcolor="white", showlegend=False
     )
-    fig_pitch.set_title(f"PITCHMAP", 
-                 fontsize=12, 
-                 weight='bold', 
-                 pad=10)
+    
     return fig_pitch
 
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
