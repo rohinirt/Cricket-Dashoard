@@ -1124,6 +1124,7 @@ st.set_page_config(
     page_title="Batters",
     layout="wide")
 st.title("Batters")
+st.sidebar.success("select a page above")
 
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 # --- File Uploader ---
