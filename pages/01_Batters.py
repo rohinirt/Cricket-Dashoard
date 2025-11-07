@@ -1,36 +1,35 @@
-
 import streamlit as st
 import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
+import sys
 
 # Import ALL chart functions and utilities from utils.py
-from utils import (
-    REQUIRED_COLS, 
-    create_pdf_report, 
-    create_zonal_analysis, 
-    create_lateral_performance_boxes, 
-    create_crease_beehive, 
-    create_pitch_map, 
-    create_pitch_length_run_pct, 
-    create_interception_side_on, 
-    create_crease_width_split, 
-    create_interception_front_on, 
-    create_wagon_wheel, 
-    create_left_right_split, 
-    create_directional_split
-)
+try:
+    from utils import (
+        create_zonal_analysis, 
+        create_lateral_performance_boxes, 
+        create_crease_beehive, 
+        create_pitch_map, 
+        create_pitch_length_run_pct, 
+        create_interception_side_on, 
+        create_crease_width_split, 
+        create_interception_front_on, 
+        create_wagon_wheel, 
+        create_left_right_split, 
+        create_directional_split
+    )
+except ImportError:
+    st.error("Error: Could not import utility functions from utils.py. Please ensure 'utils.py' is in the root directory.")
+    sys.exit()
 
 # --- PAGE SETUP ---
 st.title("🏏 Batters Performance Analysis")
 
 # 1. Retrieve the data shared from the main app.py file
-df_raw = st.session_state.get('df_raw')
-
-if df_raw.empty:
+if 'df_raw' not in st.session_state or st.session_state['df_raw'].empty:
     st.warning("Please upload a CSV file via the main page to continue.")
     st.stop() 
+
+df_raw = st.session_state['df_raw']
 
 # 2. Data Separation (Seam/Spin)
 df_seam_raw = df_raw[df_raw["DeliveryType"] == "Seam"].copy()
@@ -96,7 +95,6 @@ figures = {
     'seam_top_on': create_interception_front_on(df_seam, "Seam"),
     'seam_wagon_wheel': create_wagon_wheel(df_seam, "Seam"),
     'seam_lr_split': create_left_right_split(df_seam, "Seam"),
-    # Seam analysis uses Swing/Deviation terms
     'seam_swing': create_directional_split(df_seam, "Swing", "Swing", "Seam"),
     'seam_deviation': create_directional_split(df_seam, "Deviation", "Deviation", "Seam"),
     
@@ -110,31 +108,13 @@ figures = {
     'spin_top_on': create_interception_front_on(df_spin, "Spin"),
     'spin_wagon_wheel': create_wagon_wheel(df_spin, "Spin"),
     'spin_lr_split': create_left_right_split(df_spin, "Spin"),
-    # Spin analysis uses Drift/Turn terms
     'spin_swing': create_directional_split(df_spin, "Swing", "Drift", "Spin"), 
     'spin_deviation': create_directional_split(df_spin, "Deviation", "Turn", "Spin")
 }
 
-# 7. --- DOWNLOAD BUTTON & DISPLAY ---
-heading_col, download_col = st.columns([4, 1])
-
+# 7. --- HEADING DISPLAY ---
 heading_text = batsman.upper() if batsman != "All" else "GLOBAL ANALYSIS"
-with heading_col:
-    st.header(f"**{heading_text}**")
-
-with download_col:
-    if any(isinstance(f, (plt.Figure, go.Figure)) for f in figures.values()):
-        pdf_bytes = create_pdf_report(figures, "BATTER", heading_text) 
-        
-        st.download_button(
-            label="Download PDF Report ⬇️",
-            data=pdf_bytes,
-            file_name=f"Report_Batter_{heading_text.replace(' ', '_')}.pdf",
-            mime="application/pdf"
-        )
-    else:
-        st.button("Download PDF Report ⬇️", disabled=True)
-        
+st.header(f"**{heading_text}**")
 st.markdown("---")
 
 # --- DISPLAY CHARTS ---
@@ -147,7 +127,7 @@ with col1:
     st.markdown("###### CREASE BEEHIVE ZONES")
     st.pyplot(figures['seam_zonal'], use_container_width=True)
     
-    st.markdown("###### CREASE BEEHIVE")
+    st.markdown("###### CREASE BEEHIVE (Plotly Placeholder)")
     st.plotly_chart(figures['seam_beehive'], use_container_width=True)
 
     st.pyplot(figures['seam_lateral'], use_container_width=True)
@@ -155,7 +135,7 @@ with col1:
     pitch_map_col, run_pct_col = st.columns([3, 1])
 
     with pitch_map_col:
-        st.markdown("###### PITCHMAP")
+        st.markdown("###### PITCHMAP (Plotly Placeholder)")
         st.plotly_chart(figures['seam_pitchmap'], use_container_width=True)
         
     with run_pct_col:
@@ -194,7 +174,7 @@ with col2:
     
     st.markdown("###### CREASE BEEHIVE ZONES")
     st.pyplot(figures['spin_zonal'], use_container_width=True)
-    st.markdown("###### CREASE BEEHIVE")
+    st.markdown("###### CREASE BEEHIVE (Plotly Placeholder)")
     st.plotly_chart(figures['spin_beehive'], use_container_width=True)
 
     st.pyplot(figures['spin_lateral'], use_container_width=True)
@@ -202,7 +182,7 @@ with col2:
     pitch_map_col, run_pct_col = st.columns([3, 1])
 
     with pitch_map_col:
-        st.markdown("###### PITCHMAP")
+        st.markdown("###### PITCHMAP (Plotly Placeholder)")
         st.plotly_chart(figures['spin_pitchmap'], use_container_width=True) 
         
     with run_pct_col:
