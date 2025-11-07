@@ -66,7 +66,6 @@ def generate_report_pdf(batsman_name, df_data):
             if isinstance(fig, go.Figure):
                 # Plotly Figure: Requires kaleido package
                 buf.write(fig.to_image(format="png", width=600, height=400, scale=1.5))
-                plt.close(fig) # Safe to call even if not Matplotlib, but better practice if fig could be either
             elif isinstance(fig, plt.Figure):
                 # Matplotlib Figure
                 fig.savefig(buf, format='png', bbox_inches="tight")
@@ -176,10 +175,13 @@ def generate_report_pdf(batsman_name, df_data):
     # Return PDF byte stream encoded in 'latin-1' (standard for FPDF)
     return pdf.output(dest="S").encode('latin-1') 
 
+# --- Function 2: Creates the ZIP file containing all reports ---
 def create_all_reports_zip(df_main):
-    """Creates a ZIP archive in-memory containing a PDF for every unique BatsmanName."""
+    """
+    Creates a ZIP archive in-memory containing a PDF for every unique BatsmanName.
+    Includes robust error handling to prevent an empty ZIP file.
+    """
     
-    # Use the unfiltered raw data to get the list of all unique batsmen
     BATS_LIST = df_main['BatsmanName'].dropna().unique().tolist()
     if not BATS_LIST:
         return None
@@ -188,26 +190,35 @@ def create_all_reports_zip(df_main):
     
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
         for batsman in BATS_LIST:
-            # Generate the individual PDF bytes
+            pdf_bytes = None
+            filename = f"Report_{batsman.replace(' ', '_').replace('.', '')}.pdf"
+            
             try:
+                # Attempt to generate the detailed PDF
                 pdf_bytes = generate_report_pdf(batsman, df_main)
-                # Create a clean filename
-                filename = f"Report_{batsman.replace(' ', '_').replace('.', '')}.pdf"
-                
-                # Add the PDF bytes to the ZIP file
-                zip_file.writestr(filename, pdf_bytes)
+            
             except Exception as e:
-                # In a real app, you might want more robust error logging
-                print(f"Error generating report for {batsman}: {e}")
+                # CRITICAL: If generation fails, create a simple error PDF instead
+                print(f"CRITICAL ERROR generating report for {batsman}: {e}")
+                
+                error_pdf = FPDF(unit="mm", format="A4")
+                error_pdf.add_page()
+                error_pdf.set_font("Arial", "B", 18)
+                error_pdf.cell(0, 20, f"Error Report: {batsman}", 0, 1, "C")
+                error_pdf.set_font("Arial", "", 12)
+                error_pdf.multi_cell(0, 10, f"Failed to generate report due to an internal error.\n\nError details (Check console for full trace):\n{str(e)[:100]}")
+                
+                pdf_bytes = error_pdf.output(dest="S").encode('latin-1')
+            
+            finally:
+                if pdf_bytes:
+                    # Add the generated (or error) PDF bytes to the ZIP file
+                    zip_file.writestr(filename, pdf_bytes)
                 
     zip_buffer.seek(0)
     return zip_buffer.getvalue()
 
-# --- ALL EXISTING CHART FUNCTIONS ARE INCLUDED BELOW (REMOVED FOR BREVITY IN THIS EXPLANATION) ---
-# ... (All existing functions: create_zonal_analysis, create_crease_beehive, etc.)
-
 # --- CHART 1: ZONAL ANALYSIS (CBH Boxes) ---
-# ... (function content omitted for brevity, assumed to be the same)
 def create_zonal_analysis(df_in, batsman_name, delivery_type):
     # ... (Zonal Analysis logic remains the same)
     if df_in.empty:
@@ -262,7 +273,6 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
 
         ax.text(x1 + w / 2, y1 + h / 2, 
         f"R: {runs}\nW: {wkts}\nSR: {sr:.0f}\nA: {avg:.0f}", 
-        # ===============================================
         ha="center", 
         va="center", 
         fontsize=5,
@@ -277,24 +287,16 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
     return fig_boxes
 
 # --- CHART 2a: CREASE BEEHIVE ---
-# ... (function content omitted for brevity, assumed to be the same)
 def create_crease_beehive(df_in, delivery_type):
-    # ... (Crease Beehive logic remains the same)
     if df_in.empty:
         return go.Figure().update_layout(title="No data for Beehive", height=400)
 
     # --- Data Filtering ---
     wickets = df_in[df_in["Wicket"] == True]
-    
-    # 1. Filter Non-Wickets
     non_wickets_all = df_in[df_in["Wicket"] == False]
-
-    # 2. Filter Boundaries (Runs = 4 or 6) from Non-Wickets
     boundaries = non_wickets_all[
         (non_wickets_all["Runs"] == 4) | (non_wickets_all["Runs"] == 6)
     ]
-    
-    # 3. Filter Regular Balls (Runs != 4 and Runs != 6)
     regular_balls = non_wickets_all[
         (non_wickets_all["Runs"] != 4) & (non_wickets_all["Runs"] != 6)
     ]
@@ -346,7 +348,6 @@ def create_crease_beehive(df_in, delivery_type):
     
 
 # --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
-# ... (function content omitted for brevity, assumed to be the same)
 def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
     from matplotlib import cm, colors, patches
     
@@ -476,7 +477,6 @@ def get_pitch_bins(delivery_type):
     return {} # Default
 
 # --- CHART 3: PITCH MAP (BOUNCE LOCATION) ---
-# ... (function content omitted for brevity, assumed to be the same)
 def create_pitch_map(df_in, delivery_type):
     if df_in.empty:
         return go.Figure().update_layout(title=f"No data for Pitch Map ({delivery_type})", height=300)
@@ -537,7 +537,6 @@ def create_pitch_map(df_in, delivery_type):
     return fig_pitch
 
 # --- CHART 3b: PITCH LENGTH RUN % (EQUAL SIZED BOXES) ---
-# ... (function content omitted for brevity, assumed to be the same)
 def create_pitch_length_run_pct(df_in, delivery_type):
     # Adjust figsize height to accommodate the four boxes and title comfortably
     FIG_HEIGHT = 5.7
@@ -678,7 +677,6 @@ def create_pitch_length_run_pct(df_in, delivery_type):
     return fig_stack
     
 # --- CHART 4a: INTERCEPTION SIDE-ON --- (Wide View)
-# ... (function content omitted for brevity, assumed to be the same)
 def create_interception_side_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
     if df_interception.empty:
@@ -750,7 +748,6 @@ def create_interception_side_on(df_in, delivery_type):
     return fig_7
 
 # Chart 4b: Interception Side on Bins ---
-# ... (function content omitted for brevity, assumed to be the same)
 def create_crease_width_split(df_in, delivery_type):
     # Adjust figsize width for horizontal display, height for four boxes
     FIG_WIDTH = 5
@@ -890,7 +887,6 @@ def create_crease_width_split(df_in, delivery_type):
     return fig_stack
 
 # --- CHART 5: INTERCEPTION FRONT-ON --- (Distance vs Width)
-# ... (function content omitted for brevity, assumed to be the same)
 def create_interception_front_on(df_in, delivery_type):
     df_interception = df_in[df_in["InterceptionX"] > -999].copy()
     if df_interception.empty:
@@ -948,7 +944,6 @@ def create_interception_front_on(df_in, delivery_type):
 
 
 # --- CHART 6: SCORING WAGON WHEEL ---
-# ... (function content omitted for brevity, assumed to be the same)
 def calculate_scoring_wagon(row):
     """Calculates the scoring area based on LandingX/Y coordinates and handedness."""
     LX = row.get("LandingX"); LY = row.get("LandingY"); RH = row.get("IsBatsmanRightHanded")
@@ -1116,7 +1111,6 @@ def create_wagon_wheel(df_in, delivery_type):
     return fig
     
 # --- CHART 7: LEFT/RIGHT SCORING SPLIT (100% Bar) ---
-# ... (function content omitted for brevity, assumed to be the same)
 def create_left_right_split(df_in, delivery_type):
     import matplotlib.colors as mcolors
     import matplotlib.cm as cm
@@ -1204,9 +1198,16 @@ def create_left_right_split(df_in, delivery_type):
     return fig_split
 
 # --- CHART 9/10: DIRECTIONAL SPLIT (Side-by-Side Bars) ---
-# ... (function content omitted for brevity, assumed to be the same)
 def create_directional_split(df_in, direction_col, chart_title, delivery_type):
     df_dir = df_in.copy()
+    
+    # CRITICAL: Defensive check for missing columns
+    if direction_col not in df_dir.columns:
+        fig, ax = plt.subplots(figsize=(6, 2.5)); 
+        ax.text(0.5, 0.5, f"Missing Column: {direction_col}", ha='center', va='center'); 
+        ax.axis('off'); 
+        return fig
+        
     if df_dir.empty:
         fig, ax = plt.subplots(figsize=(6, 2.5)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
     
@@ -1412,6 +1413,7 @@ if uploaded_file is not None:
 
     # --- Apply Filters to Seam and Spin dataframes ---
     def apply_filters(df):
+        if df.empty: return df
         if bat_team != "All":
             df = df[df["BattingTeam"] == bat_team]
         
