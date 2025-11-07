@@ -86,7 +86,7 @@ def create_zonal_analysis(df_in, batsman_name, delivery_type):
         color="black" if norm(avg) < 0.6 else "white", 
         linespacing=1.2)
     ax.set_title(f"STRIKE RATE", 
-                 fontsize=12, 
+                 fontsize=8, 
                  weight='bold', 
                  pad=10)
     ax.set_xlim(-0.75, 0.75); ax.set_ylim(0, 2); ax.axis('off'); 
@@ -150,6 +150,14 @@ def create_crease_beehive(df_in, delivery_type):
         yanchor='bottom'        # Place text slightly above the line
     )
     fig_cbh.update_layout(
+        title={
+        'text': f"CREESE BEEHIVE", # Dynamic Title Text
+        'y': 0.98,                             # Title vertical position (near the top)
+        'x': 0.5,                              # Title horizontal position (center)
+        'xanchor': 'center',
+        'yanchor': 'top',
+        'font': {'size': 12, 'color': 'black'} # You can customize font size/color here
+    }
         height=300, 
         margin=dict(l=0, r=0, t=0, b=0),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
@@ -344,7 +352,7 @@ def create_pitch_map(df_in, delivery_type):
         title={
         'text': f"PITCHMAP", # Dynamic Title Text
         'y': 0.98,                             # Title vertical position (near the top)
-        'x': 0,                              # Title horizontal position (center)
+        'x': 0.5,                              # Title horizontal position (center)
         'xanchor': 'center',
         'yanchor': 'top',
         'font': {'size': 12, 'color': 'black'} # You can customize font size/color here
@@ -562,7 +570,7 @@ def create_interception_side_on(df_in, delivery_type):
     ax_7.set_xlim(x_limit_min, x_limit_max) 
     ax_7.set_ylim(0, y_limit) 
     ax_7.set_title(f"INTERCEPTION SIDE-ON", 
-                 fontsize=12, 
+                 fontsize=8, 
                  weight='bold', 
                  pad=10)
     # ... (Rest of the styling remains the same)
@@ -760,7 +768,7 @@ def create_interception_front_on(df_in, delivery_type):
     ax_8.axvline(x= 0, color='lightgrey', linestyle='--', linewidth=0.8, alpha=0.7)
     
     # 3. Set Axes Limits and Labels (FIXED LIMITS: Y-axis -0.2 to 3.5)
-    ax_8.set_title(f"INTERCEPTION SIDE-ON", 
+    ax_8.set_title(f"INTERCEPTION TOP-ON", 
                  fontsize=12, 
                  weight='bold', 
                  pad=10)
@@ -936,7 +944,7 @@ def create_wagon_wheel(df_in, delivery_type):
     # Ensure external texts are handled (UNCHANGED)
     for text in texts:
         text.set_color('black'); text.set_fontsize(8); text.set_fontweight('bold')
-    ax.set_title(f"Scoring v ({delivery_type} )", fontsize=12, weight='bold', pad=10)
+    ax.set_title(f"SCORING AREAS", fontsize=14, weight='bold', pad=10)
     ax.axis('equal'); 
     plt.tight_layout(pad=0.5)
     
