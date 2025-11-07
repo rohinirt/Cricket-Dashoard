@@ -42,10 +42,141 @@ def fig_to_png_bytes(fig, is_plotly=False):
     return buf
 
 # --- CHART 1: ZONAL ANALYSIS (CBH Boxes) ---
-# ... (Function definition for create_zonal_analysis remains here)
+def create_zonal_analysis(df_in, batsman_name, delivery_type):
+    # ... (Zonal Analysis logic remains the same)
+    if df_in.empty:
+        fig, ax = plt.subplots(figsize=(4, 4)); ax.text(0.5, 0.5, "No Data", ha='center', va='center'); ax.axis('off'); return fig
+
+    is_right_handed = True
+    handed_data = df_in["IsBatsmanRightHanded"].dropna().unique()
+    if len(handed_data) > 0 and batsman_name != "All": is_right_handed = handed_data[0]
+        
+    right_hand_zones = { "Z1": (-0.72, 0, -0.45, 1.91), "Z2": (-0.45, 0, -0.18, 0.71), "Z3": (-0.18, 0, 0.18, 0.71), "Z4": (-0.45, 0.71, -0.18, 1.31), "Z5": (-0.18, 0.71, 0.18, 1.31), "Z6": (-0.45, 1.31, 0.18, 1.91)}
+    left_hand_zones = { "Z1": (0.45, 0, 0.72, 1.91), "Z2": (0.18, 0, 0.45, 0.71), "Z3": (-0.18, 0, 0.18, 0.71), "Z4": (0.18, 0.71, 0.45, 1.31), "Z5": (-0.18, 0.71, 0.18, 1.31), "Z6": (-0.18, 1.31, 0.45, 1.91)}
+    zones_layout = right_hand_zones if is_right_handed else left_hand_zones
+    
+    def assign_zone(row):
+        x, y = row["CreaseY"], row["CreaseZ"]
+        for zone, (x1, y1, x2, y2) in zones_layout.items():
+            if x1 <= x <= x2 and y1 <= y <= y2: return zone
+        return "Other"
+
+    df_chart2 = df_in.copy(); df_chart2["Zone"] = df_chart2.apply(assign_zone, axis=1)
+    df_chart2 = df_chart2[df_chart2["Zone"] != "Other"]
+    
+    summary = (
+        df_chart2.groupby("Zone").agg(Runs=("Runs", "sum"), Wickets=("Wicket", lambda x: (x == True).sum()), Balls=("Wicket", "count"))
+        .reindex([f"Z{i}" for i in range(1, 7)]).fillna(0)
+    )
+    summary["Avg Runs/Wicket"] = summary.apply(lambda row: row["Runs"] / row["Wickets"] if row["Wickets"] > 0 else 0, axis=1)
+    summary["StrikeRate"] = summary.apply(lambda row: (row["Runs"] / row["Balls"]) * 100 if row["Balls"] > 0 else 0, axis=1)
+
+    avg_values = summary["Avg Runs/Wicket"]
+    avg_max = avg_values.max() if avg_values.max() > 0 else 1
+    avg_min = avg_values[avg_values > 0].min() if avg_values[avg_values > 0].min() < avg_max else 0
+    norm = mcolors.Normalize(vmin=avg_min, vmax=avg_max)
+    cmap = cm.get_cmap('Reds')
+
+    fig_boxes, ax = plt.subplots(figsize=(3,2), subplot_kw={'xticks': [], 'yticks': []}) 
+    
+    for zone, (x1, y1, x2, y2) in zones_layout.items():
+        w, h = x2 - x1, y2 - y1
+        z_key = zone.replace("Zone ", "Z")
+        
+        runs, wkts, avg, sr = (0, 0, 0, 0)
+        if z_key in summary.index:
+            runs = int(summary.loc[z_key, "Runs"])
+            wkts = int(summary.loc[z_key, "Wickets"])
+            avg = summary.loc[z_key, "Avg Runs/Wicket"]
+            sr = summary.loc[z_key, "StrikeRate"]
+        
+        color = cmap(norm(avg)) if avg > 0 else 'white'
+
+        ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=0.8))
+
+        ax.text(x1 + w / 2, y1 + h / 2, 
+        f"R: {runs}\nW: {wkts}\nSR: {sr:.0f}\nA: {avg:.0f}", 
+        # ===============================================
+        ha="center", 
+        va="center", 
+        fontsize=5,
+        color="black" if norm(avg) < 0.6 else "white", 
+        linespacing=1.2)
+    ax.set_title(f"STRIKE RATE", 
+                 fontsize=8, 
+                 weight='bold', 
+                 pad=10)
+    ax.set_xlim(-0.75, 0.75); ax.set_ylim(0, 2); ax.axis('off'); 
+    plt.tight_layout(pad=0.5) 
+    return fig_boxes
 
 # --- CHART 2a: CREASE BEEHIVE ---
-# ... (Function definition for create_crease_beehive remains here)
+def create_crease_beehive(df_in, delivery_type):
+    # ... (Crease Beehive logic remains the same)
+    if df_in.empty:
+        return go.Figure().update_layout(title="No data for Beehive", height=400)
+
+    # --- Data Filtering ---
+    wickets = df_in[df_in["Wicket"] == True]
+    
+    # 1. Filter Non-Wickets
+    non_wickets_all = df_in[df_in["Wicket"] == False]
+
+    # 2. Filter Boundaries (Runs = 4 or 6) from Non-Wickets
+    boundaries = non_wickets_all[
+        (non_wickets_all["Runs"] == 4) | (non_wickets_all["Runs"] == 6)
+    ]
+    
+    # 3. Filter Regular Balls (Runs != 4 and Runs != 6)
+    regular_balls = non_wickets_all[
+        (non_wickets_all["Runs"] != 4) & (non_wickets_all["Runs"] != 6)
+    ]
+    fig_cbh = go.Figure()
+
+    # 1. TRACE: Regular Balls (Non-Wicket, Non-Boundary) - Light Grey
+    fig_cbh.add_trace(go.Scatter(
+        x=regular_balls["CreaseY"], y=regular_balls["CreaseZ"], mode='markers', name="Regular Ball",
+        marker=dict(color='lightgrey', size=10, line=dict(width=1, color="white"), opacity=0.95)
+    ))
+
+    # 2. NEW TRACE: Boundary Balls (Runs 4 or 6) - Royal Blue
+    fig_cbh.add_trace(go.Scatter(
+        x=boundaries["CreaseY"], y=boundaries["CreaseZ"], mode='markers', name="Boundary",
+        marker=dict(color='royalblue', size=12, line=dict(width=1, color="white"), opacity=0.95)
+    ))
+
+    # 3. TRACE: Wickets - Red (Kept as the largest marker size for emphasis)
+    fig_cbh.add_trace(go.Scatter(
+        x=wickets["CreaseY"], y=wickets["CreaseZ"], mode='markers', name="Wicket",
+        marker=dict(color='red', size=12, line=dict(width=1, color="white"), opacity=0.95)
+    ))
+
+    # Stump lines & Crease lines (No change)
+    fig_cbh.add_vline(x=-0.18, line=dict(color="grey", dash="dot", width=0.5)) 
+    fig_cbh.add_vline(x=0.18, line=dict(color="grey", dash="dot", width=0.5))
+    fig_cbh.add_vline(x=0, line=dict(color="grey", dash="dot", width=0.5))
+    fig_cbh.add_vline(x=-0.92, line=dict(color="grey", width=0.5)) 
+    fig_cbh.add_vline(x=0.92, line=dict(color="grey", width=0.5))
+    fig_cbh.add_hline(y=0.78, line=dict(color="grey", width=0.5)) 
+    fig_cbh.add_annotation(
+        x=-1.5,                 # X-position on the far left
+        y=0.78,                 # Y-position (on the line)
+        text="Stump line",      # The label text
+        showarrow=False,
+        font=dict(size=8, color="grey"),
+        xanchor='left',         # Anchor text to the left
+        yanchor='bottom'        # Place text slightly above the line
+    )
+    fig_cbh.update_layout(
+        height=300, 
+        margin=dict(l=0, r=0, t=0, b=0),
+        xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
+        yaxis=dict(range=[0, 2], showgrid=False, zeroline=True, visible=False),
+        plot_bgcolor="white", paper_bgcolor="white", showlegend=False
+    )
+    
+    return fig_cbh
+
 
 # --- CHART 2b: LATERAL PERFORMANCE STACKED BAR ---
 def create_lateral_performance_boxes(df_in, delivery_type, batsman_name):
