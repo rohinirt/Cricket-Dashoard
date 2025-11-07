@@ -157,7 +157,7 @@ def create_crease_beehive(df_in, delivery_type):
         'xanchor': 'center',
         'yanchor': 'top',
         'font': {'size': 12, 'color': 'black'} # You can customize font size/color here
-    }
+    },
         height=300, 
         margin=dict(l=0, r=0, t=0, b=0),
         xaxis=dict(range=[-1.5, 1.5], showgrid=False, zeroline=False, visible=False, scaleanchor="y", scaleratio=1),
