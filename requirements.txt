@@ -3,4 +3,6 @@ pandas
 numpy
 plotly
 matplotlib
-scipy
+scipy\
+fpdf2       # PDF generation library
+kaleido
