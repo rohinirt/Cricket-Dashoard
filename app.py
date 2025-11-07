@@ -1121,7 +1121,7 @@ def create_directional_split(df_in, direction_col, chart_title, delivery_type):
 # --- 3. MAIN STREAMLIT APP STRUCTURE ---
 
 st.set_page_config(
-    page_title="Batters"
+    page_title="Batters",
     layout="wide")
 st.title("Batters")
 
