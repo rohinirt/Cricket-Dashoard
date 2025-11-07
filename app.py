@@ -1214,6 +1214,7 @@ if uploaded_file is not None:
         # Use a smaller Markdown header (e.g., h4)
         st.markdown("#### SEAM")
 
+        st.markdown("###### Crease Width Boxes")
         st.pyplot(create_zonal_analysis(df_seam, batsman, "Seam"), use_container_width=True)
 
         st.plotly_chart(create_crease_beehive(df_seam, "Seam"), use_container_width=True)
