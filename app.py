@@ -137,6 +137,7 @@ def create_crease_beehive(df_in, delivery_type):
     # Stump lines & Crease lines (No change)
     fig_cbh.add_vline(x=-0.18, line=dict(color="black", dash="dot", width=1)) 
     fig_cbh.add_vline(x=0.18, line=dict(color="black", dash="dot", width=1))
+    fig_cbh.add_vline(x=0, line=dict(color="black", dash="dot", width=0.8))
     fig_cbh.add_vline(x=-0.92, line=dict(color="grey", width=0.8)) 
     fig_cbh.add_vline(x=0.92, line=dict(color="grey", width=0.8))
     fig_cbh.add_hline(y=0.78, line=dict(color="grey", width=0.8)) 
